@@ -941,45 +941,86 @@
         });
 
         /* ==================== 新增功能：首页背景切换（使用 source.unsplash.com） ==================== */
-        function applyBackground(url) {
-            const bgElement = document.querySelector('body::before');
-            if (bgElement) {
-                // 通过动态 style 覆盖 background
-                const style = document.createElement('style');
-                style.id = 'custom-bg-style';
-                style.innerHTML = `body::before { background: url('${url}') center/cover no-repeat !important; }`;
-                const oldStyle = document.getElementById('custom-bg-style');
-                if (oldStyle) oldStyle.remove();
-                document.head.appendChild(style);
-            } else {
-                // 兼容处理：直接设置 body 背景
-                document.body.style.backgroundImage = `url('${url}')`;
-                document.body.style.backgroundSize = 'cover';
-                document.body.style.backgroundPosition = 'center';
-                document.body.style.backgroundRepeat = 'no-repeat';
-            }
+        /* ==================== 修复后的背景应用函数 ==================== */
+function applyBackground(url, photoInfo = null) {
+    // 不再判断 bgElement，直接通过 style 标签覆盖伪元素样式
+    const styleId = 'custom-bg-style';
+    let style = document.getElementById(styleId);
+    if (!style) {
+        style = document.createElement('style');
+        style.id = styleId;
+        document.head.appendChild(style);
+    }
+    
+    // 关键点：使用 !important 确保覆盖掉 CSS 文件中的默认背景
+    style.innerHTML = `
+        body::before { 
+            background-image: url('${url}') !important; 
+            background-position: center !important;
+            background-size: cover !important;
+            background-repeat: no-repeat !important;
         }
+    `;
+
+    // 处理页脚署名（符合 Unsplash 规范）
+    if (photoInfo) {
+        updateAttributionFooter(photoInfo);
+    }
+}
+
+/* ==================== 配合使用的署名函数 ==================== */
+function updateAttributionFooter(info) {
+    let footer = document.getElementById('footer-attribution');
+    if (!footer) {
+        footer = document.createElement('div');
+        footer.id = 'footer-attribution';
+        footer.style = "position:fixed; bottom:10px; right:20px; font-size:12px; color:rgba(255,255,255,0.7); z-index:1000; text-shadow:0 1px 2px rgba(0,0,0,0.5);";
+        document.body.appendChild(footer);
+    }
+
+    // 如果是默认背景，显示你要求的文字
+    if (info.isDefault) {
+        footer.innerHTML = info.text;
+    } 
+    // 如果是 Unsplash 图片，显示作者链接
+    else if (info.userLink) {
+        footer.innerHTML = `Photo by <a href="${info.userLink}" target="_blank" style="color:#fff;text-decoration:underline;">${info.user}</a> on <a href="https://unsplash.com" target="_blank" style="color:#fff;">Unsplash</a>`;
+    }
+
+    footer.style.display = 'block';
+}
 
         function loadSavedBackground() {
-            // 使用 cookies 存储背景（通过 document.cookie 实现）
-            const cookies = document.cookie.split(';');
-            let bgUrl = null;
-            for (let cookie of cookies) {
-                const [name, value] = cookie.trim().split('=');
-                if (name === 'homepage_bg') {
-                    bgUrl = decodeURIComponent(value);
-                    break;
-                }
-            }
-            if (bgUrl) {
-                applyBackground(bgUrl);
-            }
-            const creditEl = document.getElementById('photo-credit');
-
-if (!bgUrl) {
-    creditEl.innerHTML = 'Photo by 浙江丽水云和梯田 / 站长拍摄';
-}
+    const cookies = document.cookie.split(';');
+    let savedValue = null;
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'homepage_bg') {
+            savedValue = decodeURIComponent(value);
+            break;
         }
+    }
+
+    if (savedValue) {
+        try {
+            const data = JSON.parse(savedValue);
+            if (data.url) {
+                applyBackground(data.url, data.info);
+                return; // 如果加载成功，直接结束函数
+            }
+        } catch (e) {
+            // 兼容旧的纯 URL 格式
+            applyBackground(savedValue);
+            return;
+        }
+    }
+
+    // --- 核心修复：如果没有背景或加载失败，显示你的原稿署名 ---
+    updateAttributionFooter({
+        isDefault: true,
+        text: 'Photo by 浙江丽水云和梯田 / 站长拍摄'
+    });
+}
 
         function setBackgroundToCookie(url) {
     document.cookie = `bg=${encodeURIComponent(url)}; path=/; max-age=31536000`;  // 设置一个有效期为1年的 Cookie
@@ -994,32 +1035,29 @@ if (!bgUrl) {
         }
 
         // 随机背景按钮（使用 source.unsplash.com/random 获取随机高清图）
-        document.getElementById('random-bg-btn').onclick = async () => {
-    try {
-        const res = await fetch('/api/unsplash');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-
-        // 替换：直接应用背景
-        applyBackground(data.url);  // 新增，直接设置背景
-        setBackgroundToCookie(data.url);  // 保存背景到 Cookie
-
-        const creditEl = document.getElementById('photo-credit');
-        creditEl.innerHTML = `
-            Photo by 
-            <a href="https://unsplash.com/@${data.username}?utm_source=baipin&utm_medium=referral" target="_blank">
-                ${data.author}
-            </a>
-            on 
-            <a href="${data.link}?utm_source=baipin&utm_medium=referral" target="_blank">
-                Unsplash
-            </a>
-        `;
-    } catch (e) {
-        console.error('获取随机背景失败:', e);
-        alert('获取随机背景失败，请检查控制台');
-    }
+        document.getElementById('reset-bg-btn').onclick = () => {
+    // 1. 删除 Cookie
+    document.cookie = "homepage_bg=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    
+    // 2. 移除动态生成的样式，让 CSS 里的默认背景生效
+    const style = document.getElementById('custom-bg-style');
+    if (style) style.remove();
+    
+    // 3. 恢复你的自拍署名
+    updateAttributionFooter({
+        isDefault: true,
+        text: 'Photo by 浙江丽水云和梯田 / 站长拍摄'
+    });
+    
+    alert('已恢复默认背景');
 };
+
+function setBackgroundToCookie(value) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + 365 * 24 * 60 * 60 * 1000);
+    // 必须 encodeURIComponent 转换，否则 JSON 中的双引号会破坏 Cookie 结构
+    document.cookie = `homepage_bg=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+}
 
 
         // 恢复默认背景按钮
