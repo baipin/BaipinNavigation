@@ -244,6 +244,17 @@
             </div>
         </aside>
     </div>
+    <div class="content-layout">
+    <div class="card-glass" id="photo-credit" style="
+        grid-column: 1 / -1;
+        padding: 16px 24px;
+        text-align: center;
+        font-size: 0.9rem;
+        opacity: 0.9;
+    ">
+        Photo by 浙江丽水云和梯田 / 站长拍摄
+    </div>
+</div>
 
     <!-- 全屏模式 -->
     <div id="fullscreen-market">
@@ -956,6 +967,11 @@
             if (bgUrl) {
                 applyBackground(bgUrl);
             }
+            const creditEl = document.getElementById('photo-credit');
+
+if (!bgUrl) {
+    creditEl.innerHTML = 'Photo by 浙江丽水云和梯田 / 站长拍摄';
+}
         }
 
         function setBackgroundToCookie(url) {
@@ -971,33 +987,45 @@
 
         // 随机背景按钮（使用 source.unsplash.com/random 获取随机高清图）
         document.getElementById('random-bg-btn').onclick = async () => {
-            try {
-                // source.unsplash.com/random 返回随机图片（可添加 ?sig= 时间戳避免缓存）
-                const randomUrl = `https://source.unsplash.com/random/1920x1080/?sig=${Date.now()}`;
-                
-                // 预加载图片，确保加载成功后再应用
-                const img = new Image();
-                img.onload = () => {
-                    applyBackground(randomUrl);
-                    setBackgroundToCookie(randomUrl);
-                    alert('背景已切换为 Unsplash 随机图片，并已保存到 Cookies 中。');
-                };
-                img.onerror = () => {
-                    alert('获取随机背景失败，请稍后重试。');
-                };
-                img.src = randomUrl;
-            } catch (e) {
-                alert('获取随机背景时发生错误：' + e.message);
-            }
+    try {
+        const res = await fetch('/api/unsplash');
+        const data = await res.json();
+
+        const img = new Image();
+        img.onload = () => {
+            applyBackground(data.url);
+            setBackgroundToCookie(data.url);
+
+            // 更新页脚作者信息
+            const creditEl = document.getElementById('photo-credit');
+            creditEl.innerHTML = `
+                Photo by 
+                <a href="https://unsplash.com/@${data.username}?utm_source=baipin&utm_medium=referral" target="_blank">
+                    ${data.author}
+                </a>
+                on 
+                <a href="${data.link}?utm_source=baipin&utm_medium=referral" target="_blank">
+                    Unsplash
+                </a>
+            `;
         };
+        img.src = data.url;
+
+    } catch (e) {
+        alert('获取随机背景失败：' + e.message);
+    }
+};
+
 
         // 恢复默认背景按钮
         document.getElementById('reset-bg-btn').onclick = () => {
-            const oldStyle = document.getElementById('custom-bg-style');
-            if (oldStyle) oldStyle.remove();
-            document.body.style.backgroundImage = '';
-            clearBackgroundCookie();
-            alert('已恢复默认背景（img/home.jpg），并清除 Cookies 中的自定义背景。');
+                const oldStyle = document.getElementById('custom-bg-style');
+                if (oldStyle) oldStyle.remove();
+                document.body.style.backgroundImage = '';
+                clearBackgroundCookie();
+            
+                const creditEl = document.getElementById('photo-credit');
+                creditEl.innerHTML = 'Photo by 浙江丽水云和梯田 / 站长拍摄';
         };
 
         /* ==================== 新增功能：导出/导入所有 Cookies 数据 ==================== */
