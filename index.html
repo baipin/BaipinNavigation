@@ -942,6 +942,37 @@
 
         /* ==================== 新增功能：首页背景切换（使用 source.unsplash.com） ==================== */
         /* ==================== 修复后的背景应用函数 ==================== */
+document.getElementById('random-bg-btn').onclick = async () => {
+    try {
+        const res = await fetch('/api/unsplash');
+        const data = await res.json();
+
+        if (!data.url) throw new Error('无图片数据');
+
+        // 应用背景
+        applyBackground(data.url);
+
+        // 更新署名
+        updateAttributionFooter({
+            user: data.user,
+            userLink: data.userLink
+        });
+
+        // 保存
+        setBackgroundToCookie(JSON.stringify({
+            url: data.url,
+            info: {
+                user: data.user,
+                userLink: data.userLink
+            }
+        }));
+
+    } catch (e) {
+        console.error(e);
+        alert('获取背景失败');
+    }
+};
+
 function applyBackground(url, photoInfo = null) {
     // 不再判断 bgElement，直接通过 style 标签覆盖伪元素样式
     const styleId = 'custom-bg-style';
@@ -970,24 +1001,28 @@ function applyBackground(url, photoInfo = null) {
 
 /* ==================== 配合使用的署名函数 ==================== */
 function updateAttributionFooter(info) {
-    // 1. 统一指向你那个 card-glass 样式的页脚
-    const Footer = document.getElementById('photo-credit');
-    
-    if (Footer) {
-        if (info) {
-            // 如果传入了新的署名（如 Unsplash 摄影师），直接更新该区域
-            Footer.innerHTML = info;
-        } else {
-            // 如果 info 为空（比如恢复默认背景时），恢复初始状态
-            Footer.innerHTML = 'Photo by 浙江丽水云和梯田 / 站长拍摄';
-        }
+    const footer = document.getElementById('photo-credit');
+    if (!footer) return;
+
+    // 默认背景
+    if (!info || info.isDefault) {
+        footer.innerHTML = 'Photo by 浙江丽水云和梯田 / 站长拍摄';
+        return;
     }
 
-    // 2. 彻底清理旧的动态悬浮元素（防止它在你看不到的地方悄悄创建）
-    const oldFloatingFooter = document.getElementById('footer-attribution');
-    if (oldFloatingFooter) {
-        oldFloatingFooter.remove();
+    // Unsplash 署名
+    if (info.user && info.userLink) {
+        footer.innerHTML = `
+            Photo by 
+            <a href="${info.userLink}" target="_blank">${info.user}</a> 
+            on 
+            <a href="https://unsplash.com" target="_blank">Unsplash</a>
+        `;
+        return;
     }
+
+    // fallback（防止再出现 object）
+    footer.innerHTML = '';
 }
 
         function loadSavedBackground() {
@@ -1023,10 +1058,10 @@ function updateAttributionFooter(info) {
 }
 
         function setBackgroundToCookie(url) {
-    document.cookie = `bg=${encodeURIComponent(url)}; path=/; max-age=31536000`;  // 设置一个有效期为1年的 Cookie
+    document.cookie = `homepage_bg=${encodeURIComponent(url)}; path=/; max-age=31536000`;  // 设置一个有效期为1年的 Cookie
 }
         function getBackgroundFromCookie() {
-    const match = document.cookie.match(/bg=([^;]+)/);
+    const match = document.cookie.match(/homepage_bg=([^;]+)/);
     return match ? decodeURIComponent(match[1]) : null;  // 如果有背景数据，返回；没有则返回 null
 }
 
