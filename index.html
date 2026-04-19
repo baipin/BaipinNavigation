@@ -892,6 +892,13 @@
             }
         };
 
+        window.onload = () => {
+    const savedBackground = getBackgroundFromCookie();
+    if (savedBackground) {
+        applyBackground(savedBackground);  // 如果有背景图片，直接应用
+    }
+};
+
         document.getElementById('manage-rss-close').onclick = () => document.getElementById('manage-rss-dialog').open = false;
         document.getElementById('manage-rss-add').onclick = () => {
             const newUrl = prompt("请输入RSS源地址：");
@@ -975,11 +982,12 @@ if (!bgUrl) {
         }
 
         function setBackgroundToCookie(url) {
-            // 设置 cookie，有效期 365 天
-            const expires = new Date();
-            expires.setTime(expires.getTime() + 365 * 24 * 60 * 60 * 1000);
-            document.cookie = `homepage_bg=${encodeURIComponent(url)}; expires=${expires.toUTCString()}; path=/`;
-        }
+    document.cookie = `bg=${encodeURIComponent(url)}; path=/; max-age=31536000`;  // 设置一个有效期为1年的 Cookie
+}
+        function getBackgroundFromCookie() {
+    const match = document.cookie.match(/bg=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : null;  // 如果有背景数据，返回；没有则返回 null
+}
 
         function clearBackgroundCookie() {
             document.cookie = 'homepage_bg=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
@@ -989,30 +997,27 @@ if (!bgUrl) {
         document.getElementById('random-bg-btn').onclick = async () => {
     try {
         const res = await fetch('/api/unsplash');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
-        const img = new Image();
-        img.onload = () => {
-            applyBackground(data.url);
-            setBackgroundToCookie(data.url);
+        // 替换：直接应用背景
+        applyBackground(data.url);  // 新增，直接设置背景
+        setBackgroundToCookie(data.url);  // 保存背景到 Cookie
 
-            // 更新页脚作者信息
-            const creditEl = document.getElementById('photo-credit');
-            creditEl.innerHTML = `
-                Photo by 
-                <a href="https://unsplash.com/@${data.username}?utm_source=baipin&utm_medium=referral" target="_blank">
-                    ${data.author}
-                </a>
-                on 
-                <a href="${data.link}?utm_source=baipin&utm_medium=referral" target="_blank">
-                    Unsplash
-                </a>
-            `;
-        };
-        img.src = data.url;
-
+        const creditEl = document.getElementById('photo-credit');
+        creditEl.innerHTML = `
+            Photo by 
+            <a href="https://unsplash.com/@${data.username}?utm_source=baipin&utm_medium=referral" target="_blank">
+                ${data.author}
+            </a>
+            on 
+            <a href="${data.link}?utm_source=baipin&utm_medium=referral" target="_blank">
+                Unsplash
+            </a>
+        `;
     } catch (e) {
-        alert('获取随机背景失败：' + e.message);
+        console.error('获取随机背景失败:', e);
+        alert('获取随机背景失败，请检查控制台');
     }
 };
 
