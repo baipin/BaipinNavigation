@@ -17,12 +17,26 @@ export default async function handler(req, res) {
             }
         );
 
+        // 先拿文本内容，无论返回 JSON 还是 HTML
+        const textData = await response.text();
+
         if (!response.ok) {
-            const errorText = await response.text();
-            return res.status(response.status).json({ error: errorText || 'Failed to fetch Unsplash' });
+            return res.status(response.status).json({ 
+                error: 'Unsplash API 请求失败',
+                raw: textData
+            });
         }
 
-        const data = await response.json();
+        let data;
+        try {
+            data = JSON.parse(textData);
+        } catch (jsonErr) {
+            console.error('Unsplash 返回非 JSON:', textData);
+            return res.status(500).json({ 
+                error: 'Unsplash API 返回非 JSON',
+                raw: textData
+            });
+        }
 
         // 返回给前端的数据：图片 URL + 作者信息 + Unsplash 链接
         res.status(200).json({
@@ -34,6 +48,6 @@ export default async function handler(req, res) {
 
     } catch (error) {
         console.error('Unsplash API Error:', error);
-        res.status(500).json({ error: 'Failed to fetch Unsplash' });
+        res.status(500).json({ error: '请求 Unsplash API 出错', details: error.message });
     }
 }
