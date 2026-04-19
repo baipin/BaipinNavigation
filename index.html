@@ -976,7 +976,7 @@ function updateAttributionFooter(info) {
     if (Footer) {
         if (info) {
             // 如果传入了新的署名（如 Unsplash 摄影师），直接更新该区域
-            targetFooter.innerHTML = info;
+            Footer.innerHTML = info;
         } else {
             // 如果 info 为空（比如恢复默认背景时），恢复初始状态
             Footer.innerHTML = 'Photo by 浙江丽水云和梯田 / 站长拍摄';
@@ -988,18 +988,6 @@ function updateAttributionFooter(info) {
     if (oldFloatingFooter) {
         oldFloatingFooter.remove();
     }
-}
-
-    // 如果是默认背景，显示你要求的文字
-    if (info.isDefault) {
-        footer.innerHTML = info.text;
-    } 
-    // 如果是 Unsplash 图片，显示作者链接
-    else if (info.userLink) {
-        footer.innerHTML = `Photo by <a href="${info.userLink}" target="_blank" style="color:#fff;text-decoration:underline;">${info.user}</a> on <a href="https://unsplash.com" target="_blank" style="color:#fff;">Unsplash</a>`;
-    }
-
-    footer.style.display = 'block';
 }
 
         function loadSavedBackground() {
