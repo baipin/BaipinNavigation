@@ -971,15 +971,15 @@ function applyBackground(url, photoInfo = null) {
 /* ==================== 配合使用的署名函数 ==================== */
 function updateAttributionFooter(info) {
     // 1. 统一指向你那个 card-glass 样式的页脚
-    const targetFooter = document.getElementById('photo-credit');
+    const Footer = document.getElementById('photo-credit');
     
-    if (targetFooter) {
+    if (Footer) {
         if (info) {
             // 如果传入了新的署名（如 Unsplash 摄影师），直接更新该区域
             targetFooter.innerHTML = info;
         } else {
             // 如果 info 为空（比如恢复默认背景时），恢复初始状态
-            targetFooter.innerHTML = 'Photo by 浙江丽水云和梯田 / 站长拍摄';
+            Footer.innerHTML = 'Photo by 浙江丽水云和梯田 / 站长拍摄';
         }
     }
 
