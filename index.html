@@ -318,6 +318,36 @@
     <mdui-button slot="action" variant="text" id="icon-picker-close">关闭</mdui-button>
 </mdui-dialog>
 
+    <!-- 新增：首页背景设置对话框 -->
+    <mdui-dialog id="background-settings-dialog" close-on-overlay-click>
+        <span slot="headline">首页背景设置</span>
+        <div style="padding: 20px 0; display: flex; flex-direction: column; gap: 16px;">
+            <mdui-button variant="tonal" id="random-bg-btn" icon="image">从 Unsplash 获取随机背景</mdui-button>
+            <mdui-button variant="tonal" id="reset-bg-btn" icon="restore">恢复默认背景</mdui-button>
+            
+            <div style="margin-top: 12px; font-size: 0.9rem; opacity: 0.7;">
+                当前背景将保存到浏览器 Cookies 中，下次打开页面自动应用。
+            </div>
+        </div>
+        <mdui-button slot="action" variant="text" id="bg-settings-close">关闭</mdui-button>
+    </mdui-dialog>
+
+    <!-- 新增：数据导出导入对话框 -->
+    <mdui-dialog id="data-manage-dialog" close-on-overlay-click>
+        <span slot="headline">导出 / 导入 Cookies 数据</span>
+        <div style="padding: 20px 0; display: flex; flex-direction: column; gap: 16px;">
+            <mdui-button variant="tonal" id="export-data-btn" icon="download">导出所有 Cookies 数据（JSON）</mdui-button>
+            <mdui-button variant="tonal" id="import-data-btn" icon="upload">导入 Cookies 数据</mdui-button>
+            <input type="file" id="import-file-input" accept=".json" style="display: none;">
+            
+            <div style="margin-top: 8px; font-size: 0.85rem; opacity: 0.7; line-height: 1.5;">
+                导出将包含所有书签、自定义搜索引擎、RSS源、主题设置、背景等。<br>
+                导入后页面将自动刷新。
+            </div>
+        </div>
+        <mdui-button slot="action" variant="text" id="data-manage-close">关闭</mdui-button>
+    </mdui-dialog>
+
     <script>
         /* ==================== 原有代码完全保留 ==================== */
         const initLinks = [
@@ -892,6 +922,206 @@
             }
         });
 
+        /* ==================== 新增功能：首页背景切换（使用 source.unsplash.com） ==================== */
+        function applyBackground(url) {
+            const bgElement = document.querySelector('body::before');
+            if (bgElement) {
+                // 通过动态 style 覆盖 background
+                const style = document.createElement('style');
+                style.id = 'custom-bg-style';
+                style.innerHTML = `body::before { background: url('${url}') center/cover no-repeat !important; }`;
+                const oldStyle = document.getElementById('custom-bg-style');
+                if (oldStyle) oldStyle.remove();
+                document.head.appendChild(style);
+            } else {
+                // 兼容处理：直接设置 body 背景
+                document.body.style.backgroundImage = `url('${url}')`;
+                document.body.style.backgroundSize = 'cover';
+                document.body.style.backgroundPosition = 'center';
+                document.body.style.backgroundRepeat = 'no-repeat';
+            }
+        }
+
+        function loadSavedBackground() {
+            // 使用 cookies 存储背景（通过 document.cookie 实现）
+            const cookies = document.cookie.split(';');
+            let bgUrl = null;
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'homepage_bg') {
+                    bgUrl = decodeURIComponent(value);
+                    break;
+                }
+            }
+            if (bgUrl) {
+                applyBackground(bgUrl);
+            }
+        }
+
+        function setBackgroundToCookie(url) {
+            // 设置 cookie，有效期 365 天
+            const expires = new Date();
+            expires.setTime(expires.getTime() + 365 * 24 * 60 * 60 * 1000);
+            document.cookie = `homepage_bg=${encodeURIComponent(url)}; expires=${expires.toUTCString()}; path=/`;
+        }
+
+        function clearBackgroundCookie() {
+            document.cookie = 'homepage_bg=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+        }
+
+        // 随机背景按钮（使用 source.unsplash.com/random 获取随机高清图）
+        document.getElementById('random-bg-btn').onclick = async () => {
+            try {
+                // source.unsplash.com/random 返回随机图片（可添加 ?sig= 时间戳避免缓存）
+                const randomUrl = `https://source.unsplash.com/random/1920x1080/?sig=${Date.now()}`;
+                
+                // 预加载图片，确保加载成功后再应用
+                const img = new Image();
+                img.onload = () => {
+                    applyBackground(randomUrl);
+                    setBackgroundToCookie(randomUrl);
+                    alert('背景已切换为 Unsplash 随机图片，并已保存到 Cookies 中。');
+                };
+                img.onerror = () => {
+                    alert('获取随机背景失败，请稍后重试。');
+                };
+                img.src = randomUrl;
+            } catch (e) {
+                alert('获取随机背景时发生错误：' + e.message);
+            }
+        };
+
+        // 恢复默认背景按钮
+        document.getElementById('reset-bg-btn').onclick = () => {
+            const oldStyle = document.getElementById('custom-bg-style');
+            if (oldStyle) oldStyle.remove();
+            document.body.style.backgroundImage = '';
+            clearBackgroundCookie();
+            alert('已恢复默认背景（img/home.jpg），并清除 Cookies 中的自定义背景。');
+        };
+
+        /* ==================== 新增功能：导出/导入所有 Cookies 数据 ==================== */
+        function getAllCookies() {
+            const cookies = {};
+            document.cookie.split(';').forEach(cookie => {
+                const [name, value] = cookie.trim().split('=');
+                if (name) {
+                    cookies[name] = decodeURIComponent(value || '');
+                }
+            });
+            return cookies;
+        }
+
+        function setAllCookies(cookiesObj) {
+            Object.keys(cookiesObj).forEach(name => {
+                const expires = new Date();
+                expires.setTime(expires.getTime() + 365 * 24 * 60 * 60 * 1000);
+                document.cookie = `${name}=${encodeURIComponent(cookiesObj[name])}; expires=${expires.toUTCString()}; path=/`;
+            });
+        }
+
+        // 导出按钮
+        document.getElementById('export-data-btn').onclick = () => {
+            const allData = {
+                localStorage: {},
+                cookies: getAllCookies()
+            };
+
+            // 收集主要 localStorage 键值（与页面使用的键一致）
+            const lsKeys = ['bp_v7', 'custom_engines', 'last_engine', 'theme_mode', 'custom_rss'];
+            lsKeys.forEach(key => {
+                const val = localStorage.getItem(key);
+                if (val !== null) allData.localStorage[key] = val;
+            });
+
+            const dataStr = JSON.stringify(allData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `baipin_nav_backup_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert('数据已导出为 JSON 文件！\n包含 localStorage 和 Cookies 中的所有内容。');
+        };
+
+        // 导入按钮
+        document.getElementById('import-data-btn').onclick = () => {
+            document.getElementById('import-file-input').click();
+        };
+
+        document.getElementById('import-file-input').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    
+                    // 恢复 localStorage
+                    if (imported.localStorage) {
+                        Object.keys(imported.localStorage).forEach(key => {
+                            localStorage.setItem(key, imported.localStorage[key]);
+                        });
+                    }
+                    
+                    // 恢复 cookies
+                    if (imported.cookies) {
+                        setAllCookies(imported.cookies);
+                    }
+
+                    alert('数据导入成功！页面即将刷新以应用所有更改。');
+                    setTimeout(() => location.reload(), 800);
+                } catch (err) {
+                    alert('导入失败：文件格式不正确或数据损坏。\n' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        /* ==================== 新增：设置按钮入口（添加到 app-bar） ==================== */
+        // 在 header 中动态添加设置按钮（不修改原有 HTML 结构）
+        function addSettingsButtons() {
+            const header = document.querySelector('.app-bar');
+            const flexGrow = header.querySelector('div[style*="flex-grow"]');
+            
+            // 创建背景设置按钮
+            const bgBtn = document.createElement('mdui-button-icon');
+            bgBtn.id = 'bg-settings-btn';
+            bgBtn.setAttribute('icon', 'wallpaper');
+            bgBtn.style.color = 'inherit';
+            bgBtn.style.marginRight = '8px';
+            
+            // 创建数据管理按钮
+            const dataBtn = document.createElement('mdui-button-icon');
+            dataBtn.id = 'data-manage-btn';
+            dataBtn.setAttribute('icon', 'settings_backup_restore');
+            dataBtn.style.color = 'inherit';
+            
+            // 插入到 theme-btn 之前
+            const themeBtn = document.getElementById('theme-btn');
+            if (themeBtn) {
+                header.insertBefore(dataBtn, themeBtn);
+                header.insertBefore(bgBtn, dataBtn);
+            } else {
+                header.appendChild(bgBtn);
+                header.appendChild(dataBtn);
+            }
+
+            // 绑定事件
+            bgBtn.onclick = () => {
+                document.getElementById('background-settings-dialog').open = true;
+            };
+
+            dataBtn.onclick = () => {
+                document.getElementById('data-manage-dialog').open = true;
+            };
+        }
+
         /* ==================== 初始化 ==================== */
         restoreLastEngine();
         renderEngineMenu();   // 确保预设 + 自定义都显示
@@ -903,6 +1133,20 @@
         fetchHKNews();
         setInterval(fetchHKNews, 180000);
         setInterval(updateHKTTime, 1000);
+
+        // 新增功能的初始化
+        loadSavedBackground();           // 加载保存的背景
+        addSettingsButtons();            // 添加设置按钮到顶部栏
+
+        // 背景设置对话框关闭按钮
+        document.getElementById('bg-settings-close').onclick = () => {
+            document.getElementById('background-settings-dialog').open = false;
+        };
+
+        // 数据管理对话框关闭按钮
+        document.getElementById('data-manage-close').onclick = () => {
+            document.getElementById('data-manage-dialog').open = false;
+        };
     </script>
 </body>
 </html>
