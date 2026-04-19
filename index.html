@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>百品导航 - 123</title>
+   
+    <link rel="stylesheet" href="https://unpkg.com/mdui@2.0.3/mdui.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://unpkg.com/mdui@2.0.3/mdui.global.js"></script>
+    <script src="https://sdk.jinrishici.com/v2/browser/jinrishici.js" charset="utf-8"></script>
+   
+    <style>
+        :root {
+            --nav-height: 64px;
+            --hero-height: 40vh;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --text-main: #212121;
+        }
+        .mdui-theme-dark {
+            --glass-bg: rgba(30, 30, 35, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+        }
+        html, body { margin: 0; padding: 0; min-height: 100vh; background: transparent !important; color: var(--text-main); }
+        body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('/home.jpg') center/cover no-repeat; z-index: -2; }
+        .app-bar {
+            position: fixed; top: 0; left: 0; right: 0; height: var(--nav-height);
+            z-index: 2000; display: flex; align-items: center; padding: 0 5%;
+            background: var(--glass-bg) !important; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border); color: var(--text-main);
+        }
+        .logo-area { display: flex; align-items: center; gap: 12px; font-weight: 900; font-size: 1.2rem; }
+        .logo-area img { height: 32px; }
+        .hero-space { height: var(--hero-height); display: flex; align-items: center; justify-content: center; padding-top: var(--nav-height); }
+        .search-container {
+            width: 90%; max-width: 650px; background: var(--glass-bg); backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border); border-radius: 50px; padding: 8px 20px;
+            display: flex; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative; z-index: 1500;
+        }
+        .search-input { flex: 1; border: none; background: transparent; padding: 12px; font-size: 1.1rem; outline: none; color: var(--text-main); }
+        .engine-favicon { width: 24px; height: 24px; border-radius: 4px; cursor: pointer; display: block; }
+        .search-container mdui-dropdown { margin-right: 8px; }
+
+        @media (max-width: 900px) {
+            .search-container { width: 95%; margin: 0 auto; padding: 8px 16px; }
+        }
+
+        .suggestions-dropdown {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: var(--glass-bg); backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border); border-radius: 20px;
+            margin-top: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            max-height: 320px; overflow-y: auto; z-index: 1600; display: none;
+        }
+        .suggestion-item {
+            padding: 12px 20px; font-size: 1.05rem; cursor: pointer; transition: all 0.2s;
+            color: var(--text-main) !important;
+        }
+        .suggestion-item:hover, .suggestion-item.selected {
+            background: rgba(0, 0, 0, 0.08);
+        }
+        .mdui-theme-dark .suggestion-item:hover, .mdui-theme-dark .suggestion-item.selected {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .sort-btn {
+            position: absolute; right: 12px; font-size: 20px;
+            color: var(--text-main); opacity: 0.7; cursor: pointer; z-index: 10;
+            width: 24px; text-align: center;
+        }
+        .sort-up { top: 12px; }
+        .sort-down { top: 38px; }
+        .sort-btn:hover { opacity: 1; transform: scale(1.1); }
+        .edit-active .link-item { padding-right: 58px; }
+        .edit-active .link-item::after { 
+            content: "edit"; font-family: 'Material Icons'; 
+            position: absolute; top: 8px; right: 38px; 
+            font-size: 10px; background: #0081ff; color: white; 
+            border-radius: 50%; padding: 4px; 
+        }
+
+        .content-layout { max-width: 1240px; margin: 0 auto 80px; display: grid; grid-template-columns: 1fr 360px; gap: 32px; padding: 0 20px; }
+        .card-glass { border-radius: 28px; background: var(--glass-bg); backdrop-filter: blur(20px); padding: 32px; border: 1px solid var(--glass-border); color: var(--text-main); }
+        .links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 18px; margin-top: 24px; }
+        .link-item {
+            position: relative; display: flex; flex-direction: column; align-items: center; padding: 20px 10px;
+            border-radius: 22px; background: rgba(128,128,128,0.1); text-decoration: none; color: var(--text-main) !important; transition: all 0.2s;
+        }
+        .link-item:hover { transform: translateY(-5px); background: rgba(128,128,128,0.15); }
+        .link-item img, .link-item mdui-icon { width: 32px; height: 32px; margin-bottom: 12px; border-radius: 6px; color: var(--text-main) !important; }
+        .weather-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 15px; background: rgba(128,128,128,0.05); border-radius: 20px; }
+        #weather-icon-img { width: 56px; height: 56px; }
+        .temp-display { font-size: 2.2rem; font-weight: 900; }
+        .hum-display { font-size: 0.85rem; opacity: 0.8; }
+        .weather-details p { margin: 8px 0; font-size: 0.95rem; line-height: 1.6; }
+        @media (max-width: 900px) { .content-layout { grid-template-columns: 1fr; } .side-stack { order: -1; } }
+
+        .news-ticker {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .refresh-btn {
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+        .update-time {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        #fullscreen-market {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--glass-bg);
+            z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center;
+            backdrop-filter: blur(30px);
+        }
+        #fullscreen-time {
+            font-size: 7rem; font-weight: 900; letter-spacing: 8px; margin-bottom: 60px;
+        }
+        #fullscreen-marquee {
+            font-size: 2rem; width: 95%; text-align: center; overflow: hidden; white-space: nowrap;
+        }
+
+        .icon-picker-iframe { width: 100%; height: 560px; border: none; border-radius: 12px; }
+
+        @media (max-width: 600px) {
+            .button-row {
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+            .button-row mdui-button {
+                width: 100%;
+            }
+        }
+        .fullscreen-marquee {
+    font-size: 2rem;
+    width: 95%;
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+}
+
+.fullscreen-marquee span {
+    display: inline-block;
+    padding-left: 100%;
+    animation: marqueeScroll 25s linear infinite;
+}
+
+@keyframes marqueeScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+}
+    </style>
+</head>
+<body class="mdui-theme-auto">
+    <header class="app-bar">
+        <div class="logo-area">
+            <img src="/logo.png" alt="Logo">
+            <span>导航</span>
+        </div>
+        <div style="flex-grow: 1"></div>
+        <mdui-button-icon id="theme-btn" icon="light_mode" style="color: inherit;"></mdui-button-icon>
+        <mdui-button-icon id="edit-btn" icon="edit_note" style="color: inherit;"></mdui-button-icon>
+    </header>
+    <section class="hero-space">
+        <div class="search-container">
+            <mdui-dropdown id="engine-dropdown" trigger="click">
+                <div slot="trigger"><img id="cur-engine-img" class="engine-favicon" src="https://www.google.com/favicon.ico"></div>
+                <mdui-menu id="engine-menu">
+                    <!-- 预设搜索引擎已恢复并置于最前面 -->
+                    <mdui-menu-item value="google"><img class="engine-favicon" src="https://www.google.com/favicon.ico" slot="icon">Google</mdui-menu-item>
+                    <mdui-menu-item value="baidu"><img class="engine-favicon" src="https://www.baidu.com/favicon.ico" slot="icon">Baidu</mdui-menu-item>
+                    <mdui-menu-item value="bing"><img class="engine-favicon" src="https://cn.bing.com/favicon.ico" slot="icon">Bing</mdui-menu-item>
+                    <mdui-menu-item value="duckduckgo"><img class="engine-favicon" src="https://duckduckgo.com/favicon.ico" slot="icon">DuckDuckGo</mdui-menu-item>
+                    <mdui-menu-item value="yandex"><img class="engine-favicon" src="https://yandex.com/favicon.ico" slot="icon">Yandex</mdui-menu-item>
+                    <mdui-menu-item value="brave"><img class="engine-favicon" src="https://brave.com/favicon.ico" slot="icon">Brave</mdui-menu-item>
+                    <mdui-menu-item value="github"><img class="engine-favicon" src="https://github.com/favicon.ico" slot="icon">GitHub</mdui-menu-item>
+                    <mdui-divider></mdui-divider>
+                    <mdui-menu-item id="add-engine-btn"><mdui-icon name="add" slot="icon"></mdui-icon>添加搜索引擎</mdui-menu-item>
+                    <mdui-menu-item id="manage-engine-btn"><mdui-icon name="settings" slot="icon"></mdui-icon>管理自定义搜索引擎</mdui-menu-item>
+                </mdui-menu>
+            </mdui-dropdown>
+            <input type="text" class="search-input" id="search-input" placeholder="键入内容并搜索..." autocomplete="off">
+            <div id="suggestions" class="suggestions-dropdown"></div>
+        </div>
+    </section>
+    <div class="content-layout">
+        <main class="card-glass" id="main-container">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div style="font-size: 1.3rem; font-weight: 900;">快捷访问</div>
+                <mdui-button-icon id="add-btn" icon="add" style="display:none; color: inherit;"></mdui-button-icon>
+            </div>
+            <div class="links-grid" id="links-wrapper"></div>
+        </main>
+        <aside class="side-stack" style="display:flex; flex-direction:column; gap:24px;">
+            <div class="card-glass">
+                <div style="font-size:0.7rem; opacity:0.6; font-weight:bold; margin-bottom:12px; letter-spacing:1px;">拾遗</div>
+                <strong><span id="jinrishici-sentence">加载中...</span></strong>
+            </div>
+            <div class="card-glass">
+                <div style="font-size:0.7rem; opacity:0.6; font-weight:bold; margin-bottom:12px; letter-spacing:1px;">本港天气</div>
+                <div class="weather-header">
+                    <img id="weather-icon-img" src="" style="display:none;">
+                    <div>
+                        <div class="temp-display"><span id="curr-temp">--</span>°C</div>
+                        <div class="hum-display">相对湿度: <span id="curr-hum">--</span>%</div>
+                    </div>
+                </div>
+                <div class="weather-details">
+                    <div id="weather-info">正在从香港天文台获取天气预报…</div>
+                    <div id="warning-info" style="color:#ff5252; font-weight:bold; margin-top:10px;"></div>
+                    <div id="i-info" style="font-size:0.85rem; opacity:0.8; border-top:1px solid rgba(128,128,128,0.2); margin-top:10px; padding-top:10px;"></div>
+                </div>
+            </div>
+
+            <!-- 侧栏容器：香港新闻标题滚动 -->
+            <div class="card-glass" style="position:relative;">
+                <mdui-button-icon id="fullscreen-btn" icon="fullscreen" style="position:absolute; top:12px; right:52px; color:inherit; z-index:10;"></mdui-button-icon>
+                <mdui-button-icon id="manage-rss-btn" icon="rss_feed" style="position:absolute; top:12px; right:12px; color:inherit; z-index:10;"></mdui-button-icon>
+                
+                <div style="font-size:0.7rem; opacity:0.6; font-weight:bold; margin-bottom:12px; letter-spacing:1px;">香港新闻</div>
+                
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size:0.85rem; opacity:0.8;">香港时间</div>
+                    <div id="hkt-time" style="font-size:1.35rem; font-weight:700; letter-spacing:1px;">--:--:--</div>
+                </div>
+
+                <div class="news-ticker">
+                    <marquee id="news-marquee" behavior="scroll" direction="left" scrollamount="3">
+                        正在加载新闻...
+                    </marquee>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+                    <div id="update-time" class="update-time">更新时间: --</div>
+                    <mdui-button variant="tonal" id="refresh-news-btn" class="refresh-btn" icon="refresh">刷新新闻</mdui-button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 全屏模式 -->
+    <div id="fullscreen-market">
+        <div id="fullscreen-time" style="font-size: 7rem; font-weight: 900; letter-spacing: 8px; margin-bottom: 60px;">--:--:--</div>
+        <div id="fullscreen-marquee" class="fullscreen-marquee">
+            正在加载新闻...
+        </div>
+        <mdui-button variant="tonal" id="exit-fullscreen-btn" style="margin-top: 80px;" icon="fullscreen_exit">退出全屏模式</mdui-button>
+    </div>
+
+    <!-- 原有对话框（完全保留） -->
+    <mdui-dialog id="edit-dialog" close-on-overlay-click>
+        <span slot="headline">管理书签</span>
+        <div style="display:flex; flex-direction:column; gap:15px; padding:10px 0;">
+            <mdui-text-field label="URL" id="f-url"></mdui-text-field>
+            <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap: wrap;" class="button-row">
+                <mdui-text-field label="图标 (MDUI名或URL)" id="f-icon" style="flex:1; min-width: 200px;"></mdui-text-field>
+                <mdui-button variant="tonal" id="btn-get-icon">抓取图标</mdui-button>
+                <mdui-button variant="tonal" id="btn-pick-icon-bookmark">挑选图标</mdui-button>
+            </div>
+            <mdui-text-field label="显示名称" id="f-name"></mdui-text-field>
+        </div>
+        <mdui-button slot="action" variant="text" id="act-cancel">取消</mdui-button>
+        <mdui-button slot="action" variant="text" id="act-del" style="color:red">删除</mdui-button>
+        <mdui-button slot="action" variant="tonal" id="act-save">保存</mdui-button>
+    </mdui-dialog>
+
+    <mdui-dialog id="add-engine-dialog" close-on-overlay-click>
+        <span slot="headline">添加自定义搜索引擎</span>
+        <div style="display:flex; flex-direction:column; gap:15px; padding:10px 0;">
+            <mdui-text-field label="搜索引擎名称" id="engine-name"></mdui-text-field>
+            <mdui-text-field label="搜索 URL（用 {q} 代表关键词）" id="engine-url" placeholder="https://example.com/search?q={q}"></mdui-text-field>
+            <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap: wrap;" class="button-row">
+                <mdui-text-field label="图标 URL（可选）" id="engine-icon" style="flex:1; min-width: 200px;"></mdui-text-field>
+                <mdui-button variant="tonal" id="btn-get-engine-icon">抓取图标</mdui-button>
+                <mdui-button variant="tonal" id="btn-pick-icon-engine">挑选图标</mdui-button>
+            </div>
+        </div>
+        <mdui-button slot="action" variant="text" id="engine-cancel">取消</mdui-button>
+        <mdui-button slot="action" variant="tonal" id="engine-save">添加</mdui-button>
+    </mdui-dialog>
+
+    <mdui-dialog id="manage-engine-dialog" close-on-overlay-click>
+        <span slot="headline">管理自定义搜索引擎</span>
+        <div id="custom-engine-list" style="max-height: 400px; overflow-y: auto; padding: 8px 0;"></div>
+        <mdui-button slot="action" variant="text" id="manage-engine-close">关闭</mdui-button>
+        <mdui-button slot="action" variant="tonal" id="manage-engine-add">添加新引擎</mdui-button>
+    </mdui-dialog>
+
+    <mdui-dialog id="manage-rss-dialog" close-on-overlay-click>
+        <span slot="headline">管理新闻RSS源</span>
+        <div id="custom-rss-list" style="max-height: 400px; overflow-y: auto; padding: 8px 0;"></div>
+        <mdui-button slot="action" variant="text" id="manage-rss-close">关闭</mdui-button>
+        <mdui-button slot="action" variant="tonal" id="manage-rss-add">添加RSS源</mdui-button>
+    </mdui-dialog>
+
+    <!-- icon-picker-dialog（已增加底部完整列表链接） -->
+<mdui-dialog id="icon-picker-dialog" close-on-overlay-click>
+    <span slot="headline">选择 Material Design Icon</span>
+    <iframe id="icon-picker-iframe" 
+            style="width:100%; height:520px; border:none; border-radius:12px;" 
+            src="icon_picker.html"></iframe>
+    
+    <!-- 新增：对话框底部完整列表链接 -->
+    <div style="padding: 12px 16px; text-align: center; border-top: 1px solid rgba(128,128,128,0.2);">
+        <a href="https://fonts.google.com/icons" 
+           target="_blank" >
+            在新窗口中打开完整 Material Icons 列表
+        </a>
+    </div>
+
+    <mdui-button slot="action" variant="text" id="icon-picker-close">关闭</mdui-button>
+</mdui-dialog>
+
+    <script>
+        /* ==================== 原有代码完全保留 ==================== */
+        const initLinks = [
+            { name: "Youtube", url: "https://www.youtube.com/", icon: "https://www.youtube.com/favicon.ico" },
+            { name: "香港01", url: "https://www.hk01.com", icon: "https://www.hk01.com/favicon.ico" },
+            { name: "Wikipedia", url: "https://www.wikipedia.org/", icon: "https://www.wikipedia.org/favicon.ico" },
+            { name: "知乎", url: "https://www.zhihu.com", icon: "https://www.zhihu.com/favicon.ico" },
+            { name: "Now新闻", url: "https://news.now.com", icon: "newspaper" },
+            { name: "Unsplash", url: "https://unsplash.com", icon: "image" },
+            { name: "豆瓣", url: "https://www.douban.com", icon: "https://www.douban.com/favicon.ico" },
+            { name: "翻译", url: "https://translate.google.com", icon: "translate" },
+            { name: "斗鱼", url: "https://www.douyu.com", icon: "https://www.douyu.com/favicon.ico" },
+            { name: "CSDN", url: "https://www.csdn.net", icon: "https://www.csdn.net/favicon.ico" },
+            { name: "Bilibili", url: "https://www.bilibili.com/", icon: "https://www.bilibili.com/favicon.ico" },
+            { name: "百品博客", url: "https://baipin.pw", icon: "article" },
+            { name: "AIMS", url: "https://banweb.cityu.edu.hk/", icon: "https://banweb.cityu.edu.hk/favicon.ico" },
+            { name: "学校邮箱", url: "https://mail.office365.com/my.cityu.edu.hk", icon: "mail" },
+            { name: "Canvas", url: "https://canvas.cityu.edu.hk/", icon: "dashboard" },
+            { name: "应用面板", url: "https://auth.cityu.edu.hk/", icon: "apps" },
+            { name: "Github", url: "https://github.com", icon: "https://github.com/favicon.ico" }
+        ];
+        let bookmarks = JSON.parse(localStorage.getItem('bp_v7')) || initLinks;
+        let isEdit = false, curIdx = null;
+
+        let customEngines = JSON.parse(localStorage.getItem('custom_engines')) || {};
+        let engines = {
+            google: 'https://www.google.com/search?q=',
+            baidu: 'https://www.baidu.com/s?wd=',
+            bing: 'https://cn.bing.com/search?q=',
+            duckduckgo: 'https://duckduckgo.com/?q=',
+            yandex: 'https://yandex.com/search/?text=',
+            brave: 'https://search.brave.com/search?q=',
+            github: 'https://github.com/search?q='
+        };
+        Object.assign(engines, customEngines);
+
+        let curEng = localStorage.getItem('last_engine') || 'google';
+
+        function restoreLastEngine() {
+            const img = document.getElementById('cur-engine-img');
+            const menuItems = document.querySelectorAll('#engine-menu mdui-menu-item');
+            for (let item of menuItems) {
+                if (item.value === curEng) {
+                    img.src = item.querySelector('img').src;
+                    break;
+                }
+            }
+        }
+
+        function render() {
+            const wrapper = document.getElementById('links-wrapper');
+            wrapper.innerHTML = '';
+            bookmarks.forEach((item, i) => {
+                const el = document.createElement('a');
+                el.className = 'link-item';
+                el.href = isEdit ? 'javascript:void(0)' : item.url;
+                if(!isEdit) el.target = "_blank";
+                const isImg = item.icon.includes('http') || item.icon.includes('.');
+                const iconHtml = isImg ? `<img src="${item.icon}">` : `<mdui-icon name="${item.icon}"></mdui-icon>`;
+                el.innerHTML = `${iconHtml}<span>${item.name}</span>`;
+
+                if (isEdit) {
+                    const up = document.createElement('span');
+                    up.className = 'sort-btn sort-up';
+                    up.innerHTML = '↑';
+                    up.onclick = (e) => { e.stopImmediatePropagation(); moveBookmark(i, -1); };
+
+                    const down = document.createElement('span');
+                    down.className = 'sort-btn sort-down';
+                    down.innerHTML = '↓';
+                    down.onclick = (e) => { e.stopImmediatePropagation(); moveBookmark(i, 1); };
+
+                    el.appendChild(up);
+                    el.appendChild(down);
+                    el.onclick = () => openDialog(i);
+                }
+                wrapper.appendChild(el);
+            });
+            document.getElementById('main-container').classList.toggle('edit-active', isEdit);
+            document.getElementById('add-btn').style.display = isEdit ? 'inline-block' : 'none';
+        }
+
+        function moveBookmark(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= bookmarks.length) return;
+            [bookmarks[index], bookmarks[newIndex]] = [bookmarks[newIndex], bookmarks[index]];
+            localStorage.setItem('bp_v7', JSON.stringify(bookmarks));
+            render();
+        }
+
+        const engineMenu = document.getElementById('engine-menu');
+        const engineImg = document.getElementById('cur-engine-img');
+        engineMenu.onclick = (e) => {
+            const item = e.target.closest('mdui-menu-item');
+            if (!item) return;
+            if (item.id === 'add-engine-btn') {
+                document.getElementById('add-engine-dialog').open = true;
+                return;
+            }
+            if (item.id === 'manage-engine-btn') {
+                showManageEngineDialog();
+                return;
+            }
+            curEng = item.value;
+            localStorage.setItem('last_engine', curEng);
+            const iconSrc = item.querySelector('img').src;
+            engineImg.src = iconSrc;
+            document.getElementById('engine-dropdown').open = false;
+        };
+
+        document.getElementById('btn-get-engine-icon').onclick = () => {
+            const url = document.getElementById('engine-url').value;
+            if (url && url.startsWith('http')) {
+                const domain = new URL(url).origin;
+                document.getElementById('engine-icon').value = `${domain}/favicon.ico`;
+            }
+        };
+
+        document.getElementById('engine-save').onclick = () => {
+            const name = document.getElementById('engine-name').value.trim();
+            let url = document.getElementById('engine-url').value.trim();
+            const icon = document.getElementById('engine-icon').value.trim();
+            if (!name || !url) { alert('名称和搜索 URL 不能为空'); return; }
+            if (!url.includes('{q}')) { alert('搜索 URL 必须包含 {q}'); return; }
+
+            const key = name.toLowerCase().replace(/\s+/g, '');
+            customEngines[key] = { url: url, icon: icon || 'https://www.google.com/favicon.ico' };
+            engines[key] = url;
+
+            localStorage.setItem('custom_engines', JSON.stringify(customEngines));
+            document.getElementById('add-engine-dialog').open = false;
+            document.getElementById('engine-name').value = '';
+            document.getElementById('engine-url').value = '';
+            document.getElementById('engine-icon').value = '';
+            renderEngineMenu();
+        };
+
+        document.getElementById('engine-cancel').onclick = () => {
+            document.getElementById('add-engine-dialog').open = false;
+        };
+
+        function renderEngineMenu() {
+    const menu = document.getElementById('engine-menu');
+
+    // ❗只删除自定义项（带 data-custom 标记）
+    const dynamicItems = menu.querySelectorAll('mdui-menu-item[data-custom="1"]');
+    dynamicItems.forEach(item => item.remove());
+
+    Object.keys(customEngines).forEach(key => {
+        const data = customEngines[key];
+        const newItem = document.createElement('mdui-menu-item');
+
+        newItem.value = key;
+        newItem.setAttribute('data-custom', '1'); // 关键标记
+        newItem.innerHTML = `<img class="engine-favicon" src="${data.icon}" slot="icon">${key}`;
+
+        menu.insertBefore(newItem, document.getElementById('add-engine-btn'));
+    });
+        }
+
+        function showManageEngineDialog() {
+            const list = document.getElementById('custom-engine-list');
+            list.innerHTML = '';
+            Object.keys(customEngines).forEach(key => {
+                const data = customEngines[key];
+                const div = document.createElement('div');
+                div.style = 'display:flex; align-items:center; gap:12px; padding:8px; border-bottom:1px solid rgba(128,128,128,0.2);';
+                div.innerHTML = `
+                    <img src="${data.icon}" style="width:24px;height:24px;border-radius:4px;">
+                    <div style="flex:1;">
+                        <div style="font-weight:600;">${key}</div>
+                        <div style="font-size:0.85rem;opacity:0.7;">${data.url}</div>
+                    </div>
+                    <mdui-button variant="tonal" size="small" onclick="editCustomEngine('${key}')">编辑</mdui-button>
+                    <mdui-button variant="tonal" size="small" style="color:red;" onclick="deleteCustomEngine('${key}')">删除</mdui-button>
+                `;
+                list.appendChild(div);
+            });
+            document.getElementById('manage-engine-dialog').open = true;
+        }
+
+        window.editCustomEngine = function(key) {
+            const data = customEngines[key];
+            document.getElementById('engine-name').value = key;
+            document.getElementById('engine-url').value = data.url;
+            document.getElementById('engine-icon').value = data.icon || '';
+            document.getElementById('manage-engine-dialog').open = false;
+            document.getElementById('add-engine-dialog').open = true;
+            delete customEngines[key];
+        };
+
+        window.deleteCustomEngine = function(key) {
+            if (confirm(`确定删除 "${key}" 吗？`)) {
+                delete customEngines[key];
+                delete engines[key];
+                localStorage.setItem('custom_engines', JSON.stringify(customEngines));
+                showManageEngineDialog();
+                renderEngineMenu();
+            }
+        };
+
+        document.getElementById('manage-engine-close').onclick = () => document.getElementById('manage-engine-dialog').open = false;
+        document.getElementById('manage-engine-add').onclick = () => {
+            document.getElementById('manage-engine-dialog').open = false;
+            document.getElementById('add-engine-dialog').open = true;
+        };
+
+        const iconPickerDialog = document.getElementById('icon-picker-dialog');
+        function openIconPicker() { iconPickerDialog.open = true; }
+        document.getElementById('btn-pick-icon-bookmark').onclick = openIconPicker;
+        document.getElementById('btn-pick-icon-engine').onclick = openIconPicker;
+        document.getElementById('icon-picker-close').onclick = () => iconPickerDialog.open = false;
+
+        const dialog = document.getElementById('edit-dialog');
+        document.getElementById('edit-btn').onclick = () => { isEdit = !isEdit; render(); };
+        document.getElementById('add-btn').onclick = () => openDialog();
+
+        function openDialog(idx = null) {
+            curIdx = idx;
+            document.getElementById('f-name').value = idx !== null ? bookmarks[idx].name : '';
+            document.getElementById('f-url').value = idx !== null ? bookmarks[idx].url : '';
+            document.getElementById('f-icon').value = idx !== null ? bookmarks[idx].icon : '';
+            document.getElementById('act-del').style.display = idx !== null ? 'block' : 'none';
+            dialog.open = true;
+        }
+
+        document.getElementById('act-save').onclick = () => {
+            const data = { name: document.getElementById('f-name').value || '未命名', url: document.getElementById('f-url').value || '#', icon: document.getElementById('f-icon').value || 'link' };
+            if(curIdx !== null) bookmarks[curIdx] = data; else bookmarks.push(data);
+            localStorage.setItem('bp_v7', JSON.stringify(bookmarks));
+            dialog.open = false; render();
+        };
+
+        document.getElementById('act-del').onclick = () => { 
+            if(curIdx !== null) { 
+                bookmarks.splice(curIdx, 1); 
+                localStorage.setItem('bp_v7', JSON.stringify(bookmarks)); 
+                dialog.open = false; 
+                render(); 
+            } 
+        };
+
+        document.getElementById('act-cancel').onclick = () => dialog.open = false;
+
+        document.getElementById('btn-get-icon').onclick = () => {
+            const url = document.getElementById('f-url').value;
+            if (url && url.startsWith('http')) {
+                const domain = new URL(url).origin;
+                document.getElementById('f-icon').value = `${domain}/favicon.ico`;
+            }
+        };
+
+        /* 实时搜索联想（保持原样） */
+        const searchInput = document.getElementById('search-input');
+        const suggestionsContainer = document.getElementById('suggestions');
+        let debounceTimer = null;
+        let selectedIndex = -1;
+
+        const suggestionConfigs = {
+            baidu: { url: "https://unionsug.baidu.com/su?wd={q}&cb=sugCallback", parse: (data) => data.s },
+            google: { url: "https://suggestqueries.google.com/complete/search?client=firefox&q={q}&callback=sugCallback", parse: (data) => data[1] },
+            bing: { url: "https://api.bing.com/qsonhs.aspx?q={q}&cb=sugCallback", parse: (data) => data.AS.Results[0].Suggests.map(item => item.Txt) }
+        };
+
+        function fetchSuggestions(query) {
+            if (!query || query.trim().length < 1) {
+                suggestionsContainer.style.display = 'none';
+                return;
+            }
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const config = suggestionConfigs[curEng] || suggestionConfigs['baidu'];
+                const oldScript = document.getElementById('sug-script');
+                if (oldScript) oldScript.remove();
+
+                const script = document.createElement('script');
+                script.id = 'sug-script';
+                window.sugCallback = (data) => {
+                    const list = config.parse(data) || [];
+                    renderSuggestions(list);
+                    delete window.sugCallback;
+                    script.remove();
+                };
+                script.src = config.url.replace('{q}', encodeURIComponent(query));
+                document.body.appendChild(script);
+            }, 200);
+        }
+
+        function renderSuggestions(list) {
+            suggestionsContainer.innerHTML = '';
+            if (list.length === 0) { suggestionsContainer.style.display = 'none'; return; }
+            list.slice(0, 10).forEach((text) => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.textContent = text;
+                div.onclick = () => {
+                    searchInput.value = text;
+                    suggestionsContainer.style.display = 'none';
+                    performSearch(text);
+                };
+                suggestionsContainer.appendChild(div);
+            });
+            suggestionsContainer.style.display = 'block';
+            selectedIndex = -1;
+        }
+
+        function performSearch(query) {
+            if (!query || !query.trim()) return;
+            const engineUrl = engines[curEng] || engines['google'];
+            const finalUrl = engineUrl.includes('{q}') 
+                ? engineUrl.replace('{q}', encodeURIComponent(query))
+                : engineUrl + encodeURIComponent(query);
+            window.open(finalUrl, '_blank');
+        }
+
+        searchInput.addEventListener('input', () => fetchSuggestions(searchInput.value.trim()));
+        searchInput.addEventListener('keydown', (e) => {
+            const items = suggestionsContainer.querySelectorAll('.suggestion-item');
+            const isVisible = suggestionsContainer.style.display === 'block';
+
+            if (e.key === 'ArrowDown' && isVisible) { 
+                e.preventDefault(); 
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1); 
+                updateSelection(items); 
+            } 
+            else if (e.key === 'ArrowUp' && isVisible) { 
+                e.preventDefault(); 
+                selectedIndex = Math.max(selectedIndex - 1, -1); 
+                updateSelection(items); 
+            } 
+            else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (isVisible && selectedIndex >= 0 && items[selectedIndex]) {
+                    const text = items[selectedIndex].textContent;
+                    searchInput.value = text;
+                    suggestionsContainer.style.display = 'none';
+                    performSearch(text);
+                } else if (searchInput.value.trim()) {
+                    suggestionsContainer.style.display = 'none';
+                    performSearch(searchInput.value);
+                }
+            } 
+            else if (e.key === 'Escape') {
+                suggestionsContainer.style.display = 'none';
+            }
+        });
+        function updateSelection(items) {
+            items.forEach((item, i) => item.classList.toggle('selected', i === selectedIndex));
+        }
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                suggestionsContainer.style.display = 'none';
+            }
+        });
+
+        /* --- 天气代码逻辑（完全保留） --- */
+        const apiUrl = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=sc';
+        const warningApiUrl = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warningInfo&lang=tc';
+        const iUrl = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=swt&lang=sc';
+
+        async function fetchData(url, elementId, formatData) {
+            const element = document.getElementById(elementId);
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('网络响应不正常');
+                const data = await response.json();
+                element.innerHTML = formatData(data);
+            } catch (error) { element.innerHTML = `无法加载数据：${error.message}`; }
+        }
+        function formatWeatherData(data) {
+            return `<p><strong>总体情况：</strong>${data.generalSituation}</p>
+                    <p><strong>天气预测：</strong>${data.forecastDesc}</p>
+                    <p><strong>展望：</strong>${data.outlook}</p>
+                    <p style="font-size:0.8rem; opacity:0.6;">更新时间：${data.updateTime}</p>`;
+        }
+        function formatWarningData(data) {
+            if (!data.details || data.details.length === 0) return '现时没有警告生效。';
+            return data.details.map(detail => `<p>⚠️ ${detail.contents.join(' ')}</p>`).join('');
+        }
+        function formatSpecialWeatherData(data) {
+            if (!data.swt || data.swt.length === 0) return '现时没有特别天气提示。';
+            return data.swt.map(item => `<p>ℹ️ ${item.desc}</p>`).join('');
+        }
+
+        function getIconByKeyword(text) {
+            if (!text) return 51;
+            const t = text.toLowerCase();
+            if (t.includes('雷暴') || t.includes('雷雨')) return 65;
+            if (t.includes('暴雨')) return 64;
+            if (t.includes('大雨')) return 64;
+            if (t.includes('骤雨') || t.includes('阵雨') || t.includes('有雨') || t.includes('微雨') || t.includes('毛毛雨')) return 63;
+            if (t.includes('天晴') || t.includes('阳光充沛') || t.includes('晴朗')) return 50;
+            if (t.includes('部分时间有阳光') || t.includes('间有阳光') || t.includes('短暂时间有阳光')) return 51;
+            if (t.includes('短暂阳光')) return 52;
+            if (t.includes('多云') || t.includes('天色明朗')) return 60;
+            if (t.includes('天阴') || t.includes('密云') || t.includes('阴天') || t.includes('大致多云')) return 61;
+            if (t.includes('雾') || t.includes('薄雾') || t.includes('烟霞') || t.includes('能见度低')) return 80;
+            if (t.includes('烈风') || t.includes('强风')) return 90;
+            return 51;
+        }
+
+        async function updateLiveWeather() {
+            try {
+                const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc');
+                const data = await res.json();
+                if (data.temperature && data.temperature.data && data.temperature.data.length > 0) {
+                    document.getElementById('curr-temp').innerText = data.temperature.data[0].value;
+                }
+                if (data.humidity && data.humidity.data && data.humidity.data.length > 0) {
+                    document.getElementById('curr-hum').innerText = data.humidity.data[0].value;
+                }
+
+                const flwRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=sc');
+                const flwData = await flwRes.json();
+                if (flwData.forecastDesc) {
+                    const iconCode = getIconByKeyword(flwData.forecastDesc);
+                    const img = document.getElementById('weather-icon-img');
+                    img.src = `https://www.hko.gov.hk/images/wxicon/pic${iconCode}.png`;
+                    img.style.display = 'block';
+                }
+            } catch(e) {
+                console.error('天气数据获取失败:', e);
+            }
+        }
+
+        /* --- 主题控制 + 记忆 --- */
+        document.getElementById('theme-btn').onclick = () => {
+            const isDark = document.documentElement.classList.toggle('mdui-theme-dark');
+            document.documentElement.classList.toggle('mdui-theme-light', !isDark);
+            document.getElementById('theme-btn').icon = isDark ? 'dark_mode' : 'light_mode';
+            localStorage.setItem('theme_mode', isDark ? 'dark' : 'light');
+        };
+
+        const savedTheme = localStorage.getItem('theme_mode');
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('mdui-theme-dark');
+            document.getElementById('theme-btn').icon = 'dark_mode';
+        }
+
+        /* ==================== 修复后的时间 + RSS（仅保留指定三个源 + 优化解析） ==================== */
+        function updateHKTTime() {
+            const now = new Date().toLocaleString('zh-CN', { 
+                timeZone: 'Asia/Hong_Kong',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false 
+            });
+            document.getElementById('hkt-time').textContent = now;
+            document.getElementById('fullscreen-time').textContent = now;
+        }
+        setInterval(updateHKTTime, 1000);
+        updateHKTTime();
+
+        // 只保留你指定的三个源
+        let customRSS = JSON.parse(localStorage.getItem('custom_rss')) || [
+            "https://hk.news.yahoo.com/rss/hong-kong",
+            "https://rthk.hk/rthk/news/rss/c_expressnews_elocal.xml",
+            "https://rthk.hk/rthk/news/rss/c_expressnews_efinance.xml"
+        ];
+
+        function saveCustomRSS() {
+            localStorage.setItem('custom_rss', JSON.stringify(customRSS));
+        }
+
+        async function fetchHKNews() {
+    let marqueeHTML = '';
+
+    for (let rssUrl of customRSS) {
+        try {
+            // 使用 RSS 转 JSON 服务（解决 CORS）
+            const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+
+            const res = await fetch(api);
+            const data = await res.json();
+
+            if (data.items && data.items.length) {
+                data.items.forEach(item => {
+                    if (item.title) {
+                        marqueeHTML += `${item.title}　|　`;
+                    }
+                });
+            }
+
+        } catch (e) {
+            console.error(`RSS失败: ${rssUrl}`, e);
+        }
+    }
+
+    if (!marqueeHTML) marqueeHTML = '暂无最新新闻，请稍后刷新...';
+
+    document.getElementById('news-marquee').innerHTML = marqueeHTML;
+    document.getElementById('fullscreen-marquee').innerHTML =
+    `<span>${marqueeHTML}</span>`;
+    document.getElementById('update-time').textContent =
+        `更新时间: ${new Date().toLocaleTimeString('zh-CN')}`;
+        }
+
+        document.getElementById('refresh-news-btn').onclick = fetchHKNews;
+
+        // 管理RSS源对话框（保留原有逻辑）
+        function showManageRSSDialog() {
+            const list = document.getElementById('custom-rss-list');
+            list.innerHTML = '';
+            customRSS.forEach((url, index) => {
+                const div = document.createElement('div');
+                div.style = 'display:flex; align-items:center; gap:12px; padding:8px; border-bottom:1px solid rgba(128,128,128,0.2);';
+                div.innerHTML = `
+                    <div style="flex:1; word-break:break-all;">${url}</div>
+                    <mdui-button variant="tonal" size="small" onclick="editRSS(${index})">编辑</mdui-button>
+                    <mdui-button variant="tonal" size="small" style="color:red;" onclick="deleteRSS(${index})">删除</mdui-button>
+                `;
+                list.appendChild(div);
+            });
+            document.getElementById('manage-rss-dialog').open = true;
+        }
+
+        window.editRSS = function(index) {
+            const newUrl = prompt("请输入新的RSS地址：", customRSS[index]);
+            if (newUrl) {
+                customRSS[index] = newUrl;
+                saveCustomRSS();
+                showManageRSSDialog();
+                fetchHKNews();
+            }
+        };
+
+        window.deleteRSS = function(index) {
+            if (confirm("确定删除此RSS源吗？")) {
+                customRSS.splice(index, 1);
+                saveCustomRSS();
+                showManageRSSDialog();
+                fetchHKNews();
+            }
+        };
+
+        document.getElementById('manage-rss-close').onclick = () => document.getElementById('manage-rss-dialog').open = false;
+        document.getElementById('manage-rss-add').onclick = () => {
+            const newUrl = prompt("请输入RSS源地址：");
+            if (newUrl) {
+                customRSS.push(newUrl);
+                saveCustomRSS();
+                showManageRSSDialog();
+                fetchHKNews();
+            }
+        };
+
+        document.getElementById('manage-rss-btn').onclick = showManageRSSDialog;
+
+        // 全屏模式
+        const fullscreenMarket = document.getElementById('fullscreen-market');
+        document.getElementById('fullscreen-btn').onclick = () => {
+            fullscreenMarket.style.display = 'flex';
+            fetchHKNews();
+        };
+        document.getElementById('exit-fullscreen-btn').onclick = () => {
+            fullscreenMarket.style.display = 'none';
+        };
+
+        // 接收 iframe 传回的 icon 名称并自动填充
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.type === 'SELECT_ICON') {
+                const iconName = e.data.icon;
+                
+                const fIcon = document.getElementById('f-icon');
+                const engineIcon = document.getElementById('engine-icon');
+                
+                if (fIcon && document.getElementById('edit-dialog').open) {
+                    fIcon.value = iconName;
+                } else if (engineIcon && document.getElementById('add-engine-dialog').open) {
+                    engineIcon.value = iconName;
+                }
+                
+                document.getElementById('icon-picker-dialog').open = false;
+            }
+        });
+
+        /* ==================== 初始化 ==================== */
+        restoreLastEngine();
+        renderEngineMenu();   // 确保预设 + 自定义都显示
+        render();
+        updateLiveWeather();
+        fetchData(apiUrl, 'weather-info', formatWeatherData);
+        fetchData(warningApiUrl, 'warning-info', formatWarningData);
+        fetchData(iUrl, 'i-info', formatSpecialWeatherData);
+        fetchHKNews();
+        setInterval(fetchHKNews, 180000);
+        setInterval(updateHKTTime, 1000);
+    </script>
+</body>
+</html>
