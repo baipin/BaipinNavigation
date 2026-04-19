@@ -947,25 +947,25 @@ document.getElementById('random-bg-btn').onclick = async () => {
         const res = await fetch('/api/unsplash');
         const data = await res.json();
 
-        if (!data.url) throw new Error('无图片数据');
+        if (!data.url) throw new Error('无图片');
 
-        // 应用背景
+        // ✅ 应用背景
         applyBackground(data.url);
 
-        // 更新署名
+        // ✅ 正确传参（关键）
         updateAttributionFooter({
-            user: data.user,
-            userLink: data.userLink
+            user: data.author,
+            userLink: data.link
         });
 
-        // 保存
+        // ✅ 保存
         setBackgroundToCookie(JSON.stringify({
-            url: data.url,
-            info: {
-                user: data.user,
-                userLink: data.userLink
-            }
-        }));
+    url: data.url,
+    info: {
+        user: data.author,
+        userLink: data.link
+    }
+}));
 
     } catch (e) {
         console.error(e);
