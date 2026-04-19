@@ -892,13 +892,22 @@
             }
         };
 
-        window.onload = () => {
-    const savedBackground = getBackgroundFromCookie();
-    if (savedBackground) {
-        applyBackground(savedBackground);  // 如果有背景图片，直接应用
-    }
-};
+        window.addEventListener('load', () => {
+    const saved = getBackgroundFromCookie();
+    if (!saved) return;
 
+    try {
+        const data = JSON.parse(saved);
+
+        if (data.url) {
+            applyBackground(data.url);              // ✅ 只传 URL
+            updateAttributionFooter(data.info);     // ✅ 恢复 footer
+        }
+
+    } catch (e) {
+        console.warn('背景解析失败', e);
+    }
+});
         document.getElementById('manage-rss-close').onclick = () => document.getElementById('manage-rss-dialog').open = false;
         document.getElementById('manage-rss-add').onclick = () => {
             const newUrl = prompt("请输入RSS源地址：");
@@ -1249,12 +1258,14 @@ function setBackgroundToCookie(value) {
     try {
         const data = JSON.parse(saved);
 
-        if (data.url) {
+        // ✅ 防御性判断（关键）
+        if (data && typeof data === 'object' && data.url) {
             applyBackground(data.url);
             updateAttributionFooter(data.info);
         }
+
     } catch (e) {
-        console.warn('背景恢复失败', e);
+        console.warn('背景解析失败', e);
     }
 });
         addSettingsButtons();            // 添加设置按钮到顶部栏
