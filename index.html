@@ -1241,7 +1241,22 @@ function setBackgroundToCookie(value) {
         setInterval(updateHKTTime, 1000);
 
         // 新增功能的初始化
-        loadSavedBackground();           // 加载保存的背景
+        // 加载保存的背景
+        window.addEventListener('load', () => {
+    const saved = getBackgroundFromCookie();
+    if (!saved) return;
+
+    try {
+        const data = JSON.parse(saved);
+
+        if (data.url) {
+            applyBackground(data.url);
+            updateAttributionFooter(data.info);
+        }
+    } catch (e) {
+        console.warn('背景恢复失败', e);
+    }
+});
         addSettingsButtons();            // 添加设置按钮到顶部栏
 
         // 背景设置对话框关闭按钮
