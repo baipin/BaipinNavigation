@@ -970,13 +970,18 @@ function applyBackground(url, photoInfo = null) {
 
 /* ==================== 配合使用的署名函数 ==================== */
 function updateAttributionFooter(info) {
-    let footer = document.getElementById('footer-attribution');
-    if (!footer) {
-        footer = document.createElement('div');
-        footer.id = 'footer-attribution';
-        footer.style = "position:fixed; bottom:10px; right:20px; font-size:12px; color:rgba(255,255,255,0.7); z-index:1000; text-shadow:0 1px 2px rgba(0,0,0,0.5);";
-        document.body.appendChild(footer);
+    // 找到页面上已有的 card-glass 页脚
+    const photoCredit = document.getElementById('photo-credit');
+    if (photoCredit) {
+        if (info) {
+            // 如果有传入信息（比如随机背景的摄影师），则更新内容
+            photoCredit.innerHTML = info;
+        } else {
+            // 如果没有传入信息，恢复为默认的拍摄信息
+            photoCredit.innerHTML = 'Photo by 浙江丽水云和梯田 / 站长拍摄';
+        }
     }
+}
 
     // 如果是默认背景，显示你要求的文字
     if (info.isDefault) {
