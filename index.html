@@ -51,62 +51,91 @@
         .logo-area img { height: 32px; }
         .hero-space { height: var(--hero-height); display: flex; align-items: center; justify-content: center; padding-top: var(--nav-height); }
         .search-container {
-    width: 90%;
-    max-width: 650px;
-    background: var(--glass-bg);
-    backdrop-filter: blur(25px);
-    border: 1px solid var(--glass-border);
-    border-radius: 50px;
-    padding: 8px 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;               /* 新增：统一间距 */
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    position: relative;
-    z-index: 1500;
-}
-
-/* 新增：无论桌面还是移动端都固定成紧邻输入框的 flex 子项 */
-#engine-dropdown {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    margin-right: 0;
-}
-
-/* 新增：确保 trigger 容器不会自己撑开 */
-#engine-dropdown [slot="trigger"] {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 0;
-}
-
-.engine-favicon {
-    width: 24px;
-    height: 24px;
-    border-radius: 4px;
-    cursor: pointer;
-    display: block;
-    flex-shrink: 0;
-}
-
-.search-input {
-    flex: 1 1 auto;
-    min-width: 0;           /* 新增：防止把左侧 dropdown 挤走 */
-    border: none;
-    background: transparent;
-    padding: 12px;
-    font-size: 1.1rem;
-    outline: none;
-    color: var(--text-main);
-}
-.engine-trigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
+            width: 90%;
+            max-width: 650px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            padding: 4px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1500;
+        }
+        
+        /* 引擎下拉按钮容器 - 固定宽度，不收缩 */
+        #engine-dropdown {
+            flex-shrink: 0;
+            flex-grow: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* trigger 触发区域样式 */
+        #engine-dropdown [slot="trigger"] {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 4px;
+            cursor: pointer;
+            border-radius: 32px;
+            transition: background 0.2s;
+        }
+        
+        #engine-dropdown [slot="trigger"]:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        .mdui-theme-dark #engine-dropdown [slot="trigger"]:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .engine-favicon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: block;
+            flex-shrink: 0;
+        }
+        
+        /* 搜索输入框 - 自动占据剩余空间 */
+        .search-input {
+            flex: 1 1 auto;
+            min-width: 50px;
+            border: none;
+            background: transparent;
+            padding: 12px 0;
+            font-size: 1rem;
+            outline: none;
+            color: var(--text-main);
+        }
+        
+        .search-input::placeholder {
+            opacity: 0.6;
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 600px) {
+            .search-container {
+                padding: 4px 12px;
+                gap: 6px;
+            }
+            
+            .engine-favicon {
+                width: 28px;
+                height: 28px;
+            }
+            
+            .search-input {
+                font-size: 0.95rem;
+                padding: 10px 0;
+            }
+        }
 
 
         .suggestions-dropdown {
