@@ -51,60 +51,113 @@
         .logo-area img { height: 32px; }
         .hero-space { height: var(--hero-height); display: flex; align-items: center; justify-content: center; padding-top: var(--nav-height); }
         .search-container {
-            width: 90%;
-            max-width: 650px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(25px);
-            border: 1px solid var(--glass-border);
-            border-radius: 50px;
-            padding: 8px 20px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            position: relative;
-            z-index: 1500;
-        }
-        
-        /* 修复 mdui-dropdown 错位问题 */
-        #engine-dropdown {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex: 0 0 auto;
-            margin-right: 8px;
-            position: relative;  /* 防止跑到拾遗位置 */
-            z-index: 1600;       /* 确保下拉菜单位于输入框上面 */
-        }
-        
-        #engine-dropdown [slot="trigger"] {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .engine-favicon {
-            width: 24px;
-            height: 24px;
-            border-radius: 4px;
-            cursor: pointer;
-            display: block;
-        }
-        
-        .search-input {
-            flex: 1;
-            border: none;
-            background: transparent;
-            padding: 12px;
-            font-size: 1.1rem;
-            outline: none;
-            color: var(--text-main);
-        }
-
-        .engine-trigger {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
+              width: 90%;
+              max-width: 650px;
+              background: var(--glass-bg);
+              backdrop-filter: blur(25px);
+              border: 1px solid var(--glass-border);
+              border-radius: 50px;
+              padding: 4px 16px;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+              position: relative;
+              z-index: 1500;
+          }
+          
+          /* 强制修复 mdui-dropdown 组件的布局 */
+          mdui-dropdown {
+              display: inline-flex !important;
+              align-items: center;
+              flex-shrink: 0;
+              flex-grow: 0;
+              line-height: 0;
+          }
+          
+          #engine-dropdown {
+              display: inline-flex !important;
+              align-items: center;
+              justify-content: center;
+              flex-shrink: 0;
+              flex-grow: 0;
+              margin: 0;
+              padding: 0;
+          }
+          
+          #engine-dropdown [slot="trigger"] {
+              display: flex !important;
+              align-items: center;
+              justify-content: center;
+              padding: 6px;
+              cursor: pointer;
+              border-radius: 32px;
+              transition: background 0.2s;
+              line-height: 0;
+          }
+          
+          #engine-dropdown [slot="trigger"]:hover {
+              background: rgba(0, 0, 0, 0.08);
+          }
+          
+          .mdui-theme-dark #engine-dropdown [slot="trigger"]:hover {
+              background: rgba(255, 255, 255, 0.12);
+          }
+          
+          /* 确保 mdui-dropdown 内部的 shadow DOM 不影响布局 */
+          mdui-dropdown::part(trigger) {
+              display: inline-flex;
+              align-items: center;
+          }
+          
+          .engine-favicon {
+              width: 24px;
+              height: 24px;
+              border-radius: 4px;
+              cursor: pointer;
+              display: block;
+              flex-shrink: 0;
+          }
+          
+          .engine-trigger {
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              line-height: 0;
+          }
+          
+          .search-input {
+              flex: 1 1 auto;
+              min-width: 50px;
+              border: none;
+              background: transparent;
+              padding: 10px 0;
+              font-size: 1rem;
+              outline: none;
+              color: var(--text-main);
+          }
+          
+          .search-input::placeholder {
+              opacity: 0.6;
+          }
+          
+          /* 移动端适配 */
+          @media (max-width: 600px) {
+              .search-container {
+                  padding: 4px 12px;
+                  gap: 6px;
+              }
+              
+              .engine-favicon {
+                  width: 28px;
+                  height: 28px;
+              }
+              
+              .search-input {
+                  font-size: 0.95rem;
+                  padding: 8px 0;
+              }
+          }
 
 
         .suggestions-dropdown {
@@ -229,7 +282,7 @@
     </header>
     <section class="hero-space">
         <div class="search-container">
-            <mdui-dropdown id="engine-dropdown" trigger="click" placement="bottom-start">
+            <mdui-dropdown id="engine-dropdown" trigger="click" placement="bottom-start" no-auto-flip>
                 <span slot="trigger" class="engine-trigger"><img id="cur-engine-img" class="engine-favicon" src="https://www.google.com/favicon.ico"></span>
                 <mdui-menu id="engine-menu">
                     <!-- 预设搜索引擎已恢复并置于最前面 -->
