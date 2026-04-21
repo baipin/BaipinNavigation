@@ -61,8 +61,18 @@
         .search-container mdui-dropdown { margin-right: 8px; }
 
         @media (max-width: 900px) {
-            .search-container { width: 95%; margin: 0 auto; padding: 8px 16px; }
+            .search-container mdui-dropdown {
+            display: flex;           /* 保证与 input 在同一行 */
+            align-items: center;     /* 垂直居中 */
+            margin-right: 8px;
+            min-width: 40px;         /* 避免太窄 */
         }
+        .search-container mdui-dropdown > div[slot="trigger"] {
+            display: flex;
+            align-items: center;     /* 确保图标垂直居中 */
+            cursor: pointer;
+        }
+                }
 
         .suggestions-dropdown {
             position: absolute; top: 100%; left: 0; right: 0;
