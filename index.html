@@ -51,31 +51,58 @@
         .logo-area img { height: 32px; }
         .hero-space { height: var(--hero-height); display: flex; align-items: center; justify-content: center; padding-top: var(--nav-height); }
         .search-container {
-            width: 90%; max-width: 650px; background: var(--glass-bg); backdrop-filter: blur(25px);
-            border: 1px solid var(--glass-border); border-radius: 50px; padding: 8px 20px;
-            display: flex; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            position: relative; z-index: 1500;
-        }
-        .search-input { flex: 1; border: none; background: transparent; padding: 12px; font-size: 1.1rem; outline: none; color: var(--text-main); }
-        .engine-favicon { width: 24px; height: 24px; border-radius: 4px; cursor: pointer; display: block; }
-        .search-container mdui-dropdown { margin-right: 8px; }
+    width: 90%;
+    max-width: 650px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(25px);
+    border: 1px solid var(--glass-border);
+    border-radius: 50px;
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;               /* 新增：统一间距 */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 1500;
+}
 
-        @media (max-width: 900px) {
-            .search-container mdui-dropdown {
-                margin-right: 8px;
-                display: flex; /* 确保下拉触发器与 flex 容器对齐 */
-                align-items: center;
-                justify-content: center;
-                flex-shrink: 0; /* 防止图标被压缩 */
-            }
-            
-            /* 确保触发图标本身有固定宽高 */
-            .engine-favicon {
-                width: 24px;
-                height: 24px;
-                display: block;
-            }
-                }
+/* 新增：无论桌面还是移动端都固定成紧邻输入框的 flex 子项 */
+#engine-dropdown {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    margin-right: 0;
+}
+
+/* 新增：确保 trigger 容器不会自己撑开 */
+#engine-dropdown [slot="trigger"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+}
+
+.engine-favicon {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: block;
+    flex-shrink: 0;
+}
+
+.search-input {
+    flex: 1 1 auto;
+    min-width: 0;           /* 新增：防止把左侧 dropdown 挤走 */
+    border: none;
+    background: transparent;
+    padding: 12px;
+    font-size: 1.1rem;
+    outline: none;
+    color: var(--text-main);
+}
+
 
         .suggestions-dropdown {
             position: absolute; top: 100%; left: 0; right: 0;
