@@ -267,7 +267,7 @@
         font-size: 0.9rem;
         opacity: 0.9;
     ">
-        Photo by 浙江丽水云和梯田 / 站长拍摄
+         浙江丽水云和梯田 / 站长拍摄
     </div>
 </div>
 
@@ -1030,7 +1030,7 @@ function updateAttributionFooter(info) {
 
     // 默认背景
     if (!info || info.isDefault) {
-        footer.innerHTML = 'Photo by 浙江丽水云和梯田 / 站长拍摄';
+        footer.innerHTML = ' 浙江丽水云和梯田 / 站长拍摄';
         return;
     }
 
@@ -1038,9 +1038,9 @@ function updateAttributionFooter(info) {
     if (info.user && info.userLink) {
         footer.innerHTML = `
             Photo by 
-            <a href="${info.userLink}" target="_blank">${info.user}</a> 
+            <a href="${info.userLink}" target="_blank" class="mdui-link" style="color: rgb(var(--mdui-color-primary)); text-decoration: none; border-bottom: 1px solid rgba(var(--mdui-color-primary), 0.3); transition: all 0.2s;">${info.user}</a> 
             on 
-            <a href="https://unsplash.com" target="_blank">Unsplash</a>
+            <a href="https://unsplash.com" target="_blank" class="mdui-link" style="color: rgb(var(--mdui-color-primary)); text-decoration: none; border-bottom: 1px solid rgba(var(--mdui-color-primary), 0.3); transition: all 0.2s;">Unsplash</a>
         `;
         return;
     }
