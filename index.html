@@ -1555,7 +1555,7 @@ function setBackgroundToCookie(value) {
             holidays: 'https://www.1823.gov.hk/common/ical/tc.json'
         };
         const cityText = (node, tag) => node.getElementsByTagName(tag)[0]?.textContent?.trim() || '';
-        const cityEsc = (value) => String(value || '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;' }[c]));
+        const cityEsc = (value) => String(value || '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":String.fromCharCode(39) }[c]));
         const cityLive = (id, state, label) => {
             const el = document.getElementById(id);
             if (!el) return;
