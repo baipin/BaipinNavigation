@@ -141,7 +141,7 @@
             border-radius: 50%; padding: 4px; 
         }
 
-        .content-layout { max-width: 1240px; margin: 0 auto 80px; display: grid; grid-template-columns: 1fr 360px; gap: 32px; padding: 0 20px; }
+        .content-layout { width:100%; max-width:1240px; min-width:0; box-sizing:border-box; margin:0 auto 80px; display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:32px; padding:0 20px; }
         .card-glass { border-radius: 28px; background: var(--glass-bg); backdrop-filter: blur(20px); padding: 32px; border: 1px solid var(--glass-border); color: var(--text-main); }
         .links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 18px; margin-top: 24px; }
         .link-item {
@@ -358,14 +358,18 @@
         .city-flight-row small { display:block; color:rgba(255,255,255,.6); margin-top:3px; }
         .city-flight-status { color:#65d4be; white-space:nowrap; }
         .city-language-btn { margin-left:8px; color:inherit; vertical-align:middle; }
-        .page-flow { display:flex; flex-direction:column; }
+        .page-flow { display:flex; flex-direction:column; align-items:stretch; width:100%; min-width:0; overflow:visible; }
+        .page-flow > .content-layout,
+        .page-flow > .city-dashboard,
+        .page-flow > #city-finance,
+        .page-flow > #city-ticker { width:100%; min-width:0; box-sizing:border-box; flex:0 0 auto; }
         .page-flow > .content-layout:first-of-type { order:1; }
         .page-flow > .city-dashboard { order:2; }
         .page-flow > #city-finance { order:3; }
         .page-flow > #city-ticker { order:4; }
         .page-flow > .content-layout:last-of-type { order:5; }
         .city-initial-hidden { display:none !important; }
-        #city-finance, #city-ticker { max-width:1240px; width:100%; margin:0 auto 18px; padding:0 20px; }
+        #city-finance, #city-ticker { max-width:1240px; width:100%; min-width:0; box-sizing:border-box; margin:0 auto 18px; padding:0 20px; }
         .city-finance-card, .city-ticker-card { border-radius:18px; background:rgba(12,25,28,.72); backdrop-filter:blur(20px); border:1px solid rgba(101,212,190,.18); color:#fff; box-shadow:0 16px 40px rgba(0,0,0,.12); }
         .city-finance-card { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); overflow:hidden; }
         .city-finance-item { padding:18px 20px; border-right:1px solid rgba(255,255,255,.12); min-width:0; }
@@ -3423,6 +3427,10 @@ function setBackgroundToCookie(value) {
         };
         const cityAirportFetchDay = async (date, arrival) => {
             const url = `https://www.hongkongairport.com/flightinfo-rest/rest/flights/past?date=${date}&lang=en&cargo=false&arrival=${arrival}`;
+            try {
+                const response = await fetch(url, { cache:'no-store' });
+                if (response.ok) return response.json();
+            } catch (error) {}
             return cityProxyJson(url);
         };
         updateCityFlights = async function() {
@@ -3431,32 +3439,37 @@ function setBackgroundToCookie(value) {
             try {
                 const today = cityHKDateIso();
                 const yesterday = cityAddDays(today, -1);
-                const [arrivalToday, arrivalYesterday, departureToday] = await Promise.all([
+                const responses = await Promise.allSettled([
                     cityAirportFetchDay(today, true),
                     cityAirportFetchDay(yesterday, true),
                     cityAirportFetchDay(today, false)
                 ]);
+                const arrivalToday = responses[0].status === 'fulfilled' ? responses[0].value : { date:today, list:[] };
+                const arrivalYesterday = responses[1].status === 'fulfilled' ? responses[1].value : { date:yesterday, list:[] };
+                const departureToday = responses[2].status === 'fulfilled' ? responses[2].value : { date:today, list:[] };
                 const now = Date.now();
                 const arrivals = [
                     ...(arrivalToday.list || []).map((row) => ({ ...row, flightDate:arrivalToday.date || today })),
                     ...(arrivalYesterday.list || []).map((row) => ({ ...row, flightDate:arrivalYesterday.date || yesterday }))
                 ];
                 const departures = (departureToday.list || []).map((row) => ({ ...row, flightDate:departureToday.date || today }));
-                const futureArrivals = arrivals
+                const allArrivals = arrivals
                     .map((row) => ({ ...row, stamp:cityAirportFlightTime(row.flightDate, row.time) }))
-                    .filter((row) => row.stamp >= now - 30 * 60 * 1000)
                     .sort((a, b) => a.stamp - b.stamp);
-                const futureDepartures = departures
+                const allDepartures = departures
                     .map((row) => ({ ...row, stamp:cityAirportFlightTime(row.flightDate, row.time) }))
-                    .filter((row) => row.stamp >= now - 30 * 60 * 1000)
                     .sort((a, b) => a.stamp - b.stamp);
+                const futureArrivals = allArrivals.filter((row) => row.stamp >= now - 30 * 60 * 1000);
+                const futureDepartures = allDepartures.filter((row) => row.stamp >= now - 30 * 60 * 1000);
+                const visibleArrivals = futureArrivals.length ? futureArrivals : allArrivals.slice(-6);
+                const visibleDepartures = futureDepartures.length ? futureDepartures : allDepartures.slice(-6);
                 document.getElementById('city-flight-arrivals').textContent = futureArrivals.length;
                 document.getElementById('city-flight-departures').textContent = futureDepartures.length;
                 const rows = [
-                    ...futureArrivals.slice(0, 4).map((row) => ({ ...row, direction:'Arrival', place:(row.origin || []).join(', ') })),
-                    ...futureDepartures.slice(0, 4).map((row) => ({ ...row, direction:'Departure', place:(row.destination || []).join(', ') }))
+                    ...visibleArrivals.slice(0, 4).map((row) => ({ ...row, direction:'Arrival', place:(row.origin || []).join(', ') })),
+                    ...visibleDepartures.slice(0, 4).map((row) => ({ ...row, direction:'Departure', place:(row.destination || []).join(', ') }))
                 ].sort((a, b) => a.stamp - b.stamp);
-                list.innerHTML = rows.length ? rows.map((row) => `<div class="city-flight-row"><span><strong>${cityEsc(row.flight?.map((flight) => flight.no).join(' / ') || '--')}</strong><small>${cityEsc(row.direction)} · ${cityEsc(row.place || '--')} · ${cityEsc(row.time || '--')}</small></span><span class="city-flight-status">${cityEsc(row.status || '--')}</span></div>`).join('') : '<div class="city-card-caption">暫無未來航班資料</div>';
+                list.innerHTML = rows.length ? rows.map((row) => `<div class="city-flight-row"><span><strong>${cityEsc(row.flight?.map((flight) => flight.no).join(' / ') || '--')}</strong><small>${cityEsc(row.direction)} · ${cityEsc(row.place || '--')} · ${cityEsc(row.time || '--')}</small></span><span class="city-flight-status">${cityEsc(row.status || '--')}</span></div>`).join('') : '<div class="city-card-caption">暫無航班資料</div>';
                 const updated = arrivalToday.lastUpdatedTime || departureToday.lastUpdatedTime;
                 document.getElementById('city-flight-note').textContent = updated
                     ? `最後更新 ${new Date(updated).toLocaleTimeString('zh-HK', { hour:'2-digit', minute:'2-digit', hour12:false })}`
