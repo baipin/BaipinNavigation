@@ -358,9 +358,30 @@
         .city-flight-row small { display:block; color:rgba(255,255,255,.6); margin-top:3px; }
         .city-flight-status { color:#65d4be; white-space:nowrap; }
         .city-language-btn { margin-left:8px; color:inherit; vertical-align:middle; }
+        .page-flow { display:flex; flex-direction:column; }
+        .page-flow > .content-layout:first-of-type { order:1; }
+        .page-flow > .city-dashboard { order:2; }
+        .page-flow > #city-finance { order:3; }
+        .page-flow > #city-ticker { order:4; }
+        .page-flow > .content-layout:last-of-type { order:5; }
+        .city-initial-hidden { display:none !important; }
+        #city-finance, #city-ticker { max-width:1240px; width:100%; margin:0 auto 18px; padding:0 20px; }
+        .city-finance-card, .city-ticker-card { border-radius:18px; background:rgba(12,25,28,.72); backdrop-filter:blur(20px); border:1px solid rgba(101,212,190,.18); color:#fff; box-shadow:0 16px 40px rgba(0,0,0,.12); }
+        .city-finance-card { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); overflow:hidden; }
+        .city-finance-item { padding:18px 20px; border-right:1px solid rgba(255,255,255,.12); min-width:0; }
+        .city-finance-item:last-child { border-right:0; }
+        .city-finance-label { color:rgba(255,255,255,.68); font-size:.72rem; }
+        .city-finance-value { margin-top:8px; font:500 clamp(.88rem,1.45vw,1.45rem) 'Roboto Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .city-finance-note { margin-top:5px; color:rgba(255,255,255,.55); font-size:.68rem; }
+        .city-ticker-card { overflow:hidden; padding:12px 0; }
+        .city-ticker-label { display:inline-block; padding:0 15px; color:#65d4be; font:500 .7rem 'Roboto Mono',monospace; letter-spacing:.08em; border-right:1px solid rgba(255,255,255,.15); }
+        .city-ticker-window { display:inline-block; width:calc(100% - 112px); overflow:hidden; vertical-align:middle; white-space:nowrap; }
+        .city-ticker-track { display:inline-block; padding-left:100%; animation:cityTicker 95s linear infinite; color:rgba(255,255,255,.9); font-size:.78rem; }
+        .city-ticker-track span { margin-right:44px; }
+        @keyframes cityTicker { from { transform:translateX(0); } to { transform:translateX(-100%); } }
         @media (max-width:1100px) { .city-journey-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-        @media (max-width:900px) { .city-dashboard-grid { column-count:1; } .city-journey-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
-        @media (max-width:600px) { .city-dashboard { padding:0 12px; width:100%; } .city-metrics, .city-journey-grid, .city-boundary-list { grid-template-columns:1fr; } .city-metric { min-height:96px; } .city-rail-grid { grid-template-columns:1fr; } .city-two-col { grid-template-columns:1fr; } .city-card { padding:16px; } .city-finance-value { white-space:normal; font-size:1.15rem; } .city-input { min-width:0; width:100%; } .city-form .city-button { flex:1 1 40%; } .city-bus-line-list { grid-template-columns:1fr; } }
+        @media (max-width:900px) { .city-dashboard-grid { column-count:1; } .city-journey-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .city-finance-card{grid-template-columns:repeat(2,minmax(0,1fr))}.city-finance-item:nth-child(2n){border-right:0} }
+        @media (max-width:600px) { .city-dashboard { padding:0 12px; width:100%; } .city-metrics, .city-journey-grid, .city-boundary-list { grid-template-columns:1fr; } .city-metric { min-height:96px; } .city-rail-grid { grid-template-columns:1fr; } .city-two-col { grid-template-columns:1fr; } .city-card { padding:16px; } .city-finance-value { white-space:normal; font-size:1.15rem; } .city-input { min-width:0; width:100%; } .city-form .city-button { flex:1 1 40%; } .city-bus-line-list { grid-template-columns:1fr; } #city-finance,#city-ticker{padding:0 12px}.city-finance-card{grid-template-columns:1fr}.city-finance-item{border-right:0;border-bottom:1px solid rgba(255,255,255,.12)}.city-finance-item:last-child{border-bottom:0} }
     </style>
 </head>
 <body class="mdui-theme-auto">
@@ -395,6 +416,7 @@
             <div id="suggestions" class="suggestions-dropdown"></div>
         </div>
     </section>
+    <div class="page-flow">
     <section class="city-dashboard" aria-label="香港实时城市仪表盘">
         <div class="city-dashboard-grid">
             <article class="city-card">
@@ -402,11 +424,7 @@
                     <div><div class="city-card-title">香港实时脉搏</div><div class="city-card-caption">运输署行车时间 · 海底隧道与机场方向</div></div>
                     <span class="city-live" id="city-traffic-live">同步中</span>
                 </div>
-                <div class="city-metrics">
-                    <div class="city-metric"><div class="city-metric-label">海底隧道 → 九龙</div><div class="city-metric-value" id="city-harbour">--</div><div class="city-metric-note">由港岛出发</div><div class="city-meter"><i id="city-harbour-meter"></i></div></div>
-                    <div class="city-metric"><div class="city-metric-label">西隧 → 港岛</div><div class="city-metric-value" id="city-western">--</div><div class="city-metric-note">由九龙出发</div><div class="city-meter"><i id="city-western-meter"></i></div></div>
-                    <div class="city-metric"><div class="city-metric-label">机场方向</div><div class="city-metric-value" id="city-airport">--</div><div class="city-metric-note">青马 / 北大屿山</div><div class="city-meter"><i id="city-airport-meter"></i></div></div>
-                </div>
+                <div class="city-journey-grid" id="city-journey-grid"><div class="city-card-caption">正在读取官方行车时间…</div></div>
                 <div class="city-source">实时交通消息与行车时间 <span id="city-journey-updated">等待数据</span></div>
             </article>
             <article class="city-card">
@@ -414,7 +432,13 @@
                 <div class="city-rail-grid" id="city-rails"></div>
                 <div class="city-mtr-arrivals"><div class="city-mtr-controls"><select id="city-mtr-station" class="city-mtr-select" aria-label="港铁站点"></select><button class="city-button" id="city-mtr-nearby">附近站</button></div><div class="city-mini-list" id="city-mtr-arrivals">正在读取下一班列车…</div></div>
             </article>
-            <article class="city-card">
+            <article class="city-card" id="city-flights">
+                <div class="city-card-head"><div><div class="city-card-title" data-city-i18n="airportTitle">香港機場航班</div><div class="city-card-caption" data-city-i18n="airportCaption">即時抵達與離港資料</div></div><button type="button" class="city-refresh-btn material-icons" id="city-flights-refresh" title="刷新航班">refresh</button></div>
+                <div class="city-flight-grid"><div class="city-flight-stat"><strong id="city-flight-arrivals">--</strong><small data-city-i18n="arrivals">抵達</small></div><div class="city-flight-stat"><strong id="city-flight-departures">--</strong><small data-city-i18n="departures">離港</small></div></div>
+                <div class="city-flight-list" id="city-flight-list"><div class="city-card-caption">正在讀取即時航班資料…</div></div>
+                <div class="city-card-caption" id="city-flight-note">資料更新時間 --</div>
+            </article>
+            <article class="city-card city-initial-hidden">
                 <div class="city-card-head"><div><div class="city-card-title">出发时间</div><div class="city-card-caption">热门通道与机场路线</div></div><span class="city-live" id="city-journey-live">实时</span></div>
                 <div class="city-list" id="city-journeys"><div class="city-card-caption">正在读取运输署行车时间…</div></div>
             </article>
@@ -432,7 +456,7 @@
                 </div>
                 <div class="city-mini-list" id="city-bus-results"><div class="city-card-caption">输入路线后查询；允许定位后可寻找附近九巴站点。</div></div>
             </article>
-            <article class="city-card">
+            <article class="city-card city-initial-hidden">
                 <div class="city-card-head"><div><div class="city-card-title">空气与降雨</div><div class="city-card-caption">AQHI 空气质素健康指数 · 香港天文台逐小时雨量</div></div><span class="city-live" id="city-air-live">同步中</span></div>
                 <div class="city-two-col">
                     <div class="city-stat-box"><label id="city-aqhi-place">AQHI · 中环</label><strong id="city-aqhi">--</strong><div class="city-card-caption" id="city-aqhi-risk">读取中</div></div>
@@ -482,6 +506,7 @@
                     <div id="warning-info" style="color:#ff5252; font-weight:bold; margin-top:10px;"></div>
                     <div id="i-info" style="font-size:0.85rem; opacity:0.8; border-top:1px solid rgba(128,128,128,0.2); margin-top:10px; padding-top:10px;"></div>
                     <div id="home-rainfall" style="font-size:0.85rem; opacity:0.9; border-top:1px solid rgba(128,128,128,0.2); margin-top:10px; padding-top:10px;">降雨量：读取中…</div>
+                    <div id="home-aqhi-panel" style="font-size:.85rem; opacity:.9; border-top:1px solid rgba(128,128,128,.2); margin-top:10px; padding-top:10px;">空氣質素 AQHI：<strong id="city-aqhi">--</strong> · <span id="city-aqhi-place">中環</span><div id="city-aqhi-risk" style="font-size:.75rem; opacity:.7; margin-top:3px;">讀取中</div></div>
                 </div>
             </div>
 
@@ -510,6 +535,18 @@
             </div>
         </aside>
     </div>
+    <section id="city-finance">
+        <div class="city-finance-card">
+            <div class="city-finance-item"><div class="city-finance-label">港幣 / 人民幣</div><div class="city-finance-value" id="city-fx">HK$1 = ¥--</div><div class="city-finance-note" id="city-fx-note">匯率日期 --</div></div>
+            <div class="city-finance-item"><div class="city-finance-label">港幣 / 日圓</div><div class="city-finance-value" id="city-jpy">HK$1 = ¥--</div><div class="city-finance-note">即時參考匯率</div></div>
+            <div class="city-finance-item"><div class="city-finance-label">港幣 / 瑞士法郎</div><div class="city-finance-value" id="city-chf">HK$1 = CHF --</div><div class="city-finance-note">即時參考匯率</div></div>
+            <div class="city-finance-item"><div class="city-finance-label">恒生指數</div><div class="city-finance-value" id="city-hsi">--</div><div class="city-finance-note" id="city-hsi-note">市場數據讀取中</div></div>
+            <div class="city-finance-item"><div class="city-finance-label">美元 / 港幣</div><div class="city-finance-value" id="city-usd">US$1 = HK$--</div><div class="city-finance-note">即時參考匯率</div></div>
+        </div>
+    </section>
+    <section id="city-ticker">
+        <div class="city-ticker-card"><span class="city-ticker-label">CITY FEED</span><span class="city-ticker-window"><span class="city-ticker-track" id="city-ticker-track">正在匯集交通、新聞及市場資料…</span></span></div>
+    </section>
     <div class="content-layout">
     <div class="card-glass" id="photo-credit" style="
         grid-column: 1 / -1;
@@ -522,6 +559,7 @@
          <mdui-button-icon id="language-toggle-btn" class="city-language-btn" icon="translate" title="切换简繁中文" aria-label="切换简繁中文"></mdui-button-icon>
     </div>
 </div>
+    </div>
 
     <!-- 全屏模式 -->
     <div id="fullscreen-market">
@@ -3055,6 +3093,56 @@ function setBackgroundToCookie(value) {
                 cityLive('city-bus-live', 'offline', '離線');
             }
         }
+        async function cityLoadGmbStopAllEta(stopId) {
+            const results = document.getElementById('city-bus-results');
+            if (!results) return;
+            results.innerHTML = '<div class="city-card-caption">正在读取专线小巴站点所有路线到站时间…</div>';
+            try {
+                const stopRoutes = await fetch('https://data.etagmb.gov.hk/stop-route/' + encodeURIComponent(stopId), { cache:'no-store' }).then((response) => response.json());
+                const routes = [...new Map((stopRoutes.data || []).map((item) => [item.route_id, item])).values()];
+                const arrivals = await Promise.all(routes.slice(0, 18).map(async (stopRoute) => {
+                    try {
+                        const route = await fetch('https://data.etagmb.gov.hk/route/' + encodeURIComponent(stopRoute.route_id), { cache:'no-store' }).then((response) => response.json());
+                        const direction = route.data?.[0]?.directions?.find((item) => item.route_seq === stopRoute.route_seq) || route.data?.[0]?.directions?.[0];
+                        const eta = await fetch('https://data.etagmb.gov.hk/eta/stop/' + encodeURIComponent(stopId), { cache:'no-store' }).then((response) => response.json());
+                        const item = (eta.data || []).find((row) => row.route_id === stopRoute.route_id && row.route_seq === stopRoute.route_seq && row.stop_seq === stopRoute.stop_seq);
+                        const times = (item?.eta || []).slice(0, 3).map((row) => row.diff === 0 ? '即將到達' : row.diff + ' 分鐘');
+                        return `<div class="city-mini-row"><span><strong>${cityEsc(direction ? route.data[0].route_code : stopRoute.route_id)}</strong><small>專線小巴 · ${cityEsc(direction?.dest_tc || '')}</small></span><span class="city-chip">${cityEsc(times.join(' · ') || '暫無班次')}</span></div>`;
+                    } catch (error) { return ''; }
+                }));
+                const stop = routes[0];
+                results.innerHTML = `<div class="city-card-caption" style="margin:12px 0 7px">${cityEsc(stop?.name_tc || stopId)} · 專線小巴</div><div class="city-bus-line-list">${arrivals.filter(Boolean).join('') || '<div class="city-card-caption">目前沒有可顯示的即時班次。</div>'}</div>`;
+                cityLive('city-bus-live', 'online', '專線小巴已更新');
+            } catch (error) {
+                results.innerHTML = '<div class="city-card-caption">專線小巴站點資料暫時無法取得。</div>';
+                cityLive('city-bus-live', 'offline', '離線');
+            }
+        }
+        async function cityGetNearbyNlbStops(latitude, longitude) {
+            const routes = await fetch('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list', { cache:'no-store' }).then((response) => response.json());
+            const routeIds = [...new Set((routes.routes || []).map((route) => route.routeId))];
+            const groups = await Promise.all(routeIds.map(async (routeId) => {
+                try {
+                    const payload = await fetch('https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=' + encodeURIComponent(routeId), { cache:'no-store' }).then((response) => response.json());
+                    return (payload.stops || []).map((stop) => ({ ...stop, routeId }));
+                } catch (error) { return []; }
+            }));
+            return [...new Map(groups.flat().map((stop) => [stop.stopId, stop])).values()]
+                .map((stop) => ({ ...stop, operator:'NLB', distance:Math.hypot((Number(stop.latitude) - latitude) * 111, (Number(stop.longitude) - longitude) * 102) }))
+                .sort((a, b) => a.distance - b.distance)
+                .slice(0, 5);
+        }
+        async function cityGetNearbyGmbStops(latitude, longitude) {
+            const payload = await fetch('https://minibus.hk/api/stops/nearby?lat=' + encodeURIComponent(latitude) + '&lng=' + encodeURIComponent(longitude) + '&radius=1500', { cache:'no-store' }).then((response) => response.json());
+            return (payload.stops || []).slice(0, 5).map((stop) => ({
+                ...stop,
+                stop: String(stop.stop_id),
+                name_tc:stop.name_tc,
+                name_en:stop.name_en,
+                operator:'GMB',
+                distance:Number(stop.distance_km || 0)
+            }));
+        }
         const cityRenderBusSuggestionsBase = cityRenderBusSuggestions;
         cityRenderBusSuggestions = async function(query) {
             const box = document.getElementById('city-bus-suggestions');
@@ -3108,6 +3196,49 @@ function setBackgroundToCookie(value) {
                     cityLive('city-bus-live', 'online', '附近站點');
                 } catch (error) { cityFindNearbyBusDirectBase(); }
             }, () => cityFindNearbyBusDirectBase(), { enableHighAccuracy:false, timeout:8000, maximumAge:300000 });
+        };
+        const cityFindNearbyBusAllOperatorsBase = cityFindNearbyBusDirect;
+        cityFindNearbyBusDirect = function() {
+            const results = document.getElementById('city-bus-results');
+            if (!navigator.geolocation) return cityFindNearbyBusAllOperatorsBase();
+            results.innerHTML = '<div class="city-card-caption">正在定位並讀取九巴、城巴、大嶼山巴士及專線小巴…</div>';
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                try {
+                    const { latitude, longitude } = position.coords;
+                    const [kmb, ctb, nlb, gmb] = await Promise.all([
+                        cityGetKmbStopsFinal().then((rows) => rows.map((stop) => ({ ...stop, operator:'KMB', distance:Math.hypot((Number(stop.lat) - latitude) * 111, (Number(stop.long) - longitude) * 102) }))),
+                        fetch('data/ctb-stops.json', { cache:'no-store' }).then((response) => response.json()).then((payload) => (payload.data || []).map((stop) => ({ ...stop, operator:'CTB', distance:Math.hypot((Number(stop.lat) - latitude) * 111, (Number(stop.long) - longitude) * 102) }))),
+                        cityGetNearbyNlbStops(latitude, longitude),
+                        cityGetNearbyGmbStops(latitude, longitude)
+                    ]);
+                    const nearby = [...kmb, ...ctb, ...nlb, ...gmb]
+                        .sort((a, b) => a.distance - b.distance)
+                        .filter((stop, index, list) => index === list.findIndex((item) => item.operator === stop.operator && String(item.stop || item.stopId) === String(stop.stop || stop.stopId)))
+                        .slice(0, 12);
+                    results.innerHTML = nearby.map((stop) => {
+                        const stopId = stop.stop || stop.stopId;
+                        const name = stop.name_tc || stop.name_sc || stop.stopName_c || stop.name_en || stop.stopName_e || stopId;
+                        const company = stop.operator === 'CTB' ? '城巴' : stop.operator === 'NLB' ? '大嶼山巴士' : stop.operator === 'GMB' ? '專線小巴' : '九巴';
+                        return `<button class="city-mini-row" data-nearby-stop="${cityEsc(stopId)}" data-nearby-operator="${stop.operator}"><span><strong>${cityEsc(name)}</strong><small>${company} · ${(stop.distance * 1000).toFixed(0)} 米</small></span><span class="city-chip">查看到站</span></button>`;
+                    }).join('') || '<div class="city-card-caption">附近沒有可顯示的巴士站點。</div>';
+                    results.querySelectorAll('[data-nearby-stop]').forEach((button) => button.addEventListener('click', () => {
+                        const operator = button.dataset.nearbyOperator;
+                        const stopId = button.dataset.nearbyStop;
+                        if (operator === 'CTB') cityLoadCtbStopAllEta(stopId);
+                        else if (operator === 'GMB') cityLoadGmbStopAllEta(stopId);
+                        else if (operator === 'NLB') {
+                            const input = document.getElementById('city-bus-stop');
+                            input.value = button.querySelector('strong')?.textContent || stopId;
+                            input.dataset.stopId = stopId;
+                            input.dataset.operator = 'NLB';
+                            citySearchBus();
+                        } else cityLoadStopAllEta(stopId);
+                    }));
+                    cityLive('city-bus-live', 'online', '附近站點已更新');
+                } catch (error) {
+                    cityFindNearbyBusAllOperatorsBase();
+                }
+            }, () => cityFindNearbyBusAllOperatorsBase(), { enableHighAccuracy:false, timeout:10000, maximumAge:300000 });
         };
         updateCityNews = async function() {
             const card = document.getElementById('city-news');
@@ -3267,6 +3398,234 @@ function setBackgroundToCookie(value) {
             replacement.addEventListener('click', updateCityLocation);
         }
         cityAddRefreshButtons();
+        /*
+         * Final live-data adapters.  These are kept next to the bootstrap so
+         * the initial DOM remains stable while the older compatibility
+         * functions above can still serve as fallbacks.
+         */
+        const cityHKClock = () => new Date(new Date().toLocaleString('en-US', { timeZone:'Asia/Hong_Kong' }));
+        const cityHKDateIso = (date = new Date()) => {
+            const parts = new Intl.DateTimeFormat('en-CA', {
+                timeZone:'Asia/Hong_Kong', year:'numeric', month:'2-digit', day:'2-digit'
+            }).formatToParts(date);
+            const values = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+            return `${values.year}-${values.month}-${values.day}`;
+        };
+        const cityAddDays = (iso, amount) => {
+            const date = new Date(`${iso}T12:00:00+08:00`);
+            date.setDate(date.getDate() + amount);
+            return date.toISOString().slice(0, 10);
+        };
+        const cityAirportFlightTime = (date, time) => {
+            const match = String(time || '').match(/^(\d{1,2}):(\d{2})$/);
+            if (!match) return 0;
+            return new Date(`${date}T${String(match[1]).padStart(2, '0')}:${match[2]}:00+08:00`).getTime();
+        };
+        const cityAirportFetchDay = async (date, arrival) => {
+            const url = `https://www.hongkongairport.com/flightinfo-rest/rest/flights/past?date=${date}&lang=en&cargo=false&arrival=${arrival}`;
+            return cityProxyJson(url);
+        };
+        updateCityFlights = async function() {
+            const list = document.getElementById('city-flight-list');
+            if (!list) return;
+            try {
+                const today = cityHKDateIso();
+                const yesterday = cityAddDays(today, -1);
+                const [arrivalToday, arrivalYesterday, departureToday] = await Promise.all([
+                    cityAirportFetchDay(today, true),
+                    cityAirportFetchDay(yesterday, true),
+                    cityAirportFetchDay(today, false)
+                ]);
+                const now = Date.now();
+                const arrivals = [
+                    ...(arrivalToday.list || []).map((row) => ({ ...row, flightDate:arrivalToday.date || today })),
+                    ...(arrivalYesterday.list || []).map((row) => ({ ...row, flightDate:arrivalYesterday.date || yesterday }))
+                ];
+                const departures = (departureToday.list || []).map((row) => ({ ...row, flightDate:departureToday.date || today }));
+                const futureArrivals = arrivals
+                    .map((row) => ({ ...row, stamp:cityAirportFlightTime(row.flightDate, row.time) }))
+                    .filter((row) => row.stamp >= now - 30 * 60 * 1000)
+                    .sort((a, b) => a.stamp - b.stamp);
+                const futureDepartures = departures
+                    .map((row) => ({ ...row, stamp:cityAirportFlightTime(row.flightDate, row.time) }))
+                    .filter((row) => row.stamp >= now - 30 * 60 * 1000)
+                    .sort((a, b) => a.stamp - b.stamp);
+                document.getElementById('city-flight-arrivals').textContent = futureArrivals.length;
+                document.getElementById('city-flight-departures').textContent = futureDepartures.length;
+                const rows = [
+                    ...futureArrivals.slice(0, 4).map((row) => ({ ...row, direction:'Arrival', place:(row.origin || []).join(', ') })),
+                    ...futureDepartures.slice(0, 4).map((row) => ({ ...row, direction:'Departure', place:(row.destination || []).join(', ') }))
+                ].sort((a, b) => a.stamp - b.stamp);
+                list.innerHTML = rows.length ? rows.map((row) => `<div class="city-flight-row"><span><strong>${cityEsc(row.flight?.map((flight) => flight.no).join(' / ') || '--')}</strong><small>${cityEsc(row.direction)} · ${cityEsc(row.place || '--')} · ${cityEsc(row.time || '--')}</small></span><span class="city-flight-status">${cityEsc(row.status || '--')}</span></div>`).join('') : '<div class="city-card-caption">暫無未來航班資料</div>';
+                const updated = arrivalToday.lastUpdatedTime || departureToday.lastUpdatedTime;
+                document.getElementById('city-flight-note').textContent = updated
+                    ? `最後更新 ${new Date(updated).toLocaleTimeString('zh-HK', { hour:'2-digit', minute:'2-digit', hour12:false })}`
+                    : '最後更新 --';
+            } catch (error) {
+                list.innerHTML = '<div class="city-card-caption">航班資料暫時不可用</div>';
+                document.getElementById('city-flight-note').textContent = '航班資料暫時不可用';
+            }
+        };
+        const cityStatusLabel = (raw, lang) => {
+            const value = String(raw || '').trim();
+            const labels = lang === 'sc'
+                ? { fresh:'新发布', republished:'重新发布', completed:'已完结', ongoing:'进行中', traffic:'交通消息' }
+                : { fresh:'新發布', republished:'重新發布', completed:'已完結', ongoing:'進行中', traffic:'交通消息' };
+            if (value === '2') return labels.fresh;
+            if (value === '3') return labels.republished;
+            if (/completed|closed|ended|完結|完结/i.test(value)) return labels.completed;
+            if (/ongoing|active|進行|进行/i.test(value)) return labels.ongoing;
+            return value || labels.traffic;
+        };
+        updateCityNews = async function() {
+            const card = document.getElementById('city-news');
+            if (!card) return;
+            const lang = cityCurrentLanguage();
+            const sourceLabels = lang === 'sc'
+                ? { td:'运输署', rthk:'香港电台', empty:'目前没有特别交通消息', offline:'交通消息暂时无法取得' }
+                : { td:'運輸署', rthk:'香港電台', empty:'目前沒有特別交通消息', offline:'交通消息暫時無法取得' };
+            try {
+                const [tdResult, rthkResult] = await Promise.allSettled([cityXml(cityTrafficUrl()), cityRthkTrafficMessages()]);
+                const entries = [];
+                if (tdResult.status === 'fulfilled') {
+                    [...tdResult.value.getElementsByTagName('message')].forEach((node) => {
+                        const reference = cityText(node, 'ReferenceDate');
+                        const announcement = cityText(node, 'ANNOUNCEMENT_DATE');
+                        const timestamp = cityTrafficDate(reference) || Date.parse(announcement) || 0;
+                        entries.push({
+                            timestamp,
+                            time:reference || announcement.slice(11, 16),
+                            location:cityText(node, 'LOCATION_CN') || cityText(node, 'LOCATION_EN') || '',
+                            detail:cityText(node, 'ChinShort') || cityText(node, 'EngShort') || cityText(node, 'CONTENT_CN') || cityText(node, 'CONTENT_EN'),
+                            source:sourceLabels.td,
+                            status:cityStatusLabel(cityText(node, 'CurrentStatus') || cityText(node, 'INCIDENT_STATUS_CN') || cityText(node, 'INCIDENT_STATUS_EN'), lang),
+                            heading:cityText(node, 'IncidentRefNo') || (lang === 'sc' ? '交通消息' : '交通消息')
+                        });
+                    });
+                }
+                if (rthkResult.status === 'fulfilled') {
+                    rthkResult.value.forEach((item) => entries.push({
+                        ...item, source:sourceLabels.rthk, status:lang === 'sc' ? '交通消息' : '交通消息', heading:lang === 'sc' ? '交通消息' : '交通消息'
+                    }));
+                }
+                const unique = [...new Map(entries.map((item) => [item.source + '|' + item.timestamp + '|' + item.detail, item])).values()]
+                    .sort((a, b) => b.timestamp - a.timestamp).slice(0, 24);
+                card.innerHTML = unique.length ? unique.map((item) => `<div class="city-news-item"><div class="city-news-meta"><span>${cityEsc(item.source)} · ${cityEsc(item.time || '--:--')}</span><span class="city-news-badge">${cityEsc(item.status)}</span></div><strong>${cityEsc(item.heading)}</strong>　${cityEsc(item.detail)}</div>`).join('') : `<div class="city-card-caption">${sourceLabels.empty}</div>`;
+                cityLive('city-news-live', 'online', lang === 'sc' ? '在线' : '在線');
+            } catch (error) {
+                card.innerHTML = `<div class="city-card-caption">${sourceLabels.offline}</div>`;
+                cityLive('city-news-live', 'offline', lang === 'sc' ? '离线' : '離線');
+            }
+        };
+        const cityLoadGmbStopAllEtaFinal = async function(stopId, stopName = stopId) {
+            const results = document.getElementById('city-bus-results');
+            if (!results) return;
+            results.innerHTML = '<div class="city-card-caption">正在读取专线小巴到站时间…</div>';
+            try {
+                const [routesPayload, etaPayload] = await Promise.all([
+                    fetch(`https://data.etagmb.gov.hk/stop-route/${encodeURIComponent(stopId)}`, { cache:'no-store' }).then((response) => response.json()),
+                    fetch(`https://data.etagmb.gov.hk/eta/stop/${encodeURIComponent(stopId)}`, { cache:'no-store' }).then((response) => response.json())
+                ]);
+                const routeRows = routesPayload.data || [];
+                const etaMap = new Map((etaPayload.data || []).map((row) => [`${row.route_id}|${row.route_seq}|${row.stop_seq}`, row]));
+                const routeCache = new Map();
+                const rows = await Promise.all([...new Map(routeRows.map((row) => [`${row.route_id}|${row.route_seq}`, row])).values()].map(async (stopRoute) => {
+                    let route = routeCache.get(stopRoute.route_id);
+                    if (!route) {
+                        route = await fetch(`https://data.etagmb.gov.hk/route/${encodeURIComponent(stopRoute.route_id)}`, { cache:'no-store' }).then((response) => response.json());
+                        routeCache.set(stopRoute.route_id, route);
+                    }
+                    const root = route.data?.[0] || {};
+                    const direction = root.directions?.find((item) => item.route_seq === stopRoute.route_seq) || root.directions?.[0] || {};
+                    const eta = etaMap.get(`${stopRoute.route_id}|${stopRoute.route_seq}|${stopRoute.stop_seq}`);
+                    const times = (eta?.eta || []).slice(0, 3).map((item) => item.diff === 0 ? '即將到達' : `${item.diff} 分鐘`);
+                    return `<div class="city-mini-row"><span><strong>${cityEsc(root.route_code || stopRoute.route_id)}</strong><small>專線小巴 · ${cityEsc(direction.dest_tc || direction.dest_en || '')}</small></span><span class="city-chip">${cityEsc(times.join(' · ') || '暫無班次')}</span></div>`;
+                }));
+                results.innerHTML = `<div class="city-card-caption" style="margin:12px 0 7px">${cityEsc(stopName)} · 專線小巴</div><div class="city-bus-line-list">${rows.filter(Boolean).join('') || '<div class="city-card-caption">暫無可顯示的即時班次。</div>'}</div>`;
+                cityLive('city-bus-live', 'online', '專線小巴');
+            } catch (error) {
+                results.innerHTML = '<div class="city-card-caption">專線小巴資料暫時無法取得</div>';
+                cityLive('city-bus-live', 'offline', '離線');
+            }
+        };
+        const cityLoadNlbStopAllEtaFinal = async function(stop) {
+            const results = document.getElementById('city-bus-results');
+            if (!results) return;
+            results.innerHTML = '<div class="city-card-caption">正在读取大嶼山巴士到站时间…</div>';
+            try {
+                const routeIds = stop.routeIds || [stop.routeId];
+                const rows = (await Promise.all(routeIds.map(async (routeId) => {
+                    const data = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=estimatedArrivals&routeId=${encodeURIComponent(routeId)}&stopId=${encodeURIComponent(stop.stopId)}&language=tc`, { cache:'no-store' }).then((response) => response.json());
+                    const route = (await fetch('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list', { cache:'no-store' }).then((response) => response.json())).routes?.find((item) => String(item.routeId) === String(routeId));
+                    const eta = (data.estimatedArrivals || []).slice(0, 3).map((item) => cityBusEtaText(item.estimatedArrivalTime, '暫無班次'));
+                    return `<div class="city-mini-row"><span><strong>${cityEsc(route?.routeNo || routeId)}</strong><small>大嶼山巴士 · ${cityEsc(route?.routeName_c || '')}</small></span><span class="city-chip">${cityEsc(eta.join(' · ') || '暫無班次')}</span></div>`;
+                }))).join('');
+                results.innerHTML = `<div class="city-card-caption" style="margin:12px 0 7px">${cityEsc(stop.name_tc || stop.stopName_c || stop.stopId)} · 大嶼山巴士</div><div class="city-bus-line-list">${rows || '<div class="city-card-caption">暫無可顯示的即時班次。</div>'}</div>`;
+                cityLive('city-bus-live', 'online', '大嶼山巴士');
+            } catch (error) {
+                results.innerHTML = '<div class="city-card-caption">大嶼山巴士資料暫時無法取得</div>';
+                cityLive('city-bus-live', 'offline', '離線');
+            }
+        };
+        const cityGetNearbyNlbStopsFinal = async function(latitude, longitude) {
+            const routePayload = await fetch('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list', { cache:'no-store' }).then((response) => response.json());
+            const routeIds = [...new Set((routePayload.routes || []).map((route) => String(route.routeId)))];
+            const groups = await Promise.all(routeIds.map(async (routeId) => {
+                try {
+                    const payload = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${encodeURIComponent(routeId)}`, { cache:'no-store' }).then((response) => response.json());
+                    return (payload.stops || []).map((stop) => ({ ...stop, routeId }));
+                } catch (error) { return []; }
+            }));
+            const byStop = new Map();
+            groups.flat().forEach((stop) => {
+                const key = String(stop.stopId);
+                const existing = byStop.get(key);
+                if (existing) existing.routeIds = [...new Set([...existing.routeIds, stop.routeId])];
+                else byStop.set(key, { ...stop, routeIds:[stop.routeId] });
+            });
+            return [...byStop.values()].map((stop) => ({
+                ...stop, operator:'NLB',
+                distance:Math.hypot((Number(stop.latitude) - latitude) * 111, (Number(stop.longitude) - longitude) * 102)
+            })).sort((a, b) => a.distance - b.distance).slice(0, 6);
+        };
+        cityLoadGmbStopAllEta = cityLoadGmbStopAllEtaFinal;
+        cityGetNearbyNlbStops = cityGetNearbyNlbStopsFinal;
+        cityFindNearbyBusDirect = function() {
+            const results = document.getElementById('city-bus-results');
+            if (!navigator.geolocation) return cityLoadDefaultBusStop();
+            results.innerHTML = '<div class="city-card-caption">正在定位附近的九巴、城巴、大嶼山巴士及專線小巴站點…</div>';
+            navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+                try {
+                    const { latitude, longitude } = coords;
+                    const [kmb, ctb, nlb, gmb] = await Promise.all([
+                        cityGetKmbStopsFinal().then((rows) => rows.map((stop) => ({ ...stop, operator:'KMB', distance:Math.hypot((Number(stop.lat)-latitude)*111, (Number(stop.long)-longitude)*102) }))),
+                        fetch('data/ctb-stops.json', { cache:'no-store' }).then((response) => response.json()).then((payload) => (payload.data || []).map((stop) => ({ ...stop, operator:'CTB', distance:Math.hypot((Number(stop.lat)-latitude)*111, (Number(stop.long)-longitude)*102) }))),
+                        cityGetNearbyNlbStopsFinal(latitude, longitude).catch(() => []),
+                        cityGetNearbyGmbStops(latitude, longitude).catch(() => [])
+                    ]);
+                    const nearby = [...kmb, ...ctb, ...nlb, ...gmb].sort((a, b) => a.distance - b.distance).slice(0, 16);
+                    const operatorName = { KMB:'九巴', CTB:'城巴', NLB:'大嶼山巴士', GMB:'專線小巴' };
+                    results.innerHTML = nearby.map((stop) => {
+                        const id = stop.stop || stop.stopId;
+                        const name = stop.name_tc || stop.stopName_c || stop.name_en || stop.stopName_e || id;
+                        return `<button class="city-mini-row" data-nearby-stop="${cityEsc(id)}" data-nearby-operator="${stop.operator}" data-route-ids="${cityEsc((stop.routeIds || [stop.routeId || '']).join(','))}"><span><strong>${cityEsc(name)}</strong><small>${operatorName[stop.operator] || stop.operator} · ${(stop.distance*1000).toFixed(0)} 米</small></span><span class="city-chip">查看到站</span></button>`;
+                    }).join('') || '<div class="city-card-caption">附近沒有可顯示的巴士站。</div>';
+                    results.querySelectorAll('[data-nearby-stop]').forEach((button) => button.addEventListener('click', () => {
+                        const operator = button.dataset.nearbyOperator;
+                        if (operator === 'GMB') return cityLoadGmbStopAllEtaFinal(button.dataset.nearbyStop, button.querySelector('strong')?.textContent);
+                        if (operator === 'NLB') return cityLoadNlbStopAllEtaFinal({ stopId:button.dataset.nearbyStop, routeIds:button.dataset.routeIds.split(',').filter(Boolean), stopName_c:button.querySelector('strong')?.textContent });
+                        if (operator === 'CTB') return cityLoadCtbStopAllEta(button.dataset.nearbyStop);
+                        return cityLoadStopAllEta(button.dataset.nearbyStop);
+                    }));
+                    cityLive('city-bus-live', 'online', '附近站點');
+                } catch (error) {
+                    cityLoadDefaultBusStop();
+                }
+            }, () => cityLoadDefaultBusStop(), { enableHighAccuracy:false, timeout:10000, maximumAge:300000 });
+        };
+        const cityFlightRefresh = document.getElementById('city-flights-refresh');
+        if (cityFlightRefresh) cityFlightRefresh.onclick = updateCityFlights;
+        setInterval(updateCityFlights, 60000);
         updateCityFlights();
         updateLiveWeather();
         fetchData(warningApiUrl, 'warning-info', formatWarningData);
