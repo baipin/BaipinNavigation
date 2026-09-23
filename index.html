@@ -324,6 +324,8 @@
         .city-boundary-legend { grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:8px 14px; padding:0 2px 2px; color:rgba(255,255,255,.68); font-size:.68rem; }
         .city-boundary-legend span { white-space:nowrap; }
         .city-mtr-arrivals { margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,.12); }
+        .city-mtr-message { margin:0 0 10px; padding:9px 11px; border-left:3px solid #f5c66b; border-radius:8px; background:rgba(245,198,107,.12); color:#fff; font-size:.76rem; line-height:1.45; }
+        .city-mtr-message[hidden] { display:none; }
         .city-mtr-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
         .city-mtr-select { flex:1; min-width:0; padding:8px; border-radius:8px; border:1px solid rgba(255,255,255,.2); background:rgba(0,0,0,.22); color:#fff; }
         .city-mini-row small { display:block; color:rgba(255,255,255,.62); margin-top:3px; }
@@ -352,11 +354,14 @@
         .city-flight-stat { padding:10px; border-radius:10px; background:rgba(128,128,128,.1); }
         .city-flight-stat strong { display:block; font:500 1.45rem 'Roboto Mono',monospace; }
         .city-flight-stat small { color:rgba(255,255,255,.65); }
-        .city-flight-list { display:grid; gap:7px; max-height:260px; overflow:auto; }
-        .city-flight-row { display:flex; justify-content:space-between; gap:10px; padding:9px 10px; border-radius:9px; background:rgba(128,128,128,.1); font-size:.76rem; }
+        .city-flight-columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; min-width:0; }
+        .city-flight-column { min-width:0; }
+        .city-flight-column-title { padding:6px 8px; border-bottom:1px solid rgba(255,255,255,.16); color:rgba(255,255,255,.72); font-size:.68rem; font-weight:700; letter-spacing:.04em; }
+        .city-flight-list { display:grid; gap:4px; max-height:360px; overflow:auto; padding-top:4px; }
+        .city-flight-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px; align-items:center; min-height:42px; padding:6px 7px; border-radius:6px; background:rgba(128,128,128,.1); font-size:.68rem; line-height:1.25; }
         .city-flight-row span:first-child { min-width:0; }
-        .city-flight-row small { display:block; color:rgba(255,255,255,.6); margin-top:3px; }
-        .city-flight-status { color:#65d4be; white-space:nowrap; }
+        .city-flight-row small { display:block; color:rgba(255,255,255,.6); margin-top:2px; font-size:.61rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .city-flight-status { color:#65d4be; max-width:90px; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:.61rem; }
         .city-language-btn { margin-left:8px; color:inherit; vertical-align:middle; }
         .page-flow { display:flex; flex-direction:column; align-items:stretch; width:100%; min-width:0; overflow:visible; }
         .page-flow > .content-layout,
@@ -385,7 +390,7 @@
         @keyframes cityTicker { from { transform:translateX(0); } to { transform:translateX(-100%); } }
         @media (max-width:1100px) { .city-journey-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
         @media (max-width:900px) { .city-dashboard-grid { column-count:1; } .city-journey-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .city-finance-card{grid-template-columns:repeat(2,minmax(0,1fr))}.city-finance-item:nth-child(2n){border-right:0} }
-        @media (max-width:600px) { .city-dashboard { padding:0 12px; width:100%; } .city-metrics, .city-journey-grid, .city-boundary-list { grid-template-columns:1fr; } .city-metric { min-height:96px; } .city-rail-grid { grid-template-columns:1fr; } .city-two-col { grid-template-columns:1fr; } .city-card { padding:16px; } .city-finance-value { white-space:normal; font-size:1.15rem; } .city-input { min-width:0; width:100%; } .city-form .city-button { flex:1 1 40%; } .city-bus-line-list { grid-template-columns:1fr; } #city-finance,#city-ticker{padding:0 12px}.city-finance-card{grid-template-columns:1fr}.city-finance-item{border-right:0;border-bottom:1px solid rgba(255,255,255,.12)}.city-finance-item:last-child{border-bottom:0} }
+        @media (max-width:600px) { .city-dashboard { padding:0 12px; width:100%; } .city-metrics, .city-journey-grid, .city-boundary-list { grid-template-columns:1fr; } .city-metric { min-height:96px; } .city-rail-grid { grid-template-columns:1fr; } .city-two-col { grid-template-columns:1fr; } .city-flight-columns { grid-template-columns:1fr; } .city-flight-list { max-height:240px; } .city-card { padding:16px; } .city-finance-value { white-space:normal; font-size:1.15rem; } .city-input { min-width:0; width:100%; } .city-form .city-button { flex:1 1 40%; } .city-bus-line-list { grid-template-columns:1fr; } #city-finance,#city-ticker{padding:0 12px}.city-finance-card{grid-template-columns:1fr}.city-finance-item{border-right:0;border-bottom:1px solid rgba(255,255,255,.12)}.city-finance-item:last-child{border-bottom:0} }
     </style>
 </head>
 <body class="mdui-theme-auto">
@@ -439,7 +444,10 @@
             <article class="city-card" id="city-flights">
                 <div class="city-card-head"><div><div class="city-card-title" data-city-i18n="airportTitle">香港機場航班</div><div class="city-card-caption" data-city-i18n="airportCaption">即時抵達與離港資料</div></div><button type="button" class="city-refresh-btn material-icons" id="city-flights-refresh" title="刷新航班">refresh</button></div>
                 <div class="city-flight-grid"><div class="city-flight-stat"><strong id="city-flight-arrivals">--</strong><small data-city-i18n="arrivals">抵達</small></div><div class="city-flight-stat"><strong id="city-flight-departures">--</strong><small data-city-i18n="departures">離港</small></div></div>
-                <div class="city-flight-list" id="city-flight-list"><div class="city-card-caption">正在讀取即時航班資料…</div></div>
+                <div class="city-flight-columns">
+                    <div class="city-flight-column"><div class="city-flight-column-title">抵達 ARRIVALS</div><div class="city-flight-list" id="city-flight-arrivals-list"><div class="city-card-caption">正在讀取…</div></div></div>
+                    <div class="city-flight-column"><div class="city-flight-column-title">出發 DEPARTURES</div><div class="city-flight-list" id="city-flight-departures-list"><div class="city-card-caption">正在讀取…</div></div></div>
+                </div>
                 <div class="city-card-caption" id="city-flight-note">資料更新時間 --</div>
             </article>
             <article class="city-card city-initial-hidden">
@@ -1711,9 +1719,32 @@ function setBackgroundToCookie(value) {
         const cityMtrStationNames = Object.fromEntries(cityMtrStations.map(([, code, name]) => [code, name]));
         async function updateCityMtrArrivals(line, station) {
             const wrap = document.getElementById('city-mtr-arrivals');
+            let messageEl = document.getElementById('city-mtr-message');
+            if (!messageEl && wrap) {
+                messageEl = document.createElement('div');
+                messageEl.id = 'city-mtr-message';
+                messageEl.className = 'city-mtr-message';
+                messageEl.hidden = true;
+                wrap.parentElement.insertBefore(messageEl, wrap);
+            }
+            if (messageEl) {
+                messageEl.hidden = true;
+                messageEl.textContent = '';
+            }
             try {
                 const payload = await (await fetch(cityApi.mtr + '?line=' + line + '&sta=' + station + '&lang=TC&_=' + Date.now(), { cache:'no-store' })).json();
                 const data = payload.data?.[line + '-' + station] || {};
+                const rawMessage = payload.message ?? data.message ?? payload.data?.message;
+                const messageValue = Array.isArray(rawMessage)
+                    ? rawMessage.join(' ')
+                    : rawMessage && typeof rawMessage === 'object'
+                        ? (rawMessage.tc || rawMessage.zh_tw || rawMessage.zh || rawMessage.en || Object.values(rawMessage).join(' '))
+                        : rawMessage;
+                const visibleMessage = String(messageValue || '').trim();
+                if (messageEl && visibleMessage && !/^successful$/i.test(visibleMessage)) {
+                    messageEl.textContent = String(messageValue).trim();
+                    messageEl.hidden = false;
+                }
                 const trains = [...(data.UP || []), ...(data.DOWN || [])].slice(0, 6);
                 wrap.innerHTML = trains.length ? trains.map((train) => {
                     const destination = train.dest || train.DEST || '';
@@ -3511,23 +3542,40 @@ function setBackgroundToCookie(value) {
             if (!parsed.arrivals.length && !parsed.departures.length) throw new Error('FlightAware flight tables are empty');
             return cityFlightAwareWriteCache(parsed);
         };
+        const cityPrepareFlightColumns = () => {
+            const oldList = document.getElementById('city-flight-list');
+            if (!oldList || document.getElementById('city-flight-arrivals-list')) return;
+            const columns = document.createElement('div');
+            columns.className = 'city-flight-columns';
+            columns.innerHTML = `
+                <div class="city-flight-column">
+                    <div class="city-flight-column-title">抵達 ARRIVALS</div>
+                    <div class="city-flight-list" id="city-flight-arrivals-list"></div>
+                </div>
+                <div class="city-flight-column">
+                    <div class="city-flight-column-title">出發 DEPARTURES</div>
+                    <div class="city-flight-list" id="city-flight-departures-list"></div>
+                </div>`;
+            oldList.replaceWith(columns);
+        };
         updateCityFlights = async function() {
-            const list = document.getElementById('city-flight-list');
-            if (!list) return;
+            cityPrepareFlightColumns();
+            const arrivalsList = document.getElementById('city-flight-arrivals-list');
+            const departuresList = document.getElementById('city-flight-departures-list');
+            if (!arrivalsList || !departuresList) return;
             try {
                 const data = await cityFlightAwareFetch();
                 const arrivals = data.arrivals || [];
                 const departures = data.departures || [];
                 document.getElementById('city-flight-arrivals').textContent = arrivals.length;
                 document.getElementById('city-flight-departures').textContent = departures.length;
-                const rows = [
-                    ...arrivals.slice(0, 4),
-                    ...departures.slice(0, 4)
-                ];
-                list.innerHTML = rows.length ? rows.map((row) => `<div class="city-flight-row"><span><strong>${cityEsc(row.no || '--')}</strong><small>${cityEsc(row.direction === 'arrival' ? '抵達' : '離港')} · ${cityEsc(row.place || '--')} · ${cityEsc(row.time || '--')}</small></span><span class="city-flight-status">${cityEsc(row.status || '--')}</span></div>`).join('') : '<div class="city-card-caption">暫無航班資料</div>';
+                const renderFlight = (row) => `<div class="city-flight-row"><span><strong>${cityEsc(row.no || '--')}</strong><small>${cityEsc(row.type || '--')} · ${cityEsc(row.place || '--')} · ${cityEsc(row.time || '--')}</small></span><span class="city-flight-status">${cityEsc(row.status || '--')}</span></div>`;
+                arrivalsList.innerHTML = arrivals.length ? arrivals.slice(0, 12).map(renderFlight).join('') : '<div class="city-card-caption">暫無抵達航班</div>';
+                departuresList.innerHTML = departures.length ? departures.slice(0, 12).map(renderFlight).join('') : '<div class="city-card-caption">暫無出發航班</div>';
                 document.getElementById('city-flight-note').textContent = `FlightAware · ${new Date(data.fetchedAt).toLocaleTimeString('zh-HK', { hour:'2-digit', minute:'2-digit', hour12:false })} · 30 分鐘快取`;
             } catch (error) {
-                list.innerHTML = '<div class="city-card-caption">航班資料暫時不可用</div>';
+                arrivalsList.innerHTML = '<div class="city-card-caption">航班資料暫時不可用</div>';
+                departuresList.innerHTML = '<div class="city-card-caption">航班資料暫時不可用</div>';
                 document.getElementById('city-flight-note').textContent = '航班資料暫時不可用';
             }
         };
