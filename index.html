@@ -471,7 +471,7 @@
             <article class="city-card city-initial-hidden">
                 <div class="city-card-head"><div><div class="city-card-title">空气与降雨</div><div class="city-card-caption">AQHI 空气质素健康指数 · 香港天文台逐小时雨量</div></div><span class="city-live" id="city-air-live">同步中</span></div>
                 <div class="city-two-col">
-                    <div class="city-stat-box"><label id="city-aqhi-place">AQHI · 中环</label><strong id="city-aqhi">--</strong><div class="city-card-caption" id="city-aqhi-risk">读取中</div></div>
+                    <div class="city-stat-box"><label id="city-aqhi-legacy-place">AQHI · 中环</label><strong id="city-aqhi-legacy">--</strong><div class="city-card-caption" id="city-aqhi-legacy-risk">读取中</div></div>
                     <div class="city-stat-box"><label id="city-rain-place">附近雨量</label><strong id="city-rain">--</strong><div class="city-card-caption" id="city-rain-time">读取中</div></div>
                 </div>
                 <div class="city-location" id="city-location">可开启定位，以选择最近的雨量站；未授权时使用中环作为默认参考。</div>
@@ -2587,13 +2587,19 @@ function setBackgroundToCookie(value) {
         };
         updateCityAir = async function() {
             try {
+                const cityJsonWithFallback = async (url) => {
+                    try {
+                        const response = await fetch(url, { cache:'no-store' });
+                        if (response.ok) return response.json();
+                    } catch (error) {}
+                    return cityProxyJson(url);
+                };
                 const [aqhiResponse, weatherResponse] = await Promise.all([
-                    fetch('https://dashboard.data.gov.hk/api/aqhi-individual?format=json&_=' + Date.now(), { cache:'no-store' }),
-                    fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc&_=' + Date.now(), { cache:'no-store' })
+                    cityJsonWithFallback('https://dashboard.data.gov.hk/api/aqhi-individual?format=json&_=' + Date.now()),
+                    cityJsonWithFallback('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc&_=' + Date.now())
                 ]);
-                if (!aqhiResponse.ok || !weatherResponse.ok) throw new Error('HKO weather data unavailable');
-                const aqhi = await aqhiResponse.json();
-                const weather = await weatherResponse.json();
+                const aqhi = Array.isArray(aqhiResponse) ? aqhiResponse : (aqhiResponse?.data || []);
+                const weather = weatherResponse || {};
                 const central = aqhi.find((item) => /Central|中環|中环/i.test(item.station || '')) || aqhi[0];
                 const aqhiValue = Number(central?.aqhi);
                 const aqhiEl = document.getElementById('city-aqhi');
@@ -3742,6 +3748,33 @@ function setBackgroundToCookie(value) {
                 }
             }, () => cityLoadDefaultBusStop(), { enableHighAccuracy:false, timeout:10000, maximumAge:300000 });
         };
+        const cityNewsNetworkUpdate = updateCityNews;
+        const cityNewsCache = { fetchedAt:0, language:'', html:'' };
+        updateCityNews = async function(force = false) {
+            const card = document.getElementById('city-news');
+            const language = cityCurrentLanguage();
+            if (!force && card && cityNewsCache.html && cityNewsCache.language === language && Date.now() - cityNewsCache.fetchedAt < 60000) {
+                card.innerHTML = cityNewsCache.html;
+                cityLive('city-news-live', 'online', language === 'sc' ? '在线' : '在線');
+                return;
+            }
+            await cityNewsNetworkUpdate();
+            if (card && !card.textContent.includes('暫時無法') && !card.textContent.includes('暂时无法')) {
+                cityNewsCache.fetchedAt = Date.now();
+                cityNewsCache.language = language;
+                cityNewsCache.html = card.innerHTML;
+            }
+        };
+        const cityNewsCard = document.getElementById('city-news')?.closest('article');
+        const cityNewsRefresh = cityNewsCard?.querySelector('.city-refresh-btn');
+        if (cityNewsRefresh) {
+            const replacement = cityNewsRefresh.cloneNode(true);
+            cityNewsRefresh.replaceWith(replacement);
+            replacement.addEventListener('click', async () => {
+                replacement.classList.add('is-loading');
+                try { await updateCityNews(true); } finally { replacement.classList.remove('is-loading'); }
+            });
+        }
         const cityFlightRefresh = document.getElementById('city-flights-refresh');
         if (cityFlightRefresh) cityFlightRefresh.onclick = () => {
             cityFlightAwareClearCache();
