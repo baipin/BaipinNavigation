@@ -282,6 +282,7 @@
         .city-rail-status { font-size:.66rem; color:rgba(255,255,255,.66); text-align:right; }
         .city-rail-status.good { color:#65d4be; opacity:1; }
         .city-rail-status.warn { color:#f5c66b; opacity:1; }
+        .city-rail-status.offline { color:#aeb8b6; opacity:1; }
         .city-source { display:flex; justify-content:space-between; gap:12px; margin-top:12px; font-size:.68rem; color:rgba(255,255,255,.64); }
         .city-form { display:flex; gap:8px; flex-wrap:wrap; }
         .city-input { flex:1; min-width:120px; border:1px solid rgba(255,255,255,.2); border-radius:9px; background:rgba(0,0,0,.18); color:#fff; padding:10px 11px; outline:none; }
@@ -443,7 +444,6 @@
             </article>
             <article class="city-card" id="city-flights">
                 <div class="city-card-head"><div><div class="city-card-title" data-city-i18n="airportTitle">香港機場航班</div><div class="city-card-caption" data-city-i18n="airportCaption">即時抵達與離港資料</div></div><button type="button" class="city-refresh-btn material-icons" id="city-flights-refresh" title="刷新航班">refresh</button></div>
-                <div class="city-flight-grid"><div class="city-flight-stat"><strong id="city-flight-arrivals">--</strong><small data-city-i18n="arrivals">抵達</small></div><div class="city-flight-stat"><strong id="city-flight-departures">--</strong><small data-city-i18n="departures">離港</small></div></div>
                 <div class="city-flight-columns">
                     <div class="city-flight-column"><div class="city-flight-column-title">抵達 ARRIVALS</div><div class="city-flight-list" id="city-flight-arrivals-list"><div class="city-card-caption">正在讀取…</div></div></div>
                     <div class="city-flight-column"><div class="city-flight-column-title">出發 DEPARTURES</div><div class="city-flight-list" id="city-flight-departures-list"><div class="city-card-caption">正在讀取…</div></div></div>
@@ -1698,11 +1698,11 @@ function setBackgroundToCookie(value) {
             }
         }
             const cityRailLines = [
-            ['AEL', 'HOK', '机场快线', '#5c8fd6'], ['TCL', 'HOK', '东涌线', '#f68b32'], ['TKL', 'TIK', '将军澳线', '#7d4a9e'],
-            ['TML', 'HUH', '屯马线', '#9b3e8e'], ['TWL', 'CEN', '荃湾线', '#e22d39'], ['KTL', 'YAT', '观塘线', '#27a9df'],
-            ['ISL', 'ADM', '港岛线', '#1a9a62'], ['SIL', 'SOH', '南港岛线', '#b7c834'], ['EAL', 'ADM', '东铁线', '#5c2a86'], ['DI', 'SUN', '迪士尼线', '#ee6a9c']
+            ['AEL', 'HOK', '机场快线', '#1c7670'], ['TCL', 'HOK', '东涌线', '#fe7f1d'], ['TKL', 'TIK', '将军澳线', '#6b208b'],
+            ['TML', 'HUH', '屯马线', '#9a3b26'], ['TWL', 'CEN', '荃湾线', '#ff0000'], ['KTL', 'YAT', '观塘线', '#1a9431'],
+            ['ISL', 'ADM', '港岛线', '#0860a8'], ['SIL', 'SOH', '南港岛线', '#b5bd00'], ['EAL', 'ADM', '东铁线', '#5eb6e4'], ['DI', 'SUN', '迪士尼线', '#f550a6']
         ];
-        cityRailLines[cityRailLines.length - 1] = ['DRL', 'DIS', '迪士尼线', '#ee6a9c'];
+        cityRailLines[cityRailLines.length - 1] = ['DRL', 'DIS', '迪士尼线', '#f550a6'];
         const cityMtrLineNames = { AEL:'機場快線', TCL:'東涌線', TWL:'荃灣線', KTL:'觀塘線', ISL:'港島線', EAL:'東鐵線', TML:'屯馬線', TKL:'將軍澳線', SIL:'南港島線', DRL:'迪士尼線' };
         const cityMtrStations = [
             ...'HOK:香港,KOW:九龍,TSY:青衣,AIR:機場,AWE:博覽館'.split(',').map(x=>['AEL',...x.split(':')]),
@@ -1773,17 +1773,24 @@ function setBackgroundToCookie(value) {
         }
         async function updateCityRails() {
             const wrap = document.getElementById('city-rails');
-            wrap.innerHTML = cityRailLines.map(([code, station, name, colour]) => `<a class="city-rail" href="https://www.mtr.com.hk/ch/customer/services/service_status_all.php" target="_blank" rel="noreferrer"><span class="city-rail-color" style="background:${colour}"></span><span class="city-rail-name">${name}</span><span class="city-rail-status" data-city-line="${code}">读取中</span></a>`).join('');
+            wrap.innerHTML = cityRailLines.map(([code, station, name, colour]) => `<a class="city-rail" href="https://www.mtr.com.hk/ch/customer/main/index.html" target="_blank" rel="noreferrer"><span class="city-rail-color" style="background:${colour}"></span><span class="city-rail-name">${name}</span><span class="city-rail-status" data-city-line="${code}">读取中</span></a>`).join('');
             const results = await Promise.all(cityRailLines.map(async ([code, station]) => {
                 try {
                     const response = await fetch(cityApi.mtr + '?line=' + code + '&sta=' + station + '&_=' + Date.now(), { cache: 'no-store' });
-                    const payload = await response.json();
-                    return payload.status === 1 ? '正常' : code === 'DI' ? '非营运' : '留意';
-                } catch (error) { return '未连接'; }
+                    let payload = await response.json();
+                    if (code === 'AEL' && !(payload.status === 1 && payload.data?.[code + '-' + station])) {
+                        const fallbackResponse = await fetch(cityApi.mtr + '?line=AEL&sta=KOW&_=' + Date.now(), { cache: 'no-store' });
+                        if (fallbackResponse.ok) payload = await fallbackResponse.json();
+                    }
+                    if (payload.status === 1 && payload.data?.[code + '-' + station]) return '正常';
+                    if (code === 'AEL' && payload.status === 1 && payload.data?.['AEL-KOW']) return '正常';
+                    if (code === 'DRL') return '非营运';
+                    return '暂无资料';
+                } catch (error) { return '暂无资料'; }
             }));
             document.querySelectorAll('[data-city-line]').forEach((el, index) => {
                 el.textContent = results[index];
-                el.className = 'city-rail-status ' + (results[index] === '正常' ? 'good' : 'warn');
+                el.className = 'city-rail-status ' + (results[index] === '正常' ? 'good' : results[index] === '暂无资料' ? 'offline' : 'warn');
             });
             cityLive('city-rail-live', 'online', '在线');
         }
@@ -2847,7 +2854,7 @@ function setBackgroundToCookie(value) {
             const card = document.createElement('article');
             card.className = 'city-card';
             card.id = 'city-flights';
-            card.innerHTML = `<div class="city-card-head"><div><div class="city-card-title" data-city-i18n="airportTitle">香港機場航班</div><div class="city-card-caption" data-city-i18n="airportCaption">航班抵達與離港資料</div></div><button type="button" class="city-refresh-btn material-icons" id="city-flights-refresh" title="刷新航班">refresh</button></div><div class="city-flight-grid"><div class="city-flight-stat"><strong id="city-flight-arrivals">--</strong><small data-city-i18n="arrivals">抵達</small></div><div class="city-flight-stat"><strong id="city-flight-departures">--</strong><small data-city-i18n="departures">離港</small></div></div><div class="city-flight-list" id="city-flight-list"><div class="city-card-caption">正在读取航班资料…</div></div><div class="city-card-caption" id="city-flight-note">資料日期 --</div>`;
+            card.innerHTML = `<div class="city-card-head"><div><div class="city-card-title" data-city-i18n="airportTitle">香港機場航班</div><div class="city-card-caption" data-city-i18n="airportCaption">航班抵達與離港資料</div></div><button type="button" class="city-refresh-btn material-icons" id="city-flights-refresh" title="刷新航班">refresh</button></div><div class="city-flight-columns"><div class="city-flight-column"><div class="city-flight-column-title">抵達 ARRIVALS</div><div class="city-flight-list" id="city-flight-arrivals-list"></div></div><div class="city-flight-column"><div class="city-flight-column-title">出發 DEPARTURES</div><div class="city-flight-list" id="city-flight-departures-list"></div></div></div><div class="city-card-caption" id="city-flight-note">資料日期 --</div>`;
             const rail = [...grid.querySelectorAll('article')].find((article) => article.querySelector('#city-rails'));
             (rail || grid.lastElementChild)?.after(card);
             document.getElementById('city-flights-refresh').addEventListener('click', updateCityFlights);
@@ -3482,14 +3489,15 @@ function setBackgroundToCookie(value) {
                     if (cells.length < 6 || /^(Ident|Type)$/i.test(cells[0])) return null;
                     const place = cells[2] || '--';
                     const scheduled = direction === 'arrival' ? cells[5] : cells[3];
-                    const actual = direction === 'arrival' ? cells[5] : cells[3];
+                    const actual = scheduled;
+                    const estimated = /^_.*_$/.test(scheduled);
                     return {
                         direction,
                         no:cells[0],
                         type:cells[1],
                         place,
-                        time:actual || scheduled || '--',
-                        status:scheduled && scheduled !== actual ? `ETA ${scheduled}` : (direction === 'arrival' ? 'Arrival' : 'Departure')
+                        time:(actual || scheduled || '--').replace(/^_(.*)_$/, '$1'),
+                        status:estimated ? '預計' : ''
                     };
                 })
                 .filter(Boolean);
@@ -3567,8 +3575,6 @@ function setBackgroundToCookie(value) {
                 const data = await cityFlightAwareFetch();
                 const arrivals = data.arrivals || [];
                 const departures = data.departures || [];
-                document.getElementById('city-flight-arrivals').textContent = arrivals.length;
-                document.getElementById('city-flight-departures').textContent = departures.length;
                 const renderFlight = (row) => `<div class="city-flight-row"><span><strong>${cityEsc(row.no || '--')}</strong><small>${cityEsc(row.type || '--')} · ${cityEsc(row.place || '--')} · ${cityEsc(row.time || '--')}</small></span><span class="city-flight-status">${cityEsc(row.status || '--')}</span></div>`;
                 arrivalsList.innerHTML = arrivals.length ? arrivals.slice(0, 12).map(renderFlight).join('') : '<div class="city-card-caption">暫無抵達航班</div>';
                 departuresList.innerHTML = departures.length ? departures.slice(0, 12).map(renderFlight).join('') : '<div class="city-card-caption">暫無出發航班</div>';
