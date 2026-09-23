@@ -1622,7 +1622,7 @@ function setBackgroundToCookie(value) {
                         const location = cityText(node, 'LOCATION_CN') || cityText(node, 'LOCATION_EN') || '香港道路';
                         const heading = cityText(node, 'IncidentRefNo') || '运输署特别交通消息';
                         const rawStatus = cityText(node, 'CurrentStatus') || cityText(node, 'INCIDENT_STATUS_CN') || cityText(node, 'INCIDENT_STATUS_EN');
-                    const state = rawStatus === '2' ? '已完结' : rawStatus === '3' ? '进行中' : rawStatus;
+                    const state = rawStatus === '2' ? '新发布' : rawStatus === '3' ? '重新发布' : rawStatus;
                     const referenceDate = cityText(node, 'ReferenceDate');
                     const time = referenceDate ? referenceDate.replace(/\s+/g, ' ').trim() : cityText(node, 'ANNOUNCEMENT_DATE').slice(11, 16);
                     return `<div class="city-news-item"><div class="city-news-meta"><span>${cityEsc(time)} · ${cityEsc(location)}</span><span class="city-news-badge">${cityEsc(state || '交通消息')}</span></div><strong>${cityEsc(heading)}</strong>　${cityEsc(detail)}</div>`;
@@ -2185,7 +2185,10 @@ function setBackgroundToCookie(value) {
                 { name:'\u6d45\u6c34\u6e7e\u9053\uff08\u8fd1\u9999\u5c9b\u9053\uff09', direction:'\u5f80\u6e7e\u4ed4\uff08\u7ecf\u9999\u6e2f\u4ed4\u96a7\u9053\uff09', locations:['H6'], destinations:['ABT'] },
                 { name:'\u9ec4\u7af9\u5751\u9053\uff08\u8fd1\u9999\u6e2f\u4e61\u6751\u4ff1\u4e50\u90e8\uff09', direction:'\u5f80\u6e7e\u4ed4\uff08\u7ecf\u9ec4\u6ce5\u6d8c\u5ce1\u9053\uff09', locations:['H7'], destinations:['WNCG'] },
                 { name:'\u5927\u57d4\u516c\u8def\uff08\u8fd1\u6c99\u7530\u9a6c\u573a\uff09', direction:'\u5f80\u4e5d\u9f99\uff08\u7ecf\u72ee\u5b50\u5c71\u96a7\u9053\uff09', locations:['SJ1'], destinations:['LRT'] },
-                { name:'\u65b0\u7530\u516c\u8def\uff08\u8fd1\u9526\u7ee3\u82b1\u56ed\uff09', direction:'\u5f80\u673a\u573a\uff08\u7ecf\u5927\u680f\u96a7\u9053\uff09', locations:['SJ4'], destinations:['ATL'] }
+                { name:'\u65b0\u7530\u516c\u8def\uff08\u8fd1\u9526\u7ee3\u82b1\u56ed\uff09', direction:'\u5f80\u673a\u573a\uff08\u7ecf\u5927\u6984\u96a7\u9053\uff09', locations:['SJ4'], destinations:['ATL'] },
+                { name:'\u7ea2\u78e1\u6d77\u5e95\u96a7\u9053', direction:'\u6e2f\u5c9b \u2192 \u4e5d\u9f99', locations:['H1'], destinations:['CH'] },
+                { name:'\u4e1c\u533a\u6d77\u5e95\u96a7\u9053', direction:'\u6e2f\u5c9b \u2192 \u4e5d\u9f99', locations:['H2'], destinations:['EH'] },
+                { name:'\u897f\u533a\u6d77\u5e95\u96a7\u9053', direction:'\u9999\u6e2f\u5c9b \u2192 \u4e5d\u9f99', locations:['H3'], destinations:['WH'] }
             ] : [
                 { name:'\u544a\u58eb\u6253\u9053\uff08\u8fd1\u7a05\u52d9\u5927\u6a13\uff09', direction:'\u5f80\u7d05\u78e1\u6d77\u5e95\u96a7\u9053', locations:['H1'], destinations:['CH'] },
                 { name:'\u5805\u62ff\u9053\u5929\u6a4b\uff08\u8fd1\u9999\u6e2f\u4ed4\u96a7\u9053\u51fa\u53e3\uff09', direction:'\u5f80\u6771\u5340\u6d77\u5e95\u96a7\u9053', locations:['H2'], destinations:['EH'] },
@@ -2193,7 +2196,10 @@ function setBackgroundToCookie(value) {
                 { name:'\u6dfa\u6c34\u7063\u9053\uff08\u8fd1\u9999\u5cf6\u9053\uff09', direction:'\u5f80\u7063\u4ed4\uff08\u7d93\u9999\u6e2f\u4ed4\u96a7\u9053\uff09', locations:['H6'], destinations:['ABT'] },
                 { name:'\u9ec3\u7af9\u5751\u9053\uff08\u8fd1\u9999\u6e2f\u9109\u6751\u4ff1\u6a02\u90e8\uff09', direction:'\u5f80\u7063\u4ed4\uff08\u7d93\u9ec3\u6ce5\u6d8c\u5ce1\u9053\uff09', locations:['H7'], destinations:['WNCG'] },
                 { name:'\u5927\u57d4\u516c\u8def\uff08\u8fd1\u6c99\u7530\u99ac\u5834\uff09', direction:'\u5f80\u4e5d\u9f8d\uff08\u7d93\u7345\u5b50\u5c71\u96a7\u9053\uff09', locations:['SJ1'], destinations:['LRT'] },
-                { name:'\u65b0\u7530\u516c\u8def\uff08\u8fd1\u9326\u7e61\u82b1\u5712\uff09', direction:'\u5f80\u6a5f\u5834\uff08\u7d93\u5927\u6b16\u96a7\u9053\uff09', locations:['SJ4'], destinations:['ATL'] }
+                { name:'\u65b0\u7530\u516c\u8def\uff08\u8fd1\u9326\u7e61\u82b1\u5712\uff09', direction:'\u5f80\u6a5f\u5834\uff08\u7d93\u5927\u6b16\u96a7\u9053\uff09', locations:['SJ4'], destinations:['ATL'] },
+                { name:'\u7d05\u78e1\u6d77\u5e95\u96a7\u9053', direction:'\u6e2f\u5cf6 \u2192 \u4e5d\u9f8d', locations:['H1'], destinations:['CH'] },
+                { name:'\u6771\u5340\u6d77\u5e95\u96a7\u9053', direction:'\u6e2f\u5cf6 \u2192 \u4e5d\u9f8d', locations:['H2'], destinations:['EH'] },
+                { name:'\u897f\u5340\u6d77\u5e95\u96a7\u9053', direction:'\u9999\u6e2f\u5cf6 \u2192 \u4e5d\u9f8d', locations:['H3'], destinations:['WH'] }
             ];
             const statusLabel = (row) => row
                 ? (row.colour === 1 ? (lang === 'sc' ? '\u8f83\u6162' : '\u8f03\u6162') : row.colour === 2 ? (lang === 'sc' ? '\u7a0d\u6162' : '\u7a0d\u6162') : (lang === 'sc' ? '\u7545\u987a' : '\u66a2\u9806'))
@@ -2899,20 +2905,70 @@ function setBackgroundToCookie(value) {
             } catch (error) {}
         };
         const cityTrafficUrl = () => 'https://resource.data.one.gov.hk/td/' + (cityCurrentLanguage() === 'sc' ? 'sc' : 'tc') + '/specialtrafficnews.xml';
+        const cityTrafficDate = (value) => {
+            const raw = String(value || '').trim();
+            const match = raw.match(/(\d{4})\/(\d{1,2})\/(\d{1,2}).*?(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+            if (!match) {
+                const fallback = Date.parse(raw);
+                return Number.isFinite(fallback) ? fallback : 0;
+            }
+            let hour = Number(match[4]);
+            if (/(?:下午|PM)/i.test(raw) && hour < 12) hour += 12;
+            if (/(?:上午|AM)/i.test(raw) && hour === 12) hour = 0;
+            return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), hour, Number(match[5]), Number(match[6] || 0)).getTime();
+        };
+        const cityHongKongDate = () => {
+            const parts = new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Hong_Kong', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(new Date());
+            const values = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+            return values.year + values.month + values.day;
+        };
+        const cityStripHtml = (value) => String(value || '')
+            .replace(/<br\s*\/?>/gi, ' ')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/&amp;/gi, '&')
+            .replace(/&#039;|&#39;|&apos;/gi, String.fromCharCode(39))
+            .replace(/&quot;/gi, '"')
+            .replace(/\s+/g, ' ')
+            .trim();
         async function cityRthkTrafficMessages() {
-            const targetDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-            const url = 'https://programme.rthk.hk/channel/radio/trafficnews/index.php?d=' + targetDate;
+            const targetDate = cityHongKongDate();
+            const url = 'https://programme.rthk.hk/channel/radio/trafficnews/index.php?d=' + targetDate + '&_=' + Date.now();
             const response = await fetch('https://r.jina.ai/http://' + url.replace(/^https?:\/\//, ''), { cache:'no-store' });
             if (!response.ok) throw new Error('RTHK traffic ' + response.status);
             const text = await response.text();
-            return text.split('\n').map((line) => line.trim()).filter((line) => /^\*\s+/.test(line) && /\d{4}-\d{2}-\d{2}\s+HKT\s+\d{2}:\d{2}/.test(line)).slice(0, 10).map((line) => {
-                const clean = line.replace(/^\*\s+/, '').replace(/\s+\d{4}-\d{2}-\d{2}\s+HKT\s+(\d{2}:\d{2})\s*$/, '');
-                const time = (line.match(/(\d{2}:\d{2})\s*$/) || [,''])[1];
-                return { time, detail:clean, source:'香港電台' };
-            });
+            const records = [];
+            const htmlPattern = /<li[^>]*class=["'][^"']*\binner\b[^"']*["'][^>]*>([\s\S]*?)<\/li>/gi;
+            let match;
+            while ((match = htmlPattern.exec(text))) {
+                const stamp = match[1].match(/(\d{4}-\d{2}-\d{2})\s+HKT\s+(\d{2}:\d{2})/);
+                if (!stamp) continue;
+                records.push({
+                    time:stamp[2],
+                    timestamp:Date.parse(stamp[1] + 'T' + stamp[2] + ':00+08:00'),
+                    detail:cityStripHtml(match[1]).replace(stamp[0], '').trim(),
+                    source:'香港電台'
+                });
+            }
+            if (!records.length) {
+                const markdownPattern = /(?:^|\n)\s*(?:\*|-)\s*(.*?)\s+(\d{4}-\d{2}-\d{2})\s+HKT\s+(\d{2}:\d{2})\s*$/gm;
+                while ((match = markdownPattern.exec(text))) {
+                    records.push({
+                        time:match[3],
+                        timestamp:Date.parse(match[2] + 'T' + match[3] + ':00+08:00'),
+                        detail:cityStripHtml(match[1]),
+                        source:'香港電台'
+                    });
+                }
+            }
+            return records.sort((a, b) => b.timestamp - a.timestamp).slice(0, 18);
         }
         updateCityNews = async function() {
             const card = document.getElementById('city-news');
+            const lang = cityCurrentLanguage();
+            const labels = lang === 'sc'
+                ? { td:'运输署', rthk:'香港电台', traffic:'交通消息', published:'新发布', republished:'重新发布', empty:'目前没有特别交通消息。', offline:'交通消息暂时无法取得，请稍后刷新。' }
+                : { td:'運輸署', rthk:'香港電台', traffic:'交通消息', published:'新發布', republished:'重新發布', empty:'目前沒有特別交通消息。', offline:'交通消息暫時無法取得，請稍後刷新。' };
             try {
                 const [transportResult, rthkResult] = await Promise.allSettled([
                     cityXml(cityTrafficUrl()),
@@ -2920,19 +2976,36 @@ function setBackgroundToCookie(value) {
                 ]);
                 const entries = [];
                 if (transportResult.status === 'fulfilled') {
-                    [...transportResult.value.getElementsByTagName('message')].slice(0, 10).forEach((node) => {
+                    [...transportResult.value.getElementsByTagName('message')].forEach((node) => {
+                        const rawStatus = cityText(node, 'CurrentStatus');
+                        const referenceDate = cityText(node, 'ReferenceDate');
+                        const announcementDate = cityText(node, 'ANNOUNCEMENT_DATE');
                         const detail = cityText(node, 'ChinShort') || cityText(node, 'EngShort') || cityText(node, 'CONTENT_CN') || cityText(node, 'CONTENT_EN');
-                        entries.push({ time:cityText(node, 'ReferenceDate') || cityText(node, 'ANNOUNCEMENT_DATE').slice(11, 16), location:cityText(node, 'LOCATION_CN') || cityText(node, 'LOCATION_EN') || '香港道路', detail, source:'運輸署', heading:cityText(node, 'IncidentRefNo') || '交通消息' });
+                        entries.push({
+                            time:referenceDate || announcementDate.slice(11, 16),
+                            timestamp:cityTrafficDate(referenceDate) || Date.parse(announcementDate) || 0,
+                            location:cityText(node, 'LOCATION_CN') || cityText(node, 'LOCATION_EN') || '香港道路',
+                            detail,
+                            source:labels.td,
+                            status:rawStatus === '2' ? labels.published : rawStatus === '3' ? labels.republished : labels.traffic,
+                            heading:cityText(node, 'IncidentRefNo') || labels.traffic
+                        });
                     });
                 }
-                if (rthkResult.status === 'fulfilled') rthkResult.value.forEach((item) => entries.push({ ...item, location:'香港道路', heading:'交通消息' }));
+                if (rthkResult.status === 'fulfilled') rthkResult.value.forEach((item) => entries.push({
+                    ...item,
+                    location:'香港道路',
+                    heading:labels.traffic,
+                    status:labels.traffic,
+                    source:labels.rthk
+                }));
                 const unique = [...new Map(entries.map((item) => [item.time + '|' + item.detail, item])).values()]
-                    .sort((a, b) => String(b.time).localeCompare(String(a.time))).slice(0, 16);
-                card.innerHTML = unique.length ? unique.map((item) => `<div class="city-news-item"><div class="city-news-meta"><span>${cityEsc(item.time)} · ${cityEsc(item.location)}</span><span class="city-news-badge">${cityEsc(item.source)}</span></div><strong>${cityEsc(item.heading)}</strong>　${cityEsc(item.detail)}</div>`).join('') : '<div class="city-card-caption">目前沒有特別交通消息。</div>';
+                    .sort((a, b) => b.timestamp - a.timestamp).slice(0, 18);
+                card.innerHTML = unique.length ? unique.map((item) => `<div class="city-news-item"><div class="city-news-meta"><span>${cityEsc(item.time || '--:--')} · ${cityEsc(item.location)}</span><span class="city-news-badge">${cityEsc(item.source)} · ${cityEsc(item.status)}</span></div><strong>${cityEsc(item.heading)}</strong>　${cityEsc(item.detail)}</div>`).join('') : `<div class="city-card-caption">${labels.empty}</div>`;
                 cityLive('city-news-live', 'online', '在線');
             } catch (error) {
-                card.innerHTML = '<div class="city-card-caption">交通消息暫時無法取得，請稍後刷新。</div>';
-                cityLive('city-news-live', 'offline', '離線');
+                card.innerHTML = `<div class="city-card-caption">${labels.offline}</div>`;
+                cityLive('city-news-live', 'offline', lang === 'sc' ? '离线' : '離線');
             }
         };
         const cityFlightProxyUrl = (arrival) => 'https://www.hongkongairport.com/flightinfo-rest/rest/flights/past?date=' + new Date().toISOString().slice(0, 10) + '&lang=en&cargo=false&arrival=' + arrival;
@@ -3118,6 +3191,53 @@ function setBackgroundToCookie(value) {
                 cityLive('city-boundary-live', 'offline', lang === 'sc' ? '离线' : '離線');
             }
         };
+        updateCityNews = async function() {
+            const card = document.getElementById('city-news');
+            if (!card) return;
+            const lang = cityCurrentLanguage();
+            const labels = lang === 'sc'
+                ? { td:'运输署', rthk:'香港电台', traffic:'交通消息', published:'新发布', republished:'重新发布', empty:'目前没有特别交通消息。', offline:'交通消息暂时无法取得，请稍后刷新。' }
+                : { td:'運輸署', rthk:'香港電台', traffic:'交通消息', published:'新發布', republished:'重新發布', empty:'目前沒有特別交通消息。', offline:'交通消息暫時無法取得，請稍後刷新。' };
+            try {
+                const [transportResult, rthkResult] = await Promise.allSettled([cityXml(cityTrafficUrl()), cityRthkTrafficMessages()]);
+                const entries = [];
+                if (transportResult.status === 'fulfilled') {
+                    [...transportResult.value.getElementsByTagName('message')].forEach((node) => {
+                        const rawStatus = cityText(node, 'CurrentStatus');
+                        const referenceDate = cityText(node, 'ReferenceDate');
+                        const announcementDate = cityText(node, 'ANNOUNCEMENT_DATE');
+                        entries.push({
+                            time:referenceDate || announcementDate.slice(11, 16),
+                            timestamp:cityTrafficDate(referenceDate) || Date.parse(announcementDate) || 0,
+                            location:cityText(node, 'LOCATION_CN') || cityText(node, 'LOCATION_EN') || '香港道路',
+                            detail:cityText(node, 'ChinShort') || cityText(node, 'EngShort') || cityText(node, 'CONTENT_CN') || cityText(node, 'CONTENT_EN'),
+                            source:labels.td,
+                            status:rawStatus === '2' ? labels.published : rawStatus === '3' ? labels.republished : labels.traffic,
+                            heading:cityText(node, 'IncidentRefNo') || labels.traffic
+                        });
+                    });
+                }
+                if (rthkResult.status === 'fulfilled') {
+                    rthkResult.value.forEach((item) => entries.push({
+                        ...item,
+                        location:'香港道路',
+                        heading:labels.traffic,
+                        status:labels.traffic,
+                        source:labels.rthk
+                    }));
+                }
+                const unique = [...new Map(entries.map((item) => [item.source + '|' + item.timestamp + '|' + item.detail, item])).values()]
+                    .sort((a, b) => b.timestamp - a.timestamp)
+                    .slice(0, 18);
+                card.innerHTML = unique.length
+                    ? unique.map((item) => `<div class="city-news-item"><div class="city-news-meta"><span>${cityEsc(item.time || '--:--')} · ${cityEsc(item.location)}</span><span class="city-news-badge">${cityEsc(item.source)} · ${cityEsc(item.status)}</span></div><strong>${cityEsc(item.heading)}</strong>　${cityEsc(item.detail)}</div>`).join('')
+                    : `<div class="city-card-caption">${labels.empty}</div>`;
+                cityLive('city-news-live', 'online', lang === 'sc' ? '在线' : '在線');
+            } catch (error) {
+                card.innerHTML = `<div class="city-card-caption">${labels.offline}</div>`;
+                cityLive('city-news-live', 'offline', lang === 'sc' ? '离线' : '離線');
+            }
+        };
         function updateCityDashboard() {
             updateCityJourneys();
             updateCityNews();
@@ -3151,6 +3271,7 @@ function setBackgroundToCookie(value) {
         updateLiveWeather();
         fetchData(warningApiUrl, 'warning-info', formatWarningData);
         updateCityDashboard();
+        setInterval(updateCityNews, 60000);
         setTimeout(() => {
             const journeyGrid = document.getElementById('city-journey-grid');
             if (journeyGrid && journeyGrid.textContent.includes('读取')) updateCityJourneys();
