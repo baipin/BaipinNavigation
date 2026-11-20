@@ -1,0 +1,61 @@
+/* Compact broadcast strip, inspired by the supplied financial-news reference. */
+#city-ticker .city-ticker-card { padding:0; border-radius:12px; background:#191e21; border:1px solid #626655; color:#f4f1df; overflow:hidden; }
+.city-feed-top { display:grid; grid-template-columns:96px minmax(180px,1fr) minmax(0,2fr); min-height:72px; }
+.city-feed-featured { position:relative; overflow:hidden; perspective:550px; border-right:2px solid #a9a16b; color:inherit; text-decoration:none; }
+.city-feed-featured .city-feed-face { grid-template-columns:minmax(0,1fr) auto; grid-template-rows:1fr 1fr; padding:4px 10px; gap:2px 8px; }
+.city-feed-featured .city-feed-name { grid-column:1/-1; font-size:13px; }
+.city-feed-featured .city-feed-price { font-size:18px; }
+.city-feed-featured .city-feed-change { align-self:center; min-height:23px; }
+.city-feed-quote { color:inherit; text-decoration:none; }
+.city-feed-quote:focus-visible,.city-feed-featured:focus-visible { outline:2px solid #f6d355; outline-offset:-2px; }
+.city-feed-quote:hover,.city-feed-featured:hover { filter:brightness(1.18); }
+.city-feed-clock { display:flex; flex-direction:column; justify-content:center; align-items:center; border-right:2px solid #a9a16b; background:#171c1d; }
+.city-feed-clock time { color:#f6d355; font:500 27px/1.1 'Roboto Mono',monospace; font-variant-numeric:tabular-nums; letter-spacing:-2px; }
+.city-feed-clock small { color:#d4cda9; font-size:9px; letter-spacing:.12em; margin-top:5px; }
+.city-feed-markets { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1px; background:#5d6057; padding:3px; }
+.city-feed-quote { position:relative; height:31px; perspective:550px; overflow:hidden; background:#292f30; }
+.city-feed-face { position:absolute; inset:0; display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:8px; align-items:center; padding-left:8px; background:#292f30; font-size:12px; white-space:nowrap; backface-visibility:hidden; transform-origin:center; }
+.city-feed-name { overflow:hidden; text-overflow:ellipsis; font-weight:600; }
+.city-feed-price { font:500 13px 'Roboto Mono',monospace; font-variant-numeric:tabular-nums; }
+.city-feed-change { display:flex; align-items:center; justify-content:center; align-self:stretch; min-width:65px!important; padding:0 5px; background:#454c4c; font:500 12px 'Roboto Mono',monospace; font-variant-numeric:tabular-nums; }
+.city-feed-face[data-direction="up"] .city-feed-change { background:#a3312c; color:#fff0d5; }
+.city-feed-face[data-direction="down"] .city-feed-change { background:#287034; color:#e0ffd7; }
+.city-feed-face::after { content:''; position:absolute; left:0; right:0; top:50%; height:1px; background:rgba(0,0,0,.2); pointer-events:none; }
+.city-feed-outgoing { z-index:2; animation:cityFeedFoldOut .32s ease-in forwards; }
+.city-feed-incoming { animation:cityFeedFoldIn .34s .28s ease-out both; }
+@keyframes cityFeedFoldOut { to { transform:rotateX(-90deg); filter:brightness(.45); } }
+@keyframes cityFeedFoldIn { from { transform:rotateX(90deg); filter:brightness(.45); } to { transform:rotateX(0); filter:brightness(1); } }
+.city-feed-bottom { display:flex; align-items:center; min-height:30px; background:#121718; border-top:1px solid #77735b; }
+#city-ticker .city-ticker-label { flex:0 0 96px; box-sizing:border-box; padding:0 8px; text-align:center; color:#ebcf71; font-size:10px; letter-spacing:.08em; }
+#city-ticker .city-ticker-window { display:block; flex:1; width:auto; min-width:0; }
+#city-ticker .city-ticker-track { display:flex; width:max-content; padding-left:0; animation:cityFeedCrawl var(--feed-duration,90s) linear infinite; font-size:12px; line-height:30px; }
+#city-ticker .city-ticker-track .city-feed-copy { display:flex; flex:0 0 auto; margin:0; }
+#city-ticker .city-feed-copy > span { flex:0 0 auto; margin:0; padding-right:44px; white-space:nowrap; }
+@keyframes cityFeedCrawl { to { transform:translateX(-50%); } }
+#city-ticker:hover .city-ticker-track, #city-ticker:focus-within .city-ticker-track { animation-play-state:paused; }
+.city-feed-source { padding:4px 10px; border-top:1px solid #353c3d; color:#a5afac; font-size:10px; line-height:1.4; }
+@media(max-width:600px) {
+    .city-feed-top { grid-template-columns:72px minmax(0,1fr); }
+    .city-feed-markets { grid-column:1/-1; grid-template-columns:minmax(0,1fr); }
+    .city-feed-featured { min-height:68px; border-right:0; }
+    .city-feed-clock time { font-size:22px; }
+    .city-feed-clock small { font-size:8px; letter-spacing:0; }
+    .city-feed-markets { grid-template-columns:minmax(0,1fr); }
+    .city-feed-quote:nth-child(n+3) { display:none; }
+    #city-ticker .city-ticker-label { flex-basis:72px; font-size:8px; }
+    .city-feed-face { gap:5px; }
+}
+@media(prefers-reduced-motion:reduce) {
+    .city-feed-outgoing { display:none; animation:none; }
+    .city-feed-incoming { animation:none; }
+    #city-ticker .city-ticker-track { animation:none; width:auto; }
+    #city-ticker .city-ticker-window { overflow:auto; }
+    #city-ticker .city-feed-copy[aria-hidden] { display:none; }
+}
+.city-temperature-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.city-weather-warnings { display:flex; flex-wrap:wrap; align-items:center; gap:5px; }
+.city-weather-warnings img { display:block; width:42px; height:42px; object-fit:contain; }
+.city-weather-warnings a { color:inherit; font-size:12px; }
+.city-aqhi-picker { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:9px; font-size:12px; }
+.city-aqhi-select { max-width:100%; padding:6px 9px; border:1px solid rgba(128,128,128,.4); border-radius:8px; color:var(--text-main); background:var(--glass-bg); font:inherit; }
+.city-aqhi-serious { color:#ce75e9!important; }

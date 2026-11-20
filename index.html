@@ -141,7 +141,7 @@
             border-radius: 50%; padding: 4px; 
         }
 
-        .content-layout { width:100%; max-width:1240px; min-width:0; box-sizing:border-box; margin:0 auto 80px; display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:32px; padding:0 20px; }
+        .content-layout { width:100%; max-width:1240px; min-width:0; box-sizing:border-box; margin:0 auto 80px; display:grid; grid-template-columns:minmax(0,1fr) 360px; align-items:start; gap:32px; padding:0 20px; }
         .card-glass { border-radius: 28px; background: var(--glass-bg); backdrop-filter: blur(20px); padding: 32px; border: 1px solid var(--glass-border); color: var(--text-main); }
         .links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 18px; margin-top: 18px; padding: 8px 4px 4px; overflow: visible; }
         .link-item {
@@ -155,7 +155,7 @@
         .temp-display { font-size: 2.2rem; font-weight: 900; }
         .hum-display { font-size: 0.85rem; opacity: 0.8; }
         .weather-details p { margin: 8px 0; font-size: 0.95rem; line-height: 1.6; }
-        @media (max-width: 900px) { .content-layout { grid-template-columns: 1fr; } .side-stack { order: -1; } }
+        @media (max-width: 900px) { .content-layout { grid-template-columns: 1fr; } .side-stack { order: 0; } }
 
         .news-ticker {
             font-size: 0.95rem;
@@ -217,8 +217,9 @@
 }
         /* Hong Kong city dashboard */
         .city-dashboard { max-width: 1240px; margin: 0 auto 32px; padding: 0 20px; }
-        .city-dashboard-grid { column-count:2; column-gap:18px; }
-        .city-dashboard-grid > article { display:inline-block; width:100%; margin:0 0 18px; vertical-align:top; break-inside:avoid; }
+        .city-dashboard-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-flow:dense; gap:18px; align-items:start; }
+        .city-dashboard-grid.city-masonry-ready { grid-auto-rows:4px; }
+        .city-dashboard-grid > article { display:block; width:100%; margin:0; align-self:start; }
         .city-card { border-radius: 18px; background: rgba(12, 25, 28, .72); backdrop-filter: blur(20px); border: 1px solid rgba(101, 212, 190, .18); padding: 22px; color: #fff; box-shadow: 0 16px 40px rgba(0,0,0,.12); align-self:stretch; }
         .city-card a, .city-card strong, .city-card-title, .city-card .city-name, .city-card .city-time { color: #fff; }
         .city-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:18px; }
@@ -293,15 +294,15 @@
         .city-mini-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 11px; border-radius:9px; background:rgba(128,128,128,.1); font-size:.78rem; }
         .city-mini-row > span:first-child { min-width:0; flex:1 1 auto; overflow-wrap:anywhere; }
         .city-mini-row .city-chip { flex:0 1 auto; max-width:48%; text-align:right; white-space:normal; overflow-wrap:anywhere; }
-        #city-bus-results { min-width:0; width:100%; max-height:none; overflow:visible; align-content:start; }
+        #city-bus-results { min-width:0; width:100%; max-height:480px; overflow:auto; align-content:start; scrollbar-gutter:stable; }
         .city-bus-card { grid-column:auto; }
         #city-bus-results > div { min-width:0; max-width:100%; }
         #city-bus-results .city-mini-row { width:100%; min-width:0; text-align:left; border:0; color:inherit; }
         #city-bus-results .city-mini-row strong, #city-bus-results .city-mini-row small { min-width:0; overflow-wrap:anywhere; }
         .city-bus-line-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:7px; min-width:0; }
         .city-bus-line-list .city-mini-row { align-items:flex-start; }
-        .city-boundary-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-        .city-boundary-card { column-span:all; }
+        .city-boundary-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; max-height:360px; overflow:auto; scrollbar-gutter:stable; }
+        .city-boundary-card { min-width:0; }
         #city-boundary { grid-column:1 / -1; }
         .city-boundary-row { min-width:0; padding:11px; border-radius:10px; background:rgba(128,128,128,.1); border-left:4px solid #65d4be; }
         .city-boundary-row.warn { border-left-color:#f59e0b; }
@@ -390,9 +391,10 @@
         .city-ticker-track span { margin-right:44px; }
         @keyframes cityTicker { from { transform:translateX(0); } to { transform:translateX(-100%); } }
         @media (max-width:1100px) { .city-journey-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-        @media (max-width:900px) { .city-dashboard-grid { column-count:1; } .city-journey-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .city-finance-card{grid-template-columns:repeat(2,minmax(0,1fr))}.city-finance-item:nth-child(2n){border-right:0} }
+        @media (max-width:900px) { .city-dashboard-grid { display:block; } .city-dashboard-grid > article { margin-bottom:18px; } .city-journey-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .city-finance-card{grid-template-columns:repeat(2,minmax(0,1fr))}.city-finance-item:nth-child(2n){border-right:0} }
         @media (max-width:600px) { .city-dashboard { padding:0 12px; width:100%; } .city-metrics, .city-journey-grid, .city-boundary-list { grid-template-columns:1fr; } .city-metric { min-height:96px; } .city-rail-grid { grid-template-columns:1fr; } .city-two-col { grid-template-columns:1fr; } .city-flight-columns { grid-template-columns:1fr; } .city-flight-list { max-height:240px; } .city-card { padding:16px; } .city-finance-value { white-space:normal; font-size:1.15rem; } .city-input { min-width:0; width:100%; } .city-form .city-button { flex:1 1 40%; } .city-bus-line-list { grid-template-columns:1fr; } #city-finance,#city-ticker{padding:0 12px}.city-finance-card{grid-template-columns:1fr}.city-finance-item{border-right:0;border-bottom:1px solid rgba(255,255,255,.12)}.city-finance-item:last-child{border-bottom:0} }
     </style>
+    <link rel="stylesheet" href="city-feed.css">
 </head>
 <body class="mdui-theme-auto">
     <header class="app-bar">
@@ -567,7 +569,7 @@
         font-size: 0.9rem;
         opacity: 0.9;
     ">
-         浙江丽水云和梯田 / 站长拍摄
+         <span id="photo-attribution">浙江丽水云和梯田 / 站长拍摄</span>
          <mdui-button-icon id="language-toggle-btn" class="city-language-btn" icon="translate" title="切换简繁中文" aria-label="切换简繁中文"></mdui-button-icon>
     </div>
 </div>
@@ -676,6 +678,7 @@
         <mdui-button slot="action" variant="text" id="data-manage-close">关闭</mdui-button>
     </mdui-dialog>
 
+    <script src="js/weather-upgrades.js"></script>
     <script>
         /* ==================== 原有代码完全保留 ==================== */
         const initLinks = [
@@ -1327,7 +1330,7 @@ function applyBackground(url, photoInfo = null) {
 
 /* ==================== 配合使用的署名函数 ==================== */
 function updateAttributionFooter(info) {
-    const footer = document.getElementById('photo-credit');
+    const footer = document.getElementById('photo-attribution');
     if (!footer) return;
 
     // 默认背景
@@ -1336,14 +1339,24 @@ function updateAttributionFooter(info) {
         return;
     }
 
-    // Unsplash 署名
+    // Update only attribution; preserve the language button and its listener.
     if (info.user && info.userLink) {
-        footer.innerHTML = `
-            Photo by 
-            <a href="${info.userLink}" target="_blank" class="mdui-link" style="color: rgb(var(--mdui-color-primary)); text-decoration: none; border-bottom: 1px solid rgba(var(--mdui-color-primary), 0.3); transition: all 0.2s;">${info.user}</a> 
-            on 
-            <a href="https://unsplash.com" target="_blank" class="mdui-link" style="color: rgb(var(--mdui-color-primary)); text-decoration: none; border-bottom: 1px solid rgba(var(--mdui-color-primary), 0.3); transition: all 0.2s;">Unsplash</a>
-        `;
+        const author = document.createElement('a');
+        const provider = document.createElement('a');
+        let authorUrl;
+        try { authorUrl = new URL(info.userLink); } catch { footer.textContent = ''; return; }
+        if (!['https:', 'http:'].includes(authorUrl.protocol)) { footer.textContent = ''; return; }
+        author.href = authorUrl.href;
+        author.textContent = info.user;
+        provider.href = 'https://unsplash.com';
+        provider.textContent = 'Unsplash';
+        [author, provider].forEach((link) => {
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.className = 'mdui-link';
+            link.style.color = 'rgb(var(--mdui-color-primary))';
+        });
+        footer.replaceChildren('Photo by ', author, ' on ', provider);
         return;
     }
 
@@ -1395,23 +1408,6 @@ function updateAttributionFooter(info) {
             document.cookie = 'homepage_bg=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
         }
 
-        // 随机背景按钮（使用 source.unsplash.com/random 获取随机高清图）
-        document.getElementById('reset-bg-btn').onclick = () => {
-    // 1. 删除 Cookie
-    document.cookie = "homepage_bg=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    
-    // 2. 移除动态生成的样式，让 CSS 里的默认背景生效
-    const style = document.getElementById('custom-bg-style');
-    if (style) style.remove();
-    
-    // 3. 恢复你的自拍署名
-    updateAttributionFooter({
-        isDefault: true,
-        text: 'Photo by 浙江丽水云和梯田 / 站长拍摄'
-    });
-    
-    alert('已恢复默认背景');
-};
 
 function setBackgroundToCookie(value) {
     const expires = new Date();
@@ -1428,8 +1424,7 @@ function setBackgroundToCookie(value) {
                 document.body.style.backgroundImage = '';
                 clearBackgroundCookie();
             
-                const creditEl = document.getElementById('photo-credit');
-                creditEl.innerHTML = 'Photo by 浙江丽水云和梯田 / 站长拍摄';
+                updateAttributionFooter({ isDefault:true });
         };
 
         /* ==================== 新增功能：导出/导入所有 Cookies 数据 ==================== */
@@ -2604,17 +2599,7 @@ function setBackgroundToCookie(value) {
                 ]);
                 const aqhi = Array.isArray(aqhiResponse) ? aqhiResponse : (aqhiResponse?.data || []);
                 const weather = weatherResponse || {};
-                const central = aqhi.find((item) => /Central|中環|中环/i.test(item.station || '')) || aqhi[0];
-                const aqhiValue = Number(central?.aqhi);
-                const aqhiEl = document.getElementById('city-aqhi');
-                if (aqhiEl) {
-                    aqhiEl.textContent = central?.aqhi ?? '--';
-                    aqhiEl.className = aqhiValue >= 10 ? 'city-aqhi-very-high' : aqhiValue >= 7 ? 'city-aqhi-high' : aqhiValue >= 4 ? 'city-aqhi-moderate' : 'city-aqhi-low';
-                }
-                const aqhiPlace = document.getElementById('city-aqhi-place');
-                const aqhiRisk = document.getElementById('city-aqhi-risk');
-                if (aqhiPlace) aqhiPlace.textContent = 'AQHI · ' + (central?.station || '中環');
-                if (aqhiRisk) aqhiRisk.textContent = central?.health_risk || (aqhiValue >= 10 ? '甚高健康風險' : aqhiValue >= 7 ? '高健康風險' : aqhiValue >= 4 ? '中等健康風險' : '低健康風險');
+                cityRenderAqhi(aqhi);
                 const iconCode = Array.isArray(weather.icon) ? weather.icon[0] : null;
                 if (iconCode !== null && iconCode !== undefined) citySetHkoIcon(iconCode);
                 cityRainMarkup(weather, citySelectedRainArea());
@@ -3798,5 +3783,7 @@ function setBackgroundToCookie(value) {
         }, 1500);
         setInterval(updateCityDashboard, 120000);
     </script>
+    <script src="js/city-feed.js"></script>
+    <script src="js/layout.js"></script>
 </body>
 </html>
