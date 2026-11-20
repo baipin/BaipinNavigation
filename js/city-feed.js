@@ -12,20 +12,18 @@
     const bottom = document.createElement('div');
     bottom.className = 'city-feed-bottom';
     bottom.append(label, windowElement);
-    const source = document.createElement('div');
-    source.className = 'city-feed-source';
     const controls = document.createElement('div'); controls.className = 'city-feed-controls';
     const fullscreenButton = document.createElement('button');
     fullscreenButton.type = 'button'; fullscreenButton.id = 'city-feed-fullscreen'; fullscreenButton.className = 'city-feed-fullscreen-button';
     fullscreenButton.innerHTML = '<span class="material-icons" aria-hidden="true">fullscreen</span>';
     fullscreenButton.setAttribute('aria-pressed','false');
     const updates = document.createElement('div'); updates.className = 'city-feed-updates';
-    const information = document.createElement('div'); information.className = 'city-feed-information'; information.append(source,updates);
+    const information = document.createElement('div'); information.className = 'city-feed-information'; information.append(updates);
     const stockButton = document.createElement('button'); stockButton.type = 'button'; stockButton.id = 'city-feed-stock-settings'; stockButton.className = 'city-feed-fullscreen-button';
     stockButton.innerHTML = '<span class="material-icons" aria-hidden="true">playlist_add</span>';
     controls.append(information,stockButton,fullscreenButton);
     const board = document.createElement('div'); board.className = 'city-feed-board'; board.hidden = true;
-    const heading = document.createElement('div'); heading.className = 'city-feed-board-title'; heading.textContent = 'CITY FEED'; top.append(heading);
+    const heading = document.createElement('div'); heading.className = 'city-feed-board-title'; const logo = document.createElement('img'); logo.src='img/logo.png'; logo.alt=''; logo.className='city-feed-logo'; heading.append(logo,document.createTextNode('CITY FEED')); top.append(heading);
     const weather = document.createElement('div'); weather.className = 'city-feed-weather';
     const weatherLabel = document.createElement('span'); weatherLabel.className = 'city-feed-weather-label';
     const weatherWindow = document.createElement('div'); weatherWindow.className = 'city-feed-weather-window';
@@ -148,6 +146,20 @@
     document.addEventListener('fullscreenchange',()=> {if (expanded && nativeFullscreen && document.fullscreenElement !== section) finishFullscreen();});
     document.addEventListener('keydown',event=> {if(event.key === 'Escape' && !stockDialog.open && expanded && document.fullscreenElement !== section) finishFullscreen();});
     let page = 0, featuredPage = 0, boardPage = 0;
+    let boardCapacity = [featuredMarkets.length,12];
+    function fitBoard() {
+        if (!expanded) return;
+        const capacity = [...board.querySelectorAll('.city-feed-board-grid')].map((grid,index)=> {
+            const columns = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
+            const rows = Math.max(1,Math.floor((grid.clientHeight + 6) / 54));
+            return Math.min(index === 0 ? featuredMarkets.length : 12,columns * rows);
+        });
+        if (capacity.some((count,index)=>count !== boardCapacity[index])) {
+            boardCapacity=capacity; boardPage=0; renderMarkets();
+        }
+    }
+    const boardObserver = new ResizeObserver(()=>requestAnimationFrame(fitBoard));
+    board.querySelectorAll('.city-feed-board-grid').forEach(grid=>boardObserver.observe(grid));
     const timers = new WeakMap();
     function renderQuote(slot, market) {
         const quote = state.get(market.id);
@@ -194,14 +206,18 @@
         // Index/currency and individual-stock pages rotate independently.
         const count = 4;
         slots.forEach((slot,index) => {slot.hidden = index >= stocks.length; renderQuote(slot, stocks[(page * count + index) % stocks.length]);});
-        boardQuotes.forEach(({slot,market,stock,offset})=> {slot.hidden=stock && offset>=stocks.length; renderQuote(slot,stock ? stocks[(boardPage * 12 + offset) % stocks.length] : market);});
+        boardQuotes.forEach(({slot,stock,offset})=> {
+            const pool=stock ? stocks : featuredMarkets, capacity=boardCapacity[stock ? 1 : 0];
+            slot.hidden=offset>=Math.min(capacity,pool.length);
+            if (!slot.hidden) renderQuote(slot,pool[((boardPage % Math.ceil(pool.length / capacity)) * capacity + offset) % pool.length]);
+        });
         boardLabels[0].textContent = text('全球指数与汇率','全球指數與匯率');
-        boardLabels[1].textContent = text('重点个股 · 第 ','重點個股 · 第 ') + (boardPage % Math.ceil(stocks.length/12) + 1) + ' / ' + Math.ceil(stocks.length/12) + text(' 页',' 頁');
+        boardLabels[1].textContent = text('重点个股 · 第 ','重點個股 · 第 ') + (boardPage % Math.ceil(stocks.length/boardCapacity[1]) + 1) + ' / ' + Math.ceil(stocks.length/boardCapacity[1]) + text(' 页',' 頁');
         const fullscreenLabel = text(expanded?'退出全屏':'全屏行情',expanded?'退出全屏':'全屏行情');
         fullscreenButton.querySelector('.material-icons').textContent = expanded?'fullscreen_exit':'fullscreen';
         fullscreenButton.setAttribute('aria-label',fullscreenLabel); fullscreenButton.title = fullscreenLabel;
         stockButton.setAttribute('aria-label',text('设置自选股','設定自選股')); stockButton.title=stockButton.getAttribute('aria-label');
-        source.textContent = text('市场：','市場：') + marketSource + text(' · 汇率：Frankfurter / ECB（日变动） · 天气：Open-Meteo · 行情可能延迟',' · 匯率：Frankfurter / ECB（日變動） · 天氣：Open-Meteo · 行情可能延遲');
+
     }
     const stockDialog = document.createElement('dialog'); stockDialog.className='city-feed-stock-dialog'; stockDialog.id='city-feed-stock-dialog';
     stockDialog.innerHTML='<form><h2></h2><p class="city-feed-stock-hint"></p><div class="city-feed-stock-options"></div><label class="city-feed-symbol-label" for="city-feed-custom-symbols"></label><textarea id="city-feed-custom-symbols" rows="3" placeholder="BABA, 0700.HK, 600000.SS, 000001.SZ"></textarea><p class="city-feed-stock-error" role="alert"></p><div class="city-feed-stock-actions"><button type="button" data-stock-action="reset"></button><button type="button" data-stock-action="cancel"></button><button type="submit" data-stock-action="save"></button></div></form>';
@@ -428,7 +444,7 @@
     }
     function renderFreshness() {
         const labels={rss:text('RSS','RSS'),traffic:text('行车','行車'),markets:text('行情','行情'),weather:text('天气','天氣'),fx:text('汇率','匯率')};
-        updates.textContent=text('更新：','更新：')+Object.entries(labels).map(([kind,label])=> {const data=freshness[kind];return label+' '+(data?.time ? new Date(data.time).toLocaleTimeString('en-GB',{timeZone:'Asia/Hong_Kong',hour12:false}) : '--')+(data?.success===false ? text('（失败）','（失敗）') : '');}).join(' · ');
+        updates.textContent=text('更新：','更新：')+Object.entries(labels).map(([kind,label])=> {const data=freshness[kind];return label+' '+(data?.time ? new Date(data.time).toLocaleTimeString('en-GB',{timeZone:'Asia/Hong_Kong',hour12:false}) : '--')+(data?.success===false ? text('（失败）','（失敗）') : '');}).join(' · ')+text(' · 行情可能延迟',' · 行情可能延遲');
     }
     document.addEventListener('city-feed-source-update',event=> {if(event.detail?.kind) markFresh(event.detail.kind,event.detail.success);});
     let refreshingFeed=false;
@@ -467,7 +483,7 @@
     setInterval(()=> {if (!document.hidden) syncClock();},300000);
     document.addEventListener('visibilitychange',()=> {if (!document.hidden && performance.now()-lastTimeAttempt >= 300000) syncClock();});
     setInterval(clock,1000);
-    setInterval(() => { if (!document.hidden) { page++; weatherPage++; renderWeatherFlip(); boardPage = (boardPage + 1) % Math.ceil(stocks.length/12); renderMarkets(); } },6000);
+    setInterval(() => { if (!document.hidden) { page++; weatherPage++; renderWeatherFlip(); boardPage++; renderMarkets(); } },6000);
     setInterval(() => { if (!document.hidden) { featuredPage++; renderMarkets(); } },8000);
     setInterval(() => { if (!document.hidden) {refreshStocks();refreshFX();} },120000);
 })();

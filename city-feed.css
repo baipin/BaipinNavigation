@@ -94,7 +94,7 @@
     .city-feed-expanded .city-feed-board { grid-template-columns:minmax(0,1fr); }
     .city-feed-expanded .city-feed-board-title { padding:0 12px; }
 }
-/* Material Design is limited to the fullscreen control. */
+/* Translucent Material icon controls. */
 .city-feed-fullscreen-button { width:36px; height:36px; min-height:36px; padding:8px; justify-content:center; border:1px solid rgba(255,255,255,.16); border-radius:50%; background:rgba(255,255,255,.10); color:#f4f1df; backdrop-filter:blur(12px); transition:background .2s,box-shadow .2s; }
 .city-feed-fullscreen-button:hover { background:rgba(255,255,255,.2); box-shadow:0 2px 6px #0005; }
 .city-feed-fullscreen-button:focus-visible { outline:3px solid #a4d2ed; outline-offset:3px; }
@@ -183,4 +183,61 @@
     .city-feed-expanded .city-feed-weather-window { flex-basis:100%; }
     .city-feed-expanded .city-feed-traffic-flip { flex-basis:100%; height:54px; }
     .city-feed-stock-options { grid-template-columns:1fr; }
+}
+
+/* Fit both market groups to the viewport; JavaScript paginates their available slots. */
+#city-ticker.city-feed-expanded { box-sizing:border-box; overflow:hidden; }
+.city-feed-expanded .city-feed-board { overflow:hidden; }
+.city-feed-board-group { min-height:0; display:grid; grid-template-rows:auto minmax(0,1fr); }
+.city-feed-board-grid { min-height:0; grid-auto-rows:minmax(0,1fr); }
+.city-feed-board-quote { min-height:0; }
+.city-feed-board-title { gap:16px; }
+.city-feed-logo { width:48px; height:48px; object-fit:contain; flex:none; }
+.city-feed-updates { padding:7px 10px; }
+/* Material state layers, touch targets and accessible native checkboxes. */
+#city-ticker button { position:relative; isolation:isolate; overflow:hidden; -webkit-tap-highlight-color:transparent; }
+#city-ticker button::after { content:''; position:absolute; inset:0; border-radius:inherit; background:currentColor; opacity:0; pointer-events:none; transition:opacity .18s; }
+#city-ticker button:hover::after { opacity:.08; }
+#city-ticker button:active::after { opacity:.16; }
+#city-ticker button:focus-visible { outline:3px solid #e9d792; outline-offset:3px; }
+.city-feed-fullscreen-button { width:40px; height:40px; min-height:40px; border:0; box-shadow:0 1px 3px #0005; }
+.city-feed-stock-actions button { min-height:40px; border:0; border-radius:20px; padding:0 24px; font:500 14px/1.4 Roboto,Arial,sans-serif; letter-spacing:.02em; background:transparent; color:#e9d792; transition:box-shadow .2s; }
+.city-feed-stock-actions button[data-stock-action="reset"] { border:1px solid #8c9389; }
+.city-feed-stock-actions button[type="submit"] { background:#e9d792; color:#292f30; box-shadow:0 1px 3px #0005; }
+.city-feed-stock-options label { min-height:40px; cursor:pointer; gap:12px; }
+.city-feed-stock-options input { appearance:none; -webkit-appearance:none; position:relative; flex:none; width:18px; height:18px; margin:0 3px; border:2px solid #b7c1b8; border-radius:2px; background:transparent; cursor:pointer; transition:background .15s,border-color .15s,box-shadow .15s; }
+.city-feed-stock-options input:checked { background:#e9d792; border-color:#e9d792; }
+.city-feed-stock-options input:checked::after { content:''; position:absolute; left:4px; top:0; width:5px; height:10px; border:solid #292f30; border-width:0 2px 2px 0; transform:rotate(45deg); }
+.city-feed-stock-options input:hover { box-shadow:0 0 0 10px #e9d79214; }
+.city-feed-stock-options input:focus-visible { outline:2px solid #e9d792; outline-offset:6px; box-shadow:0 0 0 10px #e9d7921f; }
+@media(max-width:600px) {
+    .city-feed-expanded .city-feed-board { grid-template-rows:repeat(2,minmax(0,1fr)); }
+    .city-feed-expanded .city-feed-board-grid,.city-feed-expanded .city-feed-board-group:nth-child(2) .city-feed-board-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .city-feed-expanded .city-feed-top { min-height:64px; }
+    .city-feed-expanded .city-feed-board-title { gap:8px; font-size:21px; letter-spacing:.05em; padding:0 8px; }
+    .city-feed-logo { width:32px; height:32px; }
+    .city-feed-board-group h2 { margin-bottom:5px; font-size:13px; }
+    .city-feed-expanded .city-feed-weather { gap:2px; }
+    .city-feed-expanded .city-feed-weather-label { padding:2px 8px; font-size:10px; }
+    .city-feed-info-flip { height:42px; }
+    .city-feed-expanded .city-feed-traffic-flip { height:42px; }
+    .city-feed-info-flip .city-feed-face { padding:3px 6px; font-size:12px; }
+    #city-ticker.city-feed-expanded { --feed-font-size:16px; }
+    .city-feed-expanded .city-feed-updates { font-size:9px; line-height:1.4; padding:4px 6px; }
+    .city-feed-expanded .city-feed-fullscreen-button { margin:3px; }
+}
+@media(max-height:500px) {
+    #city-ticker.city-feed-expanded { padding:4px; --feed-font-size:14px; }
+    .city-feed-expanded .city-feed-top { min-height:48px; }
+    .city-feed-expanded .city-feed-board { gap:6px; padding:4px 8px; }
+    .city-feed-expanded .city-feed-board-group h2 { margin-bottom:4px; font-size:12px; }
+    .city-feed-expanded .city-feed-weather { min-height:32px; }
+    .city-feed-expanded .city-feed-info-flip { height:38px; }
+    .city-feed-expanded .city-feed-clock time { height:27px; }
+    .city-feed-expanded .city-feed-clock small { font-size:8px; margin-top:1px; }
+    .city-feed-expanded .city-feed-logo { width:32px; height:32px; }
+}
+@media(forced-colors:active) {
+    .city-feed-stock-options input { appearance:auto; }
+    .city-feed-stock-options input::after { display:none; }
 }
