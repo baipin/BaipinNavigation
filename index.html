@@ -141,7 +141,7 @@
             border-radius: 50%; padding: 4px; 
         }
 
-        .content-layout { width:100%; max-width:1240px; min-width:0; box-sizing:border-box; margin:0 auto 80px; display:grid; grid-template-columns:minmax(0,1fr) 360px; align-items:start; gap:32px; padding:0 20px; }
+        .content-layout { width:100%; max-width:1240px; min-width:0; box-sizing:border-box; margin:0 auto 80px; display:grid; grid-template-columns:minmax(0,1fr) 360px; align-items:stretch; gap:32px; padding:0 20px; }
         .card-glass { border-radius: 28px; background: var(--glass-bg); backdrop-filter: blur(20px); padding: 32px; border: 1px solid var(--glass-border); color: var(--text-main); }
         .links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 18px; margin-top: 18px; padding: 8px 4px 4px; overflow: visible; }
         .link-item {
@@ -301,8 +301,8 @@
         #city-bus-results .city-mini-row strong, #city-bus-results .city-mini-row small { min-width:0; overflow-wrap:anywhere; }
         .city-bus-line-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:7px; min-width:0; }
         .city-bus-line-list .city-mini-row { align-items:flex-start; }
-        .city-boundary-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; max-height:360px; overflow:auto; scrollbar-gutter:stable; }
-        .city-boundary-card { min-width:0; }
+        .city-boundary-list { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; max-height:none; overflow:visible; }
+        .city-boundary-card { min-width:0; grid-column:1 / -1; }
         #city-boundary { grid-column:1 / -1; }
         .city-boundary-row { min-width:0; padding:11px; border-radius:10px; background:rgba(128,128,128,.1); border-left:4px solid #65d4be; }
         .city-boundary-row.warn { border-left-color:#f59e0b; }
@@ -371,9 +371,9 @@
         .page-flow > #city-finance,
         .page-flow > #city-ticker { width:100%; min-width:0; box-sizing:border-box; flex:0 0 auto; }
         .page-flow > .content-layout:first-of-type { order:1; }
-        .page-flow > .city-dashboard { order:2; }
-        .page-flow > #city-finance { order:3; }
-        .page-flow > #city-ticker { order:4; }
+        .page-flow > .city-dashboard { order:3; }
+        .page-flow > #city-finance { order:4; }
+        .page-flow > #city-ticker { order:2; }
         .page-flow > .content-layout:last-of-type { order:5; }
         .city-initial-hidden { display:none !important; }
         #city-finance, #city-ticker { max-width:1240px; width:100%; min-width:0; box-sizing:border-box; margin:0 auto 18px; padding:0 20px; }
@@ -390,7 +390,7 @@
         .city-ticker-track { display:inline-block; padding-left:100%; animation:cityTicker 95s linear infinite; color:rgba(255,255,255,.9); font-size:.78rem; }
         .city-ticker-track span { margin-right:44px; }
         @keyframes cityTicker { from { transform:translateX(0); } to { transform:translateX(-100%); } }
-        @media (max-width:1100px) { .city-journey-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+        @media (max-width:1100px) { .city-boundary-list { grid-template-columns:repeat(2,minmax(0,1fr)); } .city-journey-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
         @media (max-width:900px) { .city-dashboard-grid { display:block; } .city-dashboard-grid > article { margin-bottom:18px; } .city-journey-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .city-finance-card{grid-template-columns:repeat(2,minmax(0,1fr))}.city-finance-item:nth-child(2n){border-right:0} }
         @media (max-width:600px) { .city-dashboard { padding:0 12px; width:100%; } .city-metrics, .city-journey-grid, .city-boundary-list { grid-template-columns:1fr; } .city-metric { min-height:96px; } .city-rail-grid { grid-template-columns:1fr; } .city-two-col { grid-template-columns:1fr; } .city-flight-columns { grid-template-columns:1fr; } .city-flight-list { max-height:240px; } .city-card { padding:16px; } .city-finance-value { white-space:normal; font-size:1.15rem; } .city-input { min-width:0; width:100%; } .city-form .city-button { flex:1 1 40%; } .city-bus-line-list { grid-template-columns:1fr; } #city-finance,#city-ticker{padding:0 12px}.city-finance-card{grid-template-columns:1fr}.city-finance-item{border-right:0;border-bottom:1px solid rgba(255,255,255,.12)}.city-finance-item:last-child{border-bottom:0} }
     </style>
@@ -429,6 +429,9 @@
         </div>
     </section>
     <div class="page-flow">
+    <section id="city-ticker">
+        <div class="city-ticker-card"><span class="city-ticker-label">CITY FEED</span><span class="city-ticker-window"><span class="city-ticker-track" id="city-ticker-track">正在匯集交通、新聞及市場資料…</span></span></div>
+    </section>
     <section class="city-dashboard" aria-label="香港实时城市仪表盘">
         <div class="city-dashboard-grid">
             <article class="city-card">
@@ -557,9 +560,6 @@
             <div class="city-finance-item"><div class="city-finance-label">恒生指數</div><div class="city-finance-value" id="city-hsi">--</div><div class="city-finance-note" id="city-hsi-note">市場數據讀取中</div></div>
             <div class="city-finance-item"><div class="city-finance-label">美元 / 港幣</div><div class="city-finance-value" id="city-usd">US$1 = HK$--</div><div class="city-finance-note">即時參考匯率</div></div>
         </div>
-    </section>
-    <section id="city-ticker">
-        <div class="city-ticker-card"><span class="city-ticker-label">CITY FEED</span><span class="city-ticker-window"><span class="city-ticker-track" id="city-ticker-track">正在匯集交通、新聞及市場資料…</span></span></div>
     </section>
     <div class="content-layout">
     <div class="card-glass" id="photo-credit" style="
@@ -1130,48 +1130,62 @@
         setInterval(updateHKTTime, 1000);
         updateHKTTime();
 
-        // 只保留你指定的三个源
-        let customRSS = JSON.parse(localStorage.getItem('custom_rss')) || [
-            "https://hk.news.yahoo.com/rss/hong-kong",
-            "https://rthk.hk/rthk/news/rss/c_expressnews_elocal.xml",
-            "https://rthk.hk/rthk/news/rss/c_expressnews_efinance.xml"
+        const baseRSS = [
+            'https://hk.news.yahoo.com/rss/hong-kong',
+            'https://rthk.hk/rthk/news/rss/c_expressnews_elocal.xml',
+            'https://rthk.hk/rthk/news/rss/c_expressnews_efinance.xml'
         ];
+        const additionalRSS = [
+            'https://www.chinanews.com.cn/rss/finance.xml',
+            'https://news.mingpao.com/rss/pns/s00004.xml',
+            'https://www.rti.org.tw/rss'
+        ];
+        let savedRSS;
+        try { savedRSS = JSON.parse(localStorage.getItem('custom_rss')); } catch {}
+        let customRSS = Array.isArray(savedRSS) ? savedRSS : [...baseRSS, ...additionalRSS];
+        // Add these defaults once, so a source removed by the user stays removed.
+        if (!localStorage.getItem('navi_rss_expansion_v1')) {
+            if (customRSS.length) customRSS = [...new Set([...customRSS, ...additionalRSS])];
+            localStorage.setItem('custom_rss',JSON.stringify(customRSS));
+            localStorage.setItem('navi_rss_expansion_v1','1');
+        }
+        const cityRssCache = new Map();
+        function cityReadRss(url) {
+            const cached = cityRssCache.get(url);
+            if (cached && Date.now() - cached.time < 60000) return cached.promise;
+            const promise = (async () => {
+                try {
+                    const response = await fetch(url,{signal:AbortSignal.timeout(6000)});
+                    if (!response.ok) throw new Error('RSS unavailable');
+                    const xml = new DOMParser().parseFromString(await response.text(),'application/xml');
+                    const titles = [...xml.querySelectorAll('item > title, entry > title')].map(node=>node.textContent.trim()).filter(Boolean);
+                    if (titles.length) return titles;
+                } catch {}
+                const response = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(url),{signal:AbortSignal.timeout(10000)});
+                if (!response.ok) throw new Error('RSS conversion unavailable');
+                const data = await response.json();
+                return (data.items || []).map(item=>String(item.title || '').trim()).filter(Boolean);
+            })();
+            cityRssCache.set(url,{time:Date.now(),promise});
+            return promise;
+        }
 
         function saveCustomRSS() {
             localStorage.setItem('custom_rss', JSON.stringify(customRSS));
         }
 
+        let cityRssRevision = 0;
         async function fetchHKNews() {
-    let marqueeHTML = '';
-
-    for (let rssUrl of customRSS) {
-        try {
-            // 使用 RSS 转 JSON 服务（解决 CORS）
-            const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
-
-            const res = await fetch(api);
-            const data = await res.json();
-
-            if (data.items && data.items.length) {
-                data.items.forEach(item => {
-                    if (item.title) {
-                        marqueeHTML += `${item.title}　|　`;
-                    }
-                });
-            }
-
-        } catch (e) {
-            console.error(`RSS失败: ${rssUrl}`, e);
-        }
-    }
-
-    if (!marqueeHTML) marqueeHTML = '暂无最新新闻，请稍后刷新...';
-
-    document.getElementById('news-marquee').innerHTML = marqueeHTML;
-    document.getElementById('fullscreen-marquee').innerHTML =
-    `<span>${marqueeHTML}</span>`;
-    document.getElementById('update-time').textContent =
-        `更新时间: ${new Date().toLocaleTimeString('zh-CN')}`;
+            const revision = ++cityRssRevision;
+            const results = await Promise.allSettled(customRSS.map(cityReadRss));
+            if (revision !== cityRssRevision) return;
+            const headlines = [...new Set(results.flatMap(result=>result.status === 'fulfilled' ? result.value.slice(0,12) : []))];
+            const text = headlines.length ? headlines.join('　|　') : '暂无最新新闻，请稍后刷新...';
+            document.getElementById('news-marquee').textContent = text;
+            const span = document.createElement('span'); span.textContent = text;
+            document.getElementById('fullscreen-marquee').replaceChildren(span);
+            document.getElementById('update-time').textContent = '更新时间: ' + new Date().toLocaleTimeString('zh-CN');
+            updateCityTicker();
         }
 
         document.getElementById('refresh-news-btn').onclick = fetchHKNews;
@@ -2199,7 +2213,9 @@ function setBackgroundToCookie(value) {
                 }
             } catch (error) {}
         }
+        let cityTickerRevision = 0;
         async function updateCityTicker() {
+            const revision = ++cityTickerRevision;
             const entries = [];
             try {
                 const xml = await cityXml(cityApi.traffic);
@@ -2210,15 +2226,12 @@ function setBackgroundToCookie(value) {
                 entries.push('港币人民币：HK$1 = ¥' + (fx.rates?.CNY ? fx.rates.CNY.toFixed(4) : '--'));
             } catch (error) {}
             try {
-                const rssSources = typeof customRSS !== 'undefined' ? customRSS : [];
-                const rss = await Promise.all(rssSources.slice(0, 3).map(async (source) => {
-                    const data = await (await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(source) + '&_=' + Date.now())).json();
-                    return (data.items || []).slice(0, 4).map((item) => item.title);
-                }));
-                rss.flat().forEach((title) => entries.push(title));
+                const rss = await Promise.allSettled(customRSS.map(cityReadRss));
+                rss.forEach(result=> { if (result.status === 'fulfilled') result.value.slice(0,4).forEach(title=>entries.push(title)); });
             } catch (error) {}
             if (!entries.length) entries.push('暂无可用城市资讯，稍后会自动更新。');
             for (let i = entries.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [entries[i], entries[j]] = [entries[j], entries[i]]; }
+            if (revision !== cityTickerRevision) return;
             document.getElementById('city-ticker-track').innerHTML = entries.map((entry) => `<span>${cityEsc(entry)}</span>`).join('');
         }
         function cityUpdatePulse() {

@@ -13,10 +13,14 @@
     };
     let rows = [], selected = localStorage.getItem('navi_aqhi_station') || 'Central/Western';
     const select = document.createElement('select');
-    select.id = 'city-aqhi-station'; select.className = 'city-aqhi-select';
+    select.id = 'city-aqhi-station'; select.className = 'rain-station-select city-aqhi-select'; select.hidden = true;
     const panel = document.getElementById('home-aqhi-panel');
-    const picker = document.createElement('label'); picker.className = 'city-aqhi-picker';
-    const caption = document.createElement('span'); picker.append(caption,select); panel?.append(picker);
+    const button = document.createElement('mdui-button-icon');
+    button.id = 'city-aqhi-picker'; button.className = 'rain-station-picker'; button.setAttribute('icon','edit_location');
+    button.setAttribute('aria-controls',select.id); button.setAttribute('aria-expanded','false');
+    const place = document.getElementById('city-aqhi-place'); place?.after(button,select);
+    button.addEventListener('click',()=> {select.hidden = !select.hidden; button.setAttribute('aria-expanded',String(!select.hidden)); if (!select.hidden) select.focus();});
+    select.addEventListener('keydown',event=> {if(event.key === 'Escape') {select.hidden=true;button.setAttribute('aria-expanded','false');button.focus();}});
     function fillOptions() {
         const available = rows.length ? rows.map(row=>row.station) : Object.keys(stations);
         select.replaceChildren(...available.map(station=> {
@@ -26,7 +30,7 @@
         if (!available.includes(selected)) selected = available[0];
         select.value = selected;
         select.setAttribute('aria-label',t('空气质素监测地区','空氣質素監測地區'));
-        caption.textContent = t('监测地区','監測地區');
+        button.title = t('选择空气质素监测地区','選擇空氣質素監測地區'); button.setAttribute('aria-label',button.title);
     }
     function render() {
         const row = rows.find(item=>item.station === selected);
@@ -42,7 +46,7 @@
         document.getElementById('city-aqhi-risk').title = row?.publish_date ? t('资料时间：','資料時間：') + row.publish_date.replace('T',' ') : '';
     }
     window.cityRenderAqhi = (data) => { rows = Array.isArray(data) ? data : []; fillOptions(); render(); };
-    select.addEventListener('change',()=> { selected = select.value; localStorage.setItem('navi_aqhi_station',selected); render(); });
+    select.addEventListener('change',()=> { selected = select.value; localStorage.setItem('navi_aqhi_station',selected); select.hidden=true;button.setAttribute('aria-expanded','false');render(); });
     fillOptions(); render();
 
     const icons = {WCOLD:'cold',WHOT:'vhot',WMSGNL:'msn',WFROST:'frost',WFNTSA:'ntfl',WL:'landslip',WTMW:'tsunami-warn',WTM:'tsunami-warn',WFIREY:'firey',WFIRER:'firer',WRAINA:'raina',WRAINR:'rainr',WRAINB:'rainb',WTS:'ts',TC1:'tc1',TC3:'tc3',TC8NE:'tc8ne',TC8NW:'tc8nw',TC8SE:'tc8se',TC8SW:'tc8sw',TC9:'tc9',TC10:'tc10'};
