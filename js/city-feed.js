@@ -26,7 +26,8 @@
     const weatherLabel = document.createElement('span'); weatherLabel.className = 'city-feed-weather-label';
     const weatherWindow = document.createElement('div'); weatherWindow.className = 'city-feed-weather-window';
     const weatherTrack = document.createElement('div'); weatherTrack.className = 'city-feed-weather-track';
-    weatherWindow.append(weatherTrack); weather.append(weatherLabel,weatherWindow);
+    const weatherFlip = document.createElement('div'); weatherFlip.className = 'city-feed-weather-flip';
+    weatherWindow.append(weatherFlip,weatherTrack); weather.append(weatherLabel,weatherWindow);
     card.replaceChildren(top, board, weather, bottom, controls);
 
     const isSC = () => localStorage.getItem('navi_language') === 'sc';
@@ -176,7 +177,7 @@
         slots.forEach((slot,index) => renderQuote(slot, stocks[(page * count + index) % stocks.length]));
         boardQuotes.forEach(({slot,market,stock,offset})=>renderQuote(slot,stock ? stocks[(boardPage * 12 + offset) % stocks.length] : market));
         boardLabels[0].textContent = text('全球指数与汇率','全球指數與匯率');
-        boardLabels[1].textContent = text('重点个股 · 第 ','重點個股 · 第 ') + (boardPage % Math.ceil(stocks.length/12) + 1) + ' / ' + Math.ceil(stocks.length/12) + text(' 页 · 每 6 秒翻页',' 頁 · 每 6 秒翻頁');
+        boardLabels[1].textContent = text('重点个股 · 第 ','重點個股 · 第 ') + (boardPage % Math.ceil(stocks.length/12) + 1) + ' / ' + Math.ceil(stocks.length/12) + text(' 页',' 頁');
         const fullscreenLabel = text(expanded?'退出全屏':'全屏行情',expanded?'退出全屏':'全屏行情');
         fullscreenButton.querySelector('.city-feed-fullscreen-label').textContent = fullscreenLabel;
         fullscreenButton.querySelector('.material-icons').textContent = expanded?'fullscreen_exit':'fullscreen';
@@ -271,7 +272,7 @@
         ['新加坡','新加坡',1.35,103.82],['悉尼','悉尼',-33.87,151.21],['伦敦','倫敦',51.51,-.13],
         ['巴黎','巴黎',48.86,2.35],['纽约','紐約',40.71,-74.01],['洛杉矶','洛杉磯',34.05,-118.24]
     ];
-    let worldWeather = [], weatherUpdated = '';
+    let worldWeather = [], weatherUpdated = '', weatherPage = 0;
     function weatherDescription(code) {
         if (code === 0) return ['晴','晴','☀'];
         if (code <= 3) return ['多云','多雲','☁'];
@@ -285,8 +286,7 @@
         const copy = document.createElement('div'); copy.className = 'city-feed-weather-copy';
         cities.forEach((city,index)=> {
             const data = worldWeather[index], current = data?.current, daily = data?.daily;
-            const item = document.createElement('a'); item.target = '_blank'; item.rel = 'noopener noreferrer';
-            item.href = 'https://www.open-meteo.com/en/docs?latitude=' + city[2] + '&longitude=' + city[3];
+            const item = document.createElement('span');
             const condition = current ? weatherDescription(current.weather_code) : null;
             const temp = value=>Number.isFinite(value) ? Math.round(value) + '°' : '--';
             item.textContent = city[isSC()?0:1] + '  ' + (condition ? condition[2] + ' ' + text(condition[0],condition[1]) + '  ' + temp(current.temperature_2m) + 'C  ' + temp(daily?.temperature_2m_min?.[0]) + '–' + temp(daily?.temperature_2m_max?.[0]) : text('天气暂不可用','天氣暫不可用'));
@@ -295,6 +295,25 @@
         });
         const duplicate = copy.cloneNode(true); duplicate.setAttribute('aria-hidden','true'); duplicate.inert = true;
         weatherTrack.replaceChildren(copy,duplicate);
+        renderWeatherFlip();
+    }
+    function renderWeatherFlip() {
+        const item = weatherTrack.querySelector('.city-feed-weather-copy')?.children[weatherPage % cities.length];
+        if (!item) return;
+        const signature = item.textContent;
+        if (weatherFlip.dataset.signature === signature) return;
+        weatherFlip.dataset.signature = signature;
+        clearTimeout(timers.get(weatherFlip));
+        weatherFlip.querySelectorAll('.city-feed-outgoing').forEach(node=>node.remove());
+        const previous = weatherFlip.firstElementChild;
+        const face = document.createElement('div'); face.className = 'city-feed-face';
+        face.textContent = signature; weatherFlip.title = item.title;
+        if (previous) {
+            previous.className = 'city-feed-face city-feed-outgoing'; previous.setAttribute('aria-hidden','true');
+            face.classList.add('city-feed-incoming');
+        }
+        weatherFlip.append(face);
+        timers.set(weatherFlip,setTimeout(()=> {previous?.remove();face.classList.remove('city-feed-incoming');},650));
     }
     async function refreshWorldWeather() {
         try {
@@ -319,7 +338,7 @@
     matchMedia('(max-width:600px)').addEventListener('change',() => { page = 0; renderMarkets(); });
     clock(); syncHeadlines(); syncRates(); refreshStocks();
     setInterval(clock,1000);
-    setInterval(() => { if (!document.hidden) { page++; boardPage = (boardPage + 1) % Math.ceil(stocks.length/12); renderMarkets(); } },6000);
+    setInterval(() => { if (!document.hidden) { page++; weatherPage++; renderWeatherFlip(); boardPage = (boardPage + 1) % Math.ceil(stocks.length/12); renderMarkets(); } },6000);
     setInterval(() => { if (!document.hidden) { featuredPage++; renderMarkets(); } },8000);
     setInterval(() => { if (!document.hidden) refreshStocks(); },120000);
 })();
