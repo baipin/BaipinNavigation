@@ -17,7 +17,7 @@
     const controls = document.createElement('div'); controls.className = 'city-feed-controls';
     const fullscreenButton = document.createElement('button');
     fullscreenButton.type = 'button'; fullscreenButton.id = 'city-feed-fullscreen'; fullscreenButton.className = 'city-feed-fullscreen-button';
-    fullscreenButton.innerHTML = '<span class="material-icons" aria-hidden="true">fullscreen</span><span class="city-feed-fullscreen-label"></span>';
+    fullscreenButton.innerHTML = '<span class="material-icons" aria-hidden="true">fullscreen</span>';
     fullscreenButton.setAttribute('aria-pressed','false');
     controls.append(source,fullscreenButton);
     const board = document.createElement('div'); board.className = 'city-feed-board'; board.hidden = true;
@@ -28,7 +28,8 @@
     const weatherTrack = document.createElement('div'); weatherTrack.className = 'city-feed-weather-track';
     const weatherFlip = document.createElement('div'); weatherFlip.className = 'city-feed-weather-flip';
     weatherWindow.append(weatherFlip,weatherTrack); weather.append(weatherLabel,weatherWindow);
-    card.replaceChildren(top, board, weather, bottom, controls);
+    top.append(weather);
+    card.replaceChildren(top, board, bottom, controls);
 
     const isSC = () => localStorage.getItem('navi_language') === 'sc';
     const text = (sc, tc) => isSC() ? sc : tc;
@@ -111,7 +112,7 @@
     function finishFullscreen() {
         if (!expanded) return;
         expanded = false; nativeFullscreen = false;
-        section.classList.remove('city-feed-expanded'); board.hidden = true;
+        section.classList.remove('city-feed-expanded'); board.hidden = true; top.append(weather);
         document.body.style.overflow = previousOverflow;
         fullscreenButton.setAttribute('aria-pressed','false');
         renderMarkets(); previousFocus?.focus({preventScroll:true});
@@ -122,7 +123,7 @@
             finishFullscreen(); return;
         }
         previousFocus = document.activeElement; previousOverflow = document.body.style.overflow;
-        expanded = true; board.hidden = false; document.body.style.overflow = 'hidden';
+        expanded = true; board.hidden = false; card.insertBefore(weather,bottom); document.body.style.overflow = 'hidden';
         section.classList.add('city-feed-expanded'); fullscreenButton.setAttribute('aria-pressed','true'); renderMarkets();
         try { if (section.requestFullscreen) {await section.requestFullscreen(); nativeFullscreen = true;} } catch { /* Keep the viewport-filling board when native fullscreen is unavailable. */ }
     });
@@ -179,9 +180,8 @@
         boardLabels[0].textContent = text('全球指数与汇率','全球指數與匯率');
         boardLabels[1].textContent = text('重点个股 · 第 ','重點個股 · 第 ') + (boardPage % Math.ceil(stocks.length/12) + 1) + ' / ' + Math.ceil(stocks.length/12) + text(' 页',' 頁');
         const fullscreenLabel = text(expanded?'退出全屏':'全屏行情',expanded?'退出全屏':'全屏行情');
-        fullscreenButton.querySelector('.city-feed-fullscreen-label').textContent = fullscreenLabel;
         fullscreenButton.querySelector('.material-icons').textContent = expanded?'fullscreen_exit':'fullscreen';
-        fullscreenButton.setAttribute('aria-label',fullscreenLabel);
+        fullscreenButton.setAttribute('aria-label',fullscreenLabel); fullscreenButton.title = fullscreenLabel;
         source.textContent = text('市场：','市場：') + marketSource + text(' · 汇率：ExchangeRate-API · 天气：Open-Meteo · 行情可能延迟',' · 匯率：ExchangeRate-API · 天氣：Open-Meteo · 行情可能延遲');
     }
     function syncRates() {
@@ -197,11 +197,28 @@
         });
         renderMarkets();
     }
+    // Inline seven-segment display stays sharp without a downloaded clock font.
+    const digitSegments = ['abcdef','bc','abdeg','abcdg','bcfg','acdfg','acdefg','abc','abcdefg','abcdfg'];
+    const segmentShapes = {
+        a:'4,2 18,2 21,5 18,8 4,8 1,5',
+        b:'22,6 22,18 19,21 16,18 16,9',
+        c:'22,24 22,36 19,39 16,36 16,27',
+        d:'4,36 18,36 21,39 18,42 4,42 1,39',
+        e:'0,24 3,21 6,24 6,35 3,38 0,35',
+        f:'0,8 3,5 6,8 6,17 3,20 0,17',
+        g:'4,19 18,19 21,22 18,25 4,25 1,22'
+    };
     function clock() {
         const now = new Date();
         const time = document.getElementById('city-feed-time');
-        time.textContent = now.toLocaleTimeString('en-GB', {timeZone:'Asia/Hong_Kong',hour:'2-digit',minute:'2-digit'});
+        const value = now.toLocaleTimeString('en-GB', {timeZone:'Asia/Hong_Kong',hour:'2-digit',minute:'2-digit'});
         time.dateTime = now.toISOString();
+        time.setAttribute('aria-label',text('香港时间 ','香港時間 ') + value);
+        if (time.dataset.value === value) return;
+        time.dataset.value = value;
+        const digits = value.replace(':','').split('');
+        const display = digits.map((digit,index)=> '<g transform="translate(' + [0,26,62,88][index] + ',0)">' + Object.entries(segmentShapes).map(([segment,points])=> '<polygon points="' + points + '" opacity="' + (digitSegments[Number(digit)].includes(segment) ? '1' : '.07') + '"/>').join('') + '</g>').join('');
+        time.innerHTML = '<svg class="city-feed-digital-clock" viewBox="-1 0 112 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" fill="currentColor">' + display + '<circle cx="55" cy="15" r="2.5"/><circle cx="55" cy="30" r="2.5"/></svg>';
     }
     function syncHeadlines() {
         if (track.querySelector('.city-feed-copy')) return;

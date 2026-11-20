@@ -94,11 +94,10 @@
     .city-feed-expanded .city-feed-top { grid-template-columns:100px 1fr; }
     .city-feed-expanded .city-feed-board { grid-template-columns:minmax(0,1fr); }
     .city-feed-expanded .city-feed-board-title { padding:0 12px; }
-    .city-feed-fullscreen-label { display:none; }
 }
 /* Material Design is limited to the fullscreen control. */
-.city-feed-fullscreen-button { min-height:36px; padding:8px 16px; border:0; border-radius:20px; background:#c2e7ff; color:#00344d; font-weight:600; gap:8px; transition:box-shadow .2s,filter .2s; }
-.city-feed-fullscreen-button:hover { box-shadow:0 2px 6px #0005; filter:brightness(1.08); }
+.city-feed-fullscreen-button { width:36px; height:36px; min-height:36px; padding:8px; justify-content:center; border:1px solid rgba(255,255,255,.16); border-radius:50%; background:rgba(255,255,255,.10); color:#f4f1df; backdrop-filter:blur(12px); transition:background .2s,box-shadow .2s; }
+.city-feed-fullscreen-button:hover { background:rgba(255,255,255,.2); box-shadow:0 2px 6px #0005; }
 .city-feed-fullscreen-button:focus-visible { outline:3px solid #a4d2ed; outline-offset:3px; }
 .city-feed-weather { display:flex; align-items:center; flex:none; min-height:36px; border-top:1px solid #77735b; background:#191e21; }
 .city-feed-weather-label { flex:0 0 96px; text-align:center; color:#d4cda9; font-size:11px; }
@@ -119,4 +118,29 @@
     .city-feed-expanded .city-feed-weather-track { animation:none; width:auto; }
     .city-feed-expanded .city-feed-weather-window { overflow:auto; }
     .city-feed-weather-copy[aria-hidden] { display:none; }
+}
+
+/* The compact broadcast pairs the index and weather beside the stock rows. */
+.city-feed-top { grid-template-rows:40px 32px; }
+.city-feed-clock { grid-column:1; grid-row:1 / 3; }
+.city-feed-top > .city-feed-featured { grid-column:2; grid-row:1; }
+.city-feed-top > .city-feed-featured .city-feed-face { grid-template-columns:minmax(0,1fr) auto auto; grid-template-rows:1fr; padding:3px 7px; gap:6px; }
+.city-feed-top > .city-feed-featured .city-feed-name { grid-column:auto; }
+.city-feed-top > .city-feed-featured .city-feed-price { font-size:14px; }
+.city-feed-top > .city-feed-markets { grid-column:3; grid-row:1 / 3; }
+.city-feed-top > .city-feed-weather { grid-column:2; grid-row:2; min-width:0; min-height:0; border-right:2px solid #a9a16b; }
+.city-feed-top > .city-feed-weather .city-feed-weather-label { display:none; }
+.city-feed-top > .city-feed-weather .city-feed-weather-flip { height:31px; }
+.city-feed-clock time { display:block; width:80px; height:32px; }
+.city-feed-digital-clock { display:block; width:100%; height:100%; }
+.city-feed-expanded .city-feed-top { grid-template-rows:auto; }
+.city-feed-expanded .city-feed-clock { grid-row:1; }
+.city-feed-expanded .city-feed-clock time { width:120px; height:46px; }
+@media(max-width:600px) {
+    .city-feed-top { grid-template-rows:40px 32px auto; }
+    .city-feed-top > .city-feed-featured { min-height:0; }
+    .city-feed-top > .city-feed-weather { border-right:0; }
+    .city-feed-top > .city-feed-markets { grid-column:1 / -1; grid-row:3; }
+    .city-feed-clock time { width:60px; height:27px; }
+    .city-feed-expanded .city-feed-clock time { width:82px; height:34px; }
 }
