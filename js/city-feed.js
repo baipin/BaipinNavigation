@@ -454,7 +454,7 @@
                 width+=itemWidth;
             }
         }
-        applyPending() {
+        applyPending(completedText) {
             if(!this.pending) return;
             let position=-this.offset;
             for(const node of [...this.track.children]) {
@@ -462,7 +462,11 @@
                 if(position>=this.viewport.clientWidth) node.remove();
                 position+=width;
             }
-            this.playlist=this.pending;this.pending=null;this.next=0;
+            // Resume after the last retained headline, rather than restarting the feed.
+            const anchor=this.track.lastElementChild?.textContent || completedText;
+            const anchorIndex=this.pending.indexOf(anchor);
+            this.next=anchorIndex>=0 ? anchorIndex+1 : this.next % this.pending.length;
+            this.playlist=this.pending;this.pending=null;
         }
         stop() {
             if(this.animation) {
@@ -475,7 +479,7 @@
             if(!this.active || this.reduced || this.animation || !this.viewport.clientWidth) return;
             const first=this.track.firstElementChild,width=first?.getBoundingClientRect().width || 0;
             if(!width) return;
-            if(this.offset>=width) {this.offset-=width;first.remove();this.applyPending();this.fill();this.start();return;}
+            if(this.offset>=width) {this.offset-=width;first.remove();this.applyPending(first.textContent);this.fill();this.start();return;}
             // Browser-composited linear motion: no per-frame JavaScript or layout reads.
             this.animation=this.track.animate([
                 {transform:'translate3d('+(-this.offset)+'px,0,0)'},
@@ -483,7 +487,7 @@
             ],{duration:(width-this.offset)/this.speed*1000,easing:'linear',fill:'forwards'});
             this.animation.onfinish=()=> {
                 this.animation.cancel();this.animation=null;this.offset=0;first.remove();
-                this.applyPending();this.fill();this.start();
+                this.applyPending(first.textContent);this.fill();this.start();
             };
         }
         refresh(active=this.active,reduced=this.reduced,speed=this.speed) {
