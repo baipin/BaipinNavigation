@@ -8,7 +8,7 @@
     const label = card.querySelector('.city-ticker-label');
     const top = document.createElement('div');
     top.className = 'city-feed-top';
-    top.innerHTML = '<div class="city-feed-clock"><time id="city-feed-time" aria-label="香港时间"></time><small>UTC+8</small></div><a class="city-feed-featured" target="_blank" rel="noopener noreferrer" aria-label="全球指数与汇率"></a><div class="city-feed-markets" aria-label="个股行情"></div>';
+    top.innerHTML = '<div class="city-feed-clock"><time id="city-feed-time" aria-label="香港时间"></time><small>UTC+8</small><small class="city-feed-time-source" aria-live="polite"></small></div><a class="city-feed-featured" target="_blank" rel="noopener noreferrer" aria-label="全球指数与汇率"></a><div class="city-feed-markets" aria-label="个股行情"></div>';
     const bottom = document.createElement('div');
     bottom.className = 'city-feed-bottom';
     bottom.append(label, windowElement);
@@ -19,7 +19,11 @@
     fullscreenButton.type = 'button'; fullscreenButton.id = 'city-feed-fullscreen'; fullscreenButton.className = 'city-feed-fullscreen-button';
     fullscreenButton.innerHTML = '<span class="material-icons" aria-hidden="true">fullscreen</span>';
     fullscreenButton.setAttribute('aria-pressed','false');
-    controls.append(source,fullscreenButton);
+    const updates = document.createElement('div'); updates.className = 'city-feed-updates';
+    const information = document.createElement('div'); information.className = 'city-feed-information'; information.append(source,updates);
+    const stockButton = document.createElement('button'); stockButton.type = 'button'; stockButton.id = 'city-feed-stock-settings'; stockButton.className = 'city-feed-fullscreen-button';
+    stockButton.innerHTML = '<span class="material-icons" aria-hidden="true">playlist_add</span>';
+    controls.append(information,stockButton,fullscreenButton);
     const board = document.createElement('div'); board.className = 'city-feed-board'; board.hidden = true;
     const heading = document.createElement('div'); heading.className = 'city-feed-board-title'; heading.textContent = 'CITY FEED'; top.append(heading);
     const weather = document.createElement('div'); weather.className = 'city-feed-weather';
@@ -27,7 +31,10 @@
     const weatherWindow = document.createElement('div'); weatherWindow.className = 'city-feed-weather-window';
     const weatherTrack = document.createElement('div'); weatherTrack.className = 'city-feed-weather-track';
     const weatherFlip = document.createElement('div'); weatherFlip.className = 'city-feed-weather-flip';
-    weatherWindow.append(weatherFlip,weatherTrack); weather.append(weatherLabel,weatherWindow);
+    const weatherFull = document.createElement('div'); weatherFull.className = 'city-feed-weather-full';
+    const weatherFullSlots = Array.from({length:2},()=> {const slot=document.createElement('div');slot.className='city-feed-info-flip';weatherFull.append(slot);return slot;});
+    const trafficFlip = document.createElement('div'); trafficFlip.className = 'city-feed-info-flip city-feed-traffic-flip';
+    weatherWindow.append(weatherFlip,weatherTrack,weatherFull); weather.append(weatherLabel,weatherWindow,trafficFlip);
     top.append(weather);
     card.replaceChildren(top, board, bottom, controls);
 
@@ -86,7 +93,18 @@
         { id:'usd', dom:'city-usd', names:['美元 / 港币','美元 / 港幣'] }
     ];
     const featuredMarkets = markets.filter((market) => ['hsi','nasdaq','sp500','ftse'].includes(market.id) || market.index || market.dom);
-    const stocks = markets.filter((market) => market.symbol && !featuredMarkets.includes(market));
+    const defaultStocks = markets.filter((market) => market.symbol && !featuredMarkets.includes(market));
+    const validSymbol = symbol=>/^(?:[A-Z]{1,6}|\d{4,5}\.HK|\d{6}\.(?:SS|SZ))$/.test(symbol);
+    let stockSelection = null;
+    try {const saved = JSON.parse(localStorage.getItem('navi_city_stocks'));if (saved && Array.isArray(saved.ids) && Array.isArray(saved.symbols)) stockSelection = {ids:saved.ids.filter(id=>defaultStocks.some(stock=>stock.id===id)),symbols:[...new Set(saved.symbols.filter(symbol=>typeof symbol==='string' && validSymbol(symbol)))].slice(0,20)};} catch {}
+    let stocks = [];
+    function applyStockSelection() {
+        const custom = (stockSelection?.symbols || []).filter(symbol=>!defaultStocks.some(stock=>stock.symbol===symbol)).map(symbol=>({id:'custom:'+symbol,symbol,names:[symbol,symbol]}));
+        markets.splice(0,markets.length,...markets.filter(m=>!m.id.startsWith('custom:')), ...custom);
+        stocks = stockSelection ? defaultStocks.filter(stock=>stockSelection.ids.includes(stock.id) || stockSelection.symbols.includes(stock.symbol)).concat(custom) : [...defaultStocks];
+        if (!stocks.length) {stockSelection=null;stocks=[...defaultStocks];}
+    }
+    applyStockSelection();
     const featured = top.querySelector('.city-feed-featured');
     const slots = Array.from({length:4}, () => {
         const slot = document.createElement('a');
@@ -102,7 +120,7 @@
         const container = document.createElement('section'); container.className = 'city-feed-board-group';
         const title = document.createElement('h2'); boardLabels.push(title);
         const list = document.createElement('div'); list.className = 'city-feed-board-grid';
-        (index === 0 ? group : group.slice(0,12)).forEach((market,offset)=> {
+        (index === 0 ? group : Array.from({length:12},(_,i)=>group[i % group.length])).forEach((market,offset)=> {
             const slot = document.createElement('a'); slot.className = 'city-feed-board-quote'; slot.target = '_blank'; slot.rel = 'noopener noreferrer';
             list.append(slot); boardQuotes.push({slot,market,stock:index === 1,offset});
         });
@@ -115,7 +133,7 @@
         section.classList.remove('city-feed-expanded'); board.hidden = true; top.append(weather);
         document.body.style.overflow = previousOverflow;
         fullscreenButton.setAttribute('aria-pressed','false');
-        renderMarkets(); previousFocus?.focus({preventScroll:true});
+        clock(); renderMarkets(); renderWeatherFlip(); previousFocus?.focus({preventScroll:true});
     }
     fullscreenButton.addEventListener('click',async()=> {
         if (expanded) {
@@ -124,11 +142,11 @@
         }
         previousFocus = document.activeElement; previousOverflow = document.body.style.overflow;
         expanded = true; board.hidden = false; card.insertBefore(weather,bottom); document.body.style.overflow = 'hidden';
-        section.classList.add('city-feed-expanded'); fullscreenButton.setAttribute('aria-pressed','true'); renderMarkets();
+        section.classList.add('city-feed-expanded'); fullscreenButton.setAttribute('aria-pressed','true'); clock(); renderMarkets(); renderWeatherFlip(); refreshFeedSources();
         try { if (section.requestFullscreen) {await section.requestFullscreen(); nativeFullscreen = true;} } catch { /* Keep the viewport-filling board when native fullscreen is unavailable. */ }
     });
     document.addEventListener('fullscreenchange',()=> {if (expanded && nativeFullscreen && document.fullscreenElement !== section) finishFullscreen();});
-    document.addEventListener('keydown',event=> {if(event.key === 'Escape' && expanded && document.fullscreenElement !== section) finishFullscreen();});
+    document.addEventListener('keydown',event=> {if(event.key === 'Escape' && !stockDialog.open && expanded && document.fullscreenElement !== section) finishFullscreen();});
     let page = 0, featuredPage = 0, boardPage = 0;
     const timers = new WeakMap();
     function renderQuote(slot, market) {
@@ -174,22 +192,49 @@
         }
         renderQuote(featured, featuredMarkets[featuredPage % featuredMarkets.length]);
         // Index/currency and individual-stock pages rotate independently.
-        const count = matchMedia('(max-width:600px)').matches ? 2 : 4;
-        slots.forEach((slot,index) => renderQuote(slot, stocks[(page * count + index) % stocks.length]));
-        boardQuotes.forEach(({slot,market,stock,offset})=>renderQuote(slot,stock ? stocks[(boardPage * 12 + offset) % stocks.length] : market));
+        const count = 4;
+        slots.forEach((slot,index) => {slot.hidden = index >= stocks.length; renderQuote(slot, stocks[(page * count + index) % stocks.length]);});
+        boardQuotes.forEach(({slot,market,stock,offset})=> {slot.hidden=stock && offset>=stocks.length; renderQuote(slot,stock ? stocks[(boardPage * 12 + offset) % stocks.length] : market);});
         boardLabels[0].textContent = text('全球指数与汇率','全球指數與匯率');
         boardLabels[1].textContent = text('重点个股 · 第 ','重點個股 · 第 ') + (boardPage % Math.ceil(stocks.length/12) + 1) + ' / ' + Math.ceil(stocks.length/12) + text(' 页',' 頁');
         const fullscreenLabel = text(expanded?'退出全屏':'全屏行情',expanded?'退出全屏':'全屏行情');
         fullscreenButton.querySelector('.material-icons').textContent = expanded?'fullscreen_exit':'fullscreen';
         fullscreenButton.setAttribute('aria-label',fullscreenLabel); fullscreenButton.title = fullscreenLabel;
-        source.textContent = text('市场：','市場：') + marketSource + text(' · 汇率：ExchangeRate-API · 天气：Open-Meteo · 行情可能延迟',' · 匯率：ExchangeRate-API · 天氣：Open-Meteo · 行情可能延遲');
+        stockButton.setAttribute('aria-label',text('设置自选股','設定自選股')); stockButton.title=stockButton.getAttribute('aria-label');
+        source.textContent = text('市场：','市場：') + marketSource + text(' · 汇率：Frankfurter / ECB（日变动） · 天气：Open-Meteo · 行情可能延迟',' · 匯率：Frankfurter / ECB（日變動） · 天氣：Open-Meteo · 行情可能延遲');
     }
+    const stockDialog = document.createElement('dialog'); stockDialog.className='city-feed-stock-dialog'; stockDialog.id='city-feed-stock-dialog';
+    stockDialog.innerHTML='<form><h2></h2><p class="city-feed-stock-hint"></p><div class="city-feed-stock-options"></div><label class="city-feed-symbol-label" for="city-feed-custom-symbols"></label><textarea id="city-feed-custom-symbols" rows="3" placeholder="BABA, 0700.HK, 600000.SS, 000001.SZ"></textarea><p class="city-feed-stock-error" role="alert"></p><div class="city-feed-stock-actions"><button type="button" data-stock-action="reset"></button><button type="button" data-stock-action="cancel"></button><button type="submit" data-stock-action="save"></button></div></form>';
+    section.append(stockDialog);
+    stockButton.addEventListener('click',()=> {
+        stockDialog.querySelector('h2').textContent=text('自选股设置','自選股設定');
+        stockDialog.querySelector('.city-feed-stock-hint').textContent=text('勾选需要轮播的股票，或输入其他股票代码。设置保存在当前浏览器。','勾選需要輪播的股票，或輸入其他股票代碼。設定儲存在目前瀏覽器。');
+        stockDialog.querySelector('.city-feed-symbol-label').textContent=text('添加其他代码（逗号或换行分隔，最多 20 个）','加入其他代碼（逗號或換行分隔，最多 20 個）');
+        const options=stockDialog.querySelector('.city-feed-stock-options'); options.replaceChildren();
+        defaultStocks.forEach(stock=> {const label=document.createElement('label');const input=document.createElement('input');input.type='checkbox';input.value=stock.id;input.checked=stocks.some(item=>item.id===stock.id);label.append(input,document.createTextNode(stock.names[isSC()?0:1]+' · '+stock.symbol));options.append(label);});
+        stockDialog.querySelector('textarea').value=(stockSelection?.symbols || []).join(', ');
+        stockDialog.querySelector('.city-feed-stock-error').textContent='';
+        ['reset','cancel','save'].forEach((action,index)=> {stockDialog.querySelector('[data-stock-action="'+action+'"]').textContent=text(['恢复默认','取消','保存'][index],['恢復預設','取消','儲存'][index]);});
+        stockDialog.showModal();
+    });
+    stockDialog.querySelector('[data-stock-action="cancel"]').addEventListener('click',()=>stockDialog.close());
+    stockDialog.querySelector('[data-stock-action="reset"]').addEventListener('click',()=> {stockSelection=null;localStorage.removeItem('navi_city_stocks');applyStockSelection();page=boardPage=0;renderMarkets();refreshStocks();stockDialog.close();});
+    stockDialog.querySelector('form').addEventListener('submit',event=> {
+        event.preventDefault();
+        const ids=[...stockDialog.querySelectorAll('input:checked')].map(input=>input.value);
+        const symbols=[...new Set(stockDialog.querySelector('textarea').value.toUpperCase().split(/[\s,，;；]+/).filter(Boolean).map(symbol=>/^\d{4,5}\.HK$/.test(symbol) ? String(Number(symbol.split('.')[0])).padStart(4,'0')+'.HK' : symbol))];
+        const error=stockDialog.querySelector('.city-feed-stock-error');
+        if (symbols.length>20 || symbols.some(symbol=>!validSymbol(symbol))) {error.textContent=text('请使用有效的美股、港股或沪深股票代码，最多添加 20 个。','請使用有效的美股、港股或滬深股票代碼，最多加入 20 個。');return;}
+        if (!ids.length && !symbols.length) {error.textContent=text('请至少选择或添加一只股票。','請至少選擇或加入一隻股票。');return;}
+        stockSelection={ids,symbols};localStorage.setItem('navi_city_stocks',JSON.stringify(stockSelection));applyStockSelection();page=boardPage=0;renderMarkets();refreshStocks();stockDialog.close();
+    });
     function syncRates() {
         markets.filter((item) => item.dom).forEach((market) => {
+            if (state.get(market.id)?.fxSource) return;
             const value = document.getElementById(market.dom)?.textContent || '';
             const price = value.replace(/^(HK\$1 = |US\$1 = )/, '');
             const valid = /\d/.test(price) && !price.includes('--');
-            if (valid) state.set(market.id, { price, change:text('参考','參考') });
+            if (valid) state.set(market.id, { price, change:text('涨跌暂不可用','漲跌暫不可用') });
             else {
                 const previous = state.get(market.id);
                 state.set(market.id, previous ? {...previous, stale:true} : {failed:true});
@@ -208,17 +253,39 @@
         f:'0,8 3,5 6,8 6,17 3,20 0,17',
         g:'4,19 18,19 21,22 18,25 4,25 1,22'
     };
+    let networkEpoch = null, networkAnchor = 0, networkSource = '', syncingTime = false, lastTimeAttempt = -Infinity;
+    async function syncClock() {
+        if (syncingTime) return;
+        syncingTime = true; lastTimeAttempt = performance.now();
+        const started = performance.now();
+        try {
+            const response = await fetch('/api/time?_=' + Date.now(),{cache:'no-store',signal:AbortSignal.timeout(10000)});
+            if (!response.ok) throw new Error('Network clock unavailable');
+            const data = await response.json();
+            if (!Number.isFinite(data.timestamp) || data.timestamp < 1577836800000 || data.timestamp > 4102444800000) throw new Error('Invalid network time');
+            const received = performance.now();
+            networkEpoch = data.timestamp + (received-started)/2;
+            networkAnchor = received; networkSource = data.source || 'Network';
+        } catch {
+            networkEpoch = null; networkSource = '';
+        } finally {syncingTime = false; clock();}
+    }
     function clock() {
-        const now = new Date();
+        const now = new Date(networkEpoch === null ? Date.now() : networkEpoch + performance.now() - networkAnchor);
         const time = document.getElementById('city-feed-time');
-        const value = now.toLocaleTimeString('en-GB', {timeZone:'Asia/Hong_Kong',hour:'2-digit',minute:'2-digit'});
+        const value = now.toLocaleTimeString('en-GB', {timeZone:'Asia/Hong_Kong',hour:'2-digit',minute:'2-digit',...(expanded ? {second:'2-digit'} : {})});
+        const status = top.querySelector('.city-feed-time-source');
+        status.textContent = networkEpoch !== null ? text('网络时间','網絡時間') : syncingTime ? text('正在校时','正在校時') : text('本地时间','本地時間');
+        status.title = networkEpoch !== null ? networkSource : text('网络时间未连接，使用设备本地时间','網絡時間未連接，使用裝置本地時間');
+        status.dataset.local = String(networkEpoch === null && !syncingTime);
         time.dateTime = now.toISOString();
         time.setAttribute('aria-label',text('香港时间 ','香港時間 ') + value);
         if (time.dataset.value === value) return;
         time.dataset.value = value;
-        const digits = value.replace(':','').split('');
-        const display = digits.map((digit,index)=> '<g transform="translate(' + [0,26,62,88][index] + ',0)">' + Object.entries(segmentShapes).map(([segment,points])=> '<polygon points="' + points + '" opacity="' + (digitSegments[Number(digit)].includes(segment) ? '1' : '.07') + '"/>').join('') + '</g>').join('');
-        time.innerHTML = '<svg class="city-feed-digital-clock" viewBox="-1 0 112 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" fill="currentColor">' + display + '<circle cx="55" cy="15" r="2.5"/><circle cx="55" cy="30" r="2.5"/></svg>';
+        const digits = value.replaceAll(':','').split('');
+        const display = digits.map((digit,index)=> '<g transform="translate(' + [0,26,62,88,124,150][index] + ',0)">' + Object.entries(segmentShapes).map(([segment,points])=> '<polygon points="' + points + '" opacity="' + (digitSegments[Number(digit)].includes(segment) ? '1' : '.07') + '"/>').join('') + '</g>').join('');
+        const colons = (expanded ? [55,117] : [55]).map(x=>'<circle cx="' + x + '" cy="15" r="2.5"/><circle cx="' + x + '" cy="30" r="2.5"/>').join('');
+        time.innerHTML = '<svg class="city-feed-digital-clock" viewBox="-1 0 ' + (expanded ? 174 : 112) + ' 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" fill="currentColor">' + display + colons + '</svg>';
     }
     function syncHeadlines() {
         if (track.querySelector('.city-feed-copy')) return;
@@ -241,11 +308,14 @@
     async function refreshStocks() {
         const available = new Set();
         try {
-            const response = await fetch('/api/markets',{cache:'no-store',signal:AbortSignal.timeout(12000)});
+            const customSymbols=stockSelection?.symbols || [];
+            const response = await fetch('/api/markets' + (customSymbols.length ? '?symbols='+encodeURIComponent(customSymbols.join(',')) : ''),{cache:'no-store',signal:AbortSignal.timeout(12000)});
             if (!response.ok) throw new Error('Market API unavailable');
             const payload = await response.json();
             for (const quote of payload.quotes || []) {
                 if (!Number.isFinite(quote.price) || !Number.isFinite(quote.percent)) continue;
+                const custom=markets.find(item=>item.id===quote.id && item.id.startsWith('custom:'));
+                if (custom && quote.name) custom.names=[String(quote.name),String(quote.name)];
                 state.set(quote.id, {
                     price:quote.price.toLocaleString('en-HK',{minimumFractionDigits:2,maximumFractionDigits:2}),
                     change:(quote.percent>0?'+':'') + quote.percent.toFixed(2) + '%',
@@ -254,8 +324,8 @@
                 });
                 available.add(quote.id);
             }
-            if (available.size) { marketSource = payload.source || 'Tencent Finance'; renderMarkets(); }
-        } catch { /* Static hosting can still use the public chart fallback. */ }
+            if (available.size) { markFresh('markets',true); marketSource = payload.source || 'Tencent Finance'; renderMarkets(); }
+        } catch { markFresh('markets',false); /* Static hosting can still use the public chart fallback. */ }
         await Promise.allSettled(markets.filter((item) => item.symbol && !available.has(item.id)).map(async (market) => {
             try {
                 const url = 'https://query2.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(market.symbol) + '?interval=1d&range=1d&_=' + Date.now();
@@ -283,6 +353,25 @@
         }));
     }
 
+    async function refreshFX() {
+        try {
+            const response=await fetch('/api/fx',{signal:AbortSignal.timeout(12000)});
+            if(!response.ok)throw Error('FX unavailable');
+            const data=await response.json();
+            if(!Array.isArray(data.quotes)||data.quotes.length!==4)throw Error('Incomplete FX');
+            const ids=data.quotes.map(quote=>quote.id);
+            if(new Set(ids).size!==4 || !['cny','jpy','chf','usd'].every(id=>ids.includes(id)) || data.quotes.some(quote=>!Number.isFinite(quote.price)||quote.price<=0||!Number.isFinite(quote.percent)))throw Error('Invalid FX quote');
+            for(const quote of data.quotes) {
+                const currency={cny:'¥',jpy:'¥',chf:'CHF ',usd:'HK$'}[quote.id];
+                if(!currency)continue;
+                state.set(quote.id,{price:currency+quote.price.toFixed(4),change:(quote.percent>0?'+':'')+quote.percent.toFixed(2)+'%',direction:quote.percent>0?'up':quote.percent<0?'down':'flat',time:quote.date+text(' · 较 ',' · 較 ')+quote.previousDate,fxSource:true});
+            }
+            markFresh('fx',true);renderMarkets();
+        } catch {
+            markets.filter(item=>item.dom).forEach(market=> {const previous=state.get(market.id);if(previous?.fxSource)state.set(market.id,{...previous,stale:true});});
+            markFresh('fx',false);renderMarkets();
+        }
+    }
     const cities = [
         ['香港','香港',22.32,114.17],['北京','北京',39.90,116.40],['上海','上海',31.23,121.47],
         ['台北','臺北',25.03,121.57],['东京','東京',35.68,139.69],['首尔','首爾',37.57,126.98],
@@ -314,24 +403,45 @@
         weatherTrack.replaceChildren(copy,duplicate);
         renderWeatherFlip();
     }
-    function renderWeatherFlip() {
-        const item = weatherTrack.querySelector('.city-feed-weather-copy')?.children[weatherPage % cities.length];
-        if (!item) return;
-        const signature = item.textContent;
-        if (weatherFlip.dataset.signature === signature) return;
-        weatherFlip.dataset.signature = signature;
-        clearTimeout(timers.get(weatherFlip));
-        weatherFlip.querySelectorAll('.city-feed-outgoing').forEach(node=>node.remove());
-        const previous = weatherFlip.firstElementChild;
-        const face = document.createElement('div'); face.className = 'city-feed-face';
-        face.textContent = signature; weatherFlip.title = item.title;
-        if (previous) {
-            previous.className = 'city-feed-face city-feed-outgoing'; previous.setAttribute('aria-hidden','true');
-            face.classList.add('city-feed-incoming');
-        }
-        weatherFlip.append(face);
-        timers.set(weatherFlip,setTimeout(()=> {previous?.remove();face.classList.remove('city-feed-incoming');},650));
+    function renderInfoFlip(slot,signature,title='') {
+        if (slot.dataset.signature===signature) return;
+        slot.dataset.signature=signature; slot.title=title;
+        clearTimeout(timers.get(slot));slot.querySelectorAll('.city-feed-outgoing').forEach(node=>node.remove());
+        const previous=slot.firstElementChild, face=document.createElement('div');face.className='city-feed-face';face.textContent=signature;
+        if(previous) {previous.className='city-feed-face city-feed-outgoing';previous.setAttribute('aria-hidden','true');face.classList.add('city-feed-incoming');}
+        slot.append(face);timers.set(slot,setTimeout(()=> {previous?.remove();face.classList.remove('city-feed-incoming');},650));
     }
+    function renderWeatherFlip() {
+        const items=weatherTrack.querySelector('.city-feed-weather-copy')?.children;
+        if (!items?.length) return;
+        const item=items[weatherPage % cities.length]; renderInfoFlip(weatherFlip,item.textContent,item.title);
+        weatherFullSlots.forEach((slot,index)=> {const item=items[(weatherPage*2+index)%cities.length];renderInfoFlip(slot,item.textContent,item.title);});
+        const journeys=[...document.querySelectorAll('#city-journey-grid .city-journey-card')];
+        const row=journeys[weatherPage % Math.max(1,journeys.length)];
+        const value=row ? [row.querySelector('.city-journey-name')?.textContent,row.querySelector('.city-journey-direction')?.textContent,row.querySelector('.city-journey-value')?.textContent,row.querySelector('.city-journey-status')?.textContent].filter(Boolean).join(' · ').replace(/\s+/g,' ') : text('行车时间暂不可用','行車時間暫不可用');
+        renderInfoFlip(trafficFlip,value,document.getElementById('city-journey-updated')?.textContent || '');
+    }
+    const freshness = {};
+    function markFresh(kind,success=true) {
+        const previous=freshness[kind];
+        freshness[kind]={time:success ? (networkEpoch === null ? Date.now() : networkEpoch+performance.now()-networkAnchor) : previous?.time,success};renderFreshness();
+    }
+    function renderFreshness() {
+        const labels={rss:text('RSS','RSS'),traffic:text('行车','行車'),markets:text('行情','行情'),weather:text('天气','天氣'),fx:text('汇率','匯率')};
+        updates.textContent=text('更新：','更新：')+Object.entries(labels).map(([kind,label])=> {const data=freshness[kind];return label+' '+(data?.time ? new Date(data.time).toLocaleTimeString('en-GB',{timeZone:'Asia/Hong_Kong',hour12:false}) : '--')+(data?.success===false ? text('（失败）','（失敗）') : '');}).join(' · ');
+    }
+    document.addEventListener('city-feed-source-update',event=> {if(event.detail?.kind) markFresh(event.detail.kind,event.detail.success);});
+    let refreshingFeed=false;
+    async function refreshFeedSources() {
+        if(refreshingFeed) return;refreshingFeed=true;
+        try {await Promise.allSettled([
+            typeof fetchHKNews==='function' ? fetchHKNews(true) : Promise.resolve(),
+            typeof updateCityJourneys==='function' ? updateCityJourneys() : Promise.resolve(),
+            refreshStocks(),refreshWorldWeather(),refreshFX()
+        ]);} finally {refreshingFeed=false;renderWeatherFlip();}
+    }
+    renderFreshness();
+    setInterval(()=> {if(expanded && !document.hidden) refreshFeedSources();},60000);
     async function refreshWorldWeather() {
         try {
             const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + cities.map(c=>c[2]).join(',') + '&longitude=' + cities.map(c=>c[3]).join(',') + '&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1';
@@ -339,9 +449,9 @@
             if (!response.ok) throw new Error('Weather unavailable');
             const data = await response.json();
             if (!Array.isArray(data) || data.length !== cities.length) throw new Error('Incomplete weather');
-            worldWeather = data; weatherUpdated = new Date().toISOString();
+            worldWeather = data; weatherUpdated = new Date().toISOString(); markFresh('weather',true);
             localStorage.setItem('navi_world_weather',JSON.stringify({data,time:Date.now()}));
-        } catch { /* Retain the last successful observation instead of inventing temperatures. */ }
+        } catch { markFresh('weather',false); /* Retain the last successful observation instead of inventing temperatures. */ }
         renderWorldWeather();
     }
     try {const cached = JSON.parse(localStorage.getItem('navi_world_weather')); if (cached?.data?.length === cities.length && Date.now()-cached.time < 3600000) worldWeather = cached.data;} catch {}
@@ -351,11 +461,13 @@
     new MutationObserver(syncHeadlines).observe(track,{childList:true});
     const finance = document.getElementById('city-finance');
     if (finance) new MutationObserver(syncRates).observe(finance,{childList:true,subtree:true,characterData:true});
-    new MutationObserver(() => { renderMarkets(); renderWorldWeather(); }).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+    new MutationObserver(() => { renderMarkets(); renderWorldWeather(); renderFreshness(); }).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
     matchMedia('(max-width:600px)').addEventListener('change',() => { page = 0; renderMarkets(); });
-    clock(); syncHeadlines(); syncRates(); refreshStocks();
+    clock(); syncClock(); syncHeadlines(); syncRates(); refreshStocks(); refreshFX();
+    setInterval(()=> {if (!document.hidden) syncClock();},300000);
+    document.addEventListener('visibilitychange',()=> {if (!document.hidden && performance.now()-lastTimeAttempt >= 300000) syncClock();});
     setInterval(clock,1000);
     setInterval(() => { if (!document.hidden) { page++; weatherPage++; renderWeatherFlip(); boardPage = (boardPage + 1) % Math.ceil(stocks.length/12); renderMarkets(); } },6000);
     setInterval(() => { if (!document.hidden) { featuredPage++; renderMarkets(); } },8000);
-    setInterval(() => { if (!document.hidden) refreshStocks(); },120000);
+    setInterval(() => { if (!document.hidden) {refreshStocks();refreshFX();} },120000);
 })();

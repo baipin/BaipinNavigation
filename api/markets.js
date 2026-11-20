@@ -50,6 +50,17 @@ export default async function handler(req,res) {
         res.setHeader('Allow','GET');
         return res.status(405).json({error:'Method not allowed'});
     }
+    const rawSymbols = req.query?.symbols ?? (req.url ? new URL(req.url,'http://localhost').searchParams.get('symbols') : '') ?? '';
+    const symbols = typeof rawSymbols === 'string' ? [...new Set(rawSymbols.split(',').filter(Boolean))] : null;
+    if (!symbols || symbols.length>20 || symbols.some(symbol=>!/^(?:[A-Z]{1,6}|\d{4,5}\.HK|\d{6}\.(?:SS|SZ))$/.test(symbol))) return res.status(400).json({error:'Invalid stock symbols'});
+    const requestedInstruments={...instruments};
+    symbols.forEach(symbol=> {
+        let code,zone;
+        if(symbol.endsWith('.HK')) {code='hk'+symbol.split('.')[0].padStart(5,'0');zone='Asia/Hong_Kong';}
+        else if(symbol.endsWith('.SS') || symbol.endsWith('.SZ')) {code=(symbol.endsWith('.SS')?'sh':'sz')+symbol.slice(0,6);zone='Asia/Shanghai';}
+        else {code='us'+symbol;zone='America/New_York';}
+        if(!requestedInstruments[code]) requestedInstruments[code]={id:'custom:'+symbol,symbol,zone};
+    });
     try {
         const taiwanRequest = fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5ETWII?interval=1d&range=1d',{
             headers:{'User-Agent':'Mozilla/5.0'},signal:AbortSignal.timeout(7000)
@@ -61,20 +72,20 @@ export default async function handler(req,res) {
             if (!Number.isFinite(price) || price<=0 || !Number.isFinite(close) || close<=0) return null;
             return {id:'taiwan',symbol:'^TWII',zone:'Asia/Taipei',price,percent:Number.isFinite(meta.regularMarketChangePercent)?meta.regularMarketChangePercent:(price-close)/close*100,time:meta.regularMarketTime?new Date(meta.regularMarketTime*1000).toLocaleString('sv-SE',{timeZone:'Asia/Taipei'}):''};
         }).catch(()=>null);
-        const response = await fetch('https://qt.gtimg.cn/q=' + Object.keys(instruments).join(','), {
+        const response = await fetch('https://qt.gtimg.cn/q=' + Object.keys(requestedInstruments).join(','), {
             headers:{'User-Agent':'Mozilla/5.0'}, signal:AbortSignal.timeout(8000)
         });
         if (!response.ok) throw new Error('Market source unavailable');
         const raw = new TextDecoder('gb18030').decode(await response.arrayBuffer());
         const quotes = [];
         for (const match of raw.matchAll(/v_([\w]+)="([^"]*)"/g)) {
-            const instrument = instruments[match[1]];
+            const instrument = requestedInstruments[match[1]];
             if (!instrument) continue;
             const fields = match[2].split('~');
             const price = Number(fields[3]);
             const percent = Number(fields[32]);
             if (!fields[3] || !fields[32] || !Number.isFinite(price) || price <= 0 || !Number.isFinite(percent)) continue;
-            quotes.push({...instrument,price,percent,time:fields[30] || ''});
+            quotes.push({...instrument,...(instrument.id.startsWith('custom:') ? {name:fields[1]} : {}),price,percent,time:fields[30] || ''});
         }
         const taiwan = await taiwanRequest;
         if (taiwan) quotes.push(taiwan);

@@ -1175,7 +1175,8 @@
         }
 
         let cityRssRevision = 0;
-        async function fetchHKNews() {
+        async function fetchHKNews(force = false) {
+            if (force === true) cityRssCache.clear();
             const revision = ++cityRssRevision;
             const results = await Promise.allSettled(customRSS.map(cityReadRss));
             if (revision !== cityRssRevision) return;
@@ -1185,7 +1186,8 @@
             const span = document.createElement('span'); span.textContent = text;
             document.getElementById('fullscreen-marquee').replaceChildren(span);
             document.getElementById('update-time').textContent = '更新时间: ' + new Date().toLocaleTimeString('zh-CN');
-            updateCityTicker();
+            document.dispatchEvent(new CustomEvent('city-feed-source-update',{detail:{kind:'rss',success:headlines.length>0}}));
+            await updateCityTicker();
         }
 
         document.getElementById('refresh-news-btn').onclick = fetchHKNews;
@@ -1469,12 +1471,14 @@ function setBackgroundToCookie(value) {
             };
 
             // 收集主要 localStorage 键值（与页面使用的键一致）
-            const lsKeys = ['bp_v7', 'custom_engines', 'last_engine', 'theme_mode', 'custom_rss'];
+            const lsKeys = ['bp_v7', 'custom_engines', 'last_engine', 'theme_mode', 'custom_rss', 'navi_city_stocks'];
             lsKeys.forEach(key => {
                 const val = localStorage.getItem(key);
                 if (val !== null) allData.localStorage[key] = val;
             });
 
+            // Explicit null also backs up the default watchlist, so importing it clears older selections.
+            allData.localStorage.navi_city_stocks = localStorage.getItem('navi_city_stocks');
             const dataStr = JSON.stringify(allData, null, 2);
             const blob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -1506,7 +1510,8 @@ function setBackgroundToCookie(value) {
                     // 恢复 localStorage
                     if (imported.localStorage) {
                         Object.keys(imported.localStorage).forEach(key => {
-                            localStorage.setItem(key, imported.localStorage[key]);
+                            if (key === 'navi_city_stocks' && imported.localStorage[key] === null) localStorage.removeItem(key);
+                            else localStorage.setItem(key, imported.localStorage[key]);
                         });
                     }
                     
@@ -2322,10 +2327,12 @@ function setBackgroundToCookie(value) {
                 if (updated) updated.textContent = '更新于 ' + new Date().toLocaleTimeString('zh-HK', { hour:'2-digit', minute:'2-digit', hour12:false });
                 cityLive('city-traffic-live', 'online', '在线');
                 cityLive('city-journey-live', 'online', '实时');
+                document.dispatchEvent(new CustomEvent('city-feed-source-update',{detail:{kind:'traffic',success:true}}));
             } catch (error) {
                 grid.innerHTML = '<div class="city-card-caption">行车时间暂时无法取得，请稍后刷新。</div>';
                 cityLive('city-traffic-live', 'offline', '离线');
                 cityLive('city-journey-live', 'offline', '不可用');
+                document.dispatchEvent(new CustomEvent('city-feed-source-update',{detail:{kind:'traffic',success:false}}));
             }
         };
         updateCityAir = async function() {
