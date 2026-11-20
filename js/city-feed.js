@@ -38,7 +38,7 @@
 
     const isSC = () => localStorage.getItem('navi_language') === 'sc';
     const text = (sc, tc) => isSC() ? sc : tc;
-    const displayDefaults = {clock:true,indices:true,fx:true,stocks:true,weather:true,traffic:true,ticker:true,rss:true,trafficNews:true,rateTicker:true,weatherTicker:true,rssSources:null,compactSpeed:48,fullscreenSpeed:72};
+    const displayDefaults = {clock:true,indices:true,fx:true,stocks:true,weather:true,traffic:true,ticker:true,rss:true,trafficNews:true,rateTicker:true,weatherTicker:true,rssSources:null,compactSpeed:72,fullscreenSpeed:72};
     const validMarqueeSpeed = value=>Number.isFinite(value) && value>=24 && value<=160 && value%4===0;
     let displaySettings = {...displayDefaults};
     try {
