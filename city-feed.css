@@ -270,3 +270,11 @@
 }
 
 .city-feed-stock-feedback { font-size:12px; color:#c4d9ad; }
+
+/* Pixel-based headline queue preserves on-screen text when fresh data arrives. */
+#city-ticker .city-ticker-track { animation:none; will-change:transform; }
+#city-ticker .city-feed-headline { display:block; flex:none; padding-right:44px; white-space:nowrap; }
+@media(prefers-reduced-motion:reduce) {
+    #city-ticker .city-ticker-window { overflow:hidden; }
+    #city-ticker .city-ticker-track { width:max-content; }
+}

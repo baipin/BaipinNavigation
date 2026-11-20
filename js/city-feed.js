@@ -336,7 +336,6 @@
     });
     function applySettings() {
         applyStockSelection();page=boardPage=featuredPage=0;renderMarkets();renderFreshness();renderWeatherFlip();requestAnimationFrame(fitBoard);refreshStocks();
-        const loading=document.createElement('span');loading.textContent=text('正在更新所选内容…','正在更新所選內容…');track.replaceChildren(loading);
         if(typeof updateCityTicker==='function') updateCityTicker();
     }
     stockDialog.querySelector('[data-stock-action="cancel"]').addEventListener('click',()=>stockDialog.close());
@@ -410,24 +409,72 @@
         const colons = (expanded ? [55,117] : [55]).map(x=>'<circle cx="' + x + '" cy="15" r="2.5"/><circle cx="' + x + '" cy="30" r="2.5"/>').join('');
         time.innerHTML = '<svg class="city-feed-digital-clock" viewBox="-1 0 ' + (expanded ? 174 : 112) + ' 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" fill="currentColor">' + display + colons + '</svg>';
     }
-    function syncHeadlines() {
-        if (track.querySelector('.city-feed-copy')) return;
-        const first = document.createElement('span');
-        first.className = 'city-feed-copy';
-        const children = [...track.children];
-        if (children.length) children.forEach(child=> {
-            const item = document.createElement('span'); item.textContent = child.textContent.replace(/\s+/g,' ').trim(); first.append(item);
-        });
-        else {
-            const item = document.createElement('span');
-            item.textContent = track.textContent;
-            first.append(item);
+    // Keep visible headline nodes and their pixel positions across source refreshes.
+    class HeadlineMarquee {
+        constructor(track,viewport) {
+            this.track=track;this.viewport=viewport;this.playlist=[];this.pending=null;
+            this.next=0;this.offset=0;this.lastFrame=null;
         }
-        const second = first.cloneNode(true);
-        second.setAttribute('aria-hidden','true');
-        track.style.setProperty('--feed-duration', Math.max(35, first.textContent.length / 4) + 's');
-        track.replaceChildren(first, second);
+        setEntries(entries) {
+            const normalized=[...new Set(entries.map(entry=>String(entry).replace(/\s+/g,' ').trim()).filter(Boolean))];
+            if(!normalized.length) return;
+            if(!this.playlist.length) {
+                this.playlist=normalized;this.track.replaceChildren();this.fill();
+            } else if(JSON.stringify(normalized)!==JSON.stringify(this.pending || this.playlist)) {
+                this.pending=normalized;
+            }
+        }
+        fill() {
+            if(!this.playlist.length || !this.viewport.clientWidth) return;
+            // One complete extra headline keeps the right edge filled while moving.
+            let width=[...this.track.children].reduce((sum,node)=>sum+node.getBoundingClientRect().width,0);
+            for(let count=0;width-this.offset<this.viewport.clientWidth+100 && count<100;count++) {
+                const item=document.createElement('span');item.className='city-feed-headline';
+                item.textContent=this.playlist[this.next++ % this.playlist.length];this.track.append(item);
+                const itemWidth=item.getBoundingClientRect().width;
+                if(!itemWidth) break;
+                width+=itemWidth;
+            }
+        }
+        applyPending() {
+            if(!this.pending) return;
+            // Retain every headline that has entered the viewport, including a partial one.
+            let position=-this.offset;
+            for(const node of [...this.track.children]) {
+                const width=node.getBoundingClientRect().width;
+                if(position>=this.viewport.clientWidth) node.remove();
+                position+=width;
+            }
+            this.playlist=this.pending;this.pending=null;this.next=0;
+        }
+        frame(now,active=true,reduced=false) {
+            const elapsed=this.lastFrame===null ? 0 : Math.min(100,now-this.lastFrame);
+            this.lastFrame=now;
+            if(!active) return;
+            this.fill();
+            if(reduced) {
+                if(this.pending) {this.playlist=this.pending;this.pending=null;this.next=0;this.offset=0;this.track.replaceChildren();this.fill();}
+            } else {
+                this.offset+=elapsed*.048;
+                let first=this.track.firstElementChild, width=first?.getBoundingClientRect().width || 0;
+                while(width>0 && this.offset>=width) {
+                    this.offset-=width;first.remove();this.applyPending();this.fill();
+                    first=this.track.firstElementChild;width=first?.getBoundingClientRect().width || 0;
+                }
+            }
+            this.track.style.transform='translate3d('+(-this.offset)+'px,0,0)';
+        }
     }
+    const marquee=new HeadlineMarquee(track,windowElement);
+    const initialHeadlines=[...track.children].map(node=>node.textContent);
+    window.cityFeedSetHeadlines=entries=>marquee.setEntries(entries);
+    marquee.setEntries(initialHeadlines.length?initialHeadlines:[track.textContent]);
+    const reducedMarqueeMotion=matchMedia('(prefers-reduced-motion:reduce)');
+    function animateHeadlines(now) {
+        marquee.frame(now,!document.hidden && displaySettings.ticker && windowElement.clientWidth>0,reducedMarqueeMotion.matches);
+        requestAnimationFrame(animateHeadlines);
+    }
+    requestAnimationFrame(animateHeadlines);
     async function refreshStocks() {
         const available = new Set();
         try {
@@ -581,17 +628,15 @@
     renderWorldWeather(); refreshWorldWeather();
     setInterval(()=> {if (!document.hidden) refreshWorldWeather();},600000);
 
-    new MutationObserver(syncHeadlines).observe(track,{childList:true});
     const finance = document.getElementById('city-finance');
     if (finance) new MutationObserver(syncRates).observe(finance,{childList:true,subtree:true,characterData:true});
     new MutationObserver(() => { renderMarkets(); renderWorldWeather(); renderFreshness(); }).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
     matchMedia('(max-width:600px)').addEventListener('change',() => { page = 0; renderMarkets(); });
     window.addEventListener('resize',applyDisplay);
-    clock(); syncClock(); syncHeadlines(); syncRates(); refreshStocks(); refreshFX();
+    clock(); syncClock(); syncRates(); refreshStocks(); refreshFX();
     setInterval(()=> {if (!document.hidden) syncClock();},300000);
     document.addEventListener('visibilitychange',()=> {if (!document.hidden && performance.now()-lastTimeAttempt >= 300000) syncClock();});
     setInterval(clock,1000);
-    setInterval(() => { if (!document.hidden) { page++; weatherPage++; renderWeatherFlip(); boardPage++; renderMarkets(); } },6000);
-    setInterval(() => { if (!document.hidden) { featuredPage++; renderMarkets(); } },8000);
+    setInterval(() => { if (!document.hidden) { page++; featuredPage++; weatherPage++; renderWeatherFlip(); boardPage++; renderMarkets(); } },6000);
     setInterval(() => { if (!document.hidden) {refreshStocks();refreshFX();} },120000);
 })();

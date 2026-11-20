@@ -1136,8 +1136,7 @@
             'https://rthk.hk/rthk/news/rss/c_expressnews_efinance.xml'
         ];
         const additionalRSS = [
-            'https://news.mingpao.com/rss/pns/s00004.xml',
-            'https://www.rti.org.tw/rss'
+            'https://news.mingpao.com/rss/pns/s00004.xml'
         ];
         let savedRSS;
         try { savedRSS = JSON.parse(localStorage.getItem('custom_rss')); } catch {}
@@ -2240,7 +2239,8 @@ function setBackgroundToCookie(value) {
             if (!entries.length) entries.push(enabled('rss') && rssSources.length ? '暂无可用城市资讯，稍后会自动更新。' : '未选择走马灯内容，可在 CITY FEED 设置中调整。');
             for (let i = entries.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [entries[i], entries[j]] = [entries[j], entries[i]]; }
             if (revision !== cityTickerRevision) return;
-            document.getElementById('city-ticker-track').innerHTML = entries.map((entry) => `<span>${cityEsc(entry)}</span>`).join('');
+            if (typeof window.cityFeedSetHeadlines === 'function') window.cityFeedSetHeadlines(entries);
+            else document.getElementById('city-ticker-track').innerHTML = entries.map((entry) => `<span>${cityEsc(entry)}</span>`).join('');
         }
         function cityUpdatePulse() {
             const signals = document.getElementById('pulse-number');
