@@ -38,7 +38,7 @@
 
     const isSC = () => localStorage.getItem('navi_language') === 'sc';
     const text = (sc, tc) => isSC() ? sc : tc;
-    const displayDefaults = {clock:true,indices:true,fx:true,stocks:true,weather:true,traffic:true,ticker:true,rss:true,trafficNews:true,rateTicker:true,rssSources:null};
+    const displayDefaults = {clock:true,indices:true,fx:true,stocks:true,weather:true,traffic:true,ticker:true,rss:true,trafficNews:true,rateTicker:true,weatherTicker:true,rssSources:null};
     let displaySettings = {...displayDefaults};
     try {
         const saved=JSON.parse(localStorage.getItem('navi_city_feed'));
@@ -308,7 +308,7 @@
     function syncRssControls() {
         const checked=key=>stockDialog.querySelector('[data-setting-kind="display"][value="'+key+'"]').checked;
         stockDialog.querySelectorAll('[data-setting-kind="rss"]').forEach(input=>input.disabled=!checked('ticker') || !checked('rss'));
-        ['rss','trafficNews','rateTicker'].forEach(key=>stockDialog.querySelector('[data-setting-kind="display"][value="'+key+'"]').disabled=!checked('ticker'));
+        ['rss','trafficNews','rateTicker','weatherTicker'].forEach(key=>stockDialog.querySelector('[data-setting-kind="display"][value="'+key+'"]').disabled=!checked('ticker'));
     }
     stockButton.addEventListener('click',()=> {
         stockDialog.querySelector('h2').textContent=text('CITY FEED 设置','CITY FEED 設定');
@@ -322,8 +322,8 @@
         defaultStocks.forEach(stock=>checkbox(options,stock.id,stock.names[isSC()?0:1]+' · '+stock.symbol,stocks.some(item=>item.id===stock.id),'stock'));
         draftSymbols=(stockSelection?.symbols || []).filter(symbol=>!defaultStocks.some(stock=>stock.symbol===symbol));renderCustomList();
         const display=stockDialog.querySelector('.city-feed-display-options'),ticker=stockDialog.querySelector('.city-feed-ticker-switches');display.replaceChildren();ticker.replaceChildren();
-        const labels={clock:['香港时间','香港時間'],indices:['全球指数','全球指數'],fx:['汇率','匯率'],stocks:['个股行情','個股行情'],weather:['全球天气','全球天氣'],traffic:['全屏行车时间','全屏行車時間'],ticker:['文字走马灯','文字跑馬燈'],rss:['RSS 新闻','RSS 新聞'],trafficNews:['交通消息','交通消息'],rateTicker:['汇率摘要','匯率摘要']};
-        Object.entries(labels).forEach(([key,names])=>{const input=checkbox(['rss','trafficNews','rateTicker'].includes(key)?ticker:display,key,text(...names),displaySettings[key],'display');input.addEventListener('change',syncRssControls);});
+        const labels={clock:['香港时间','香港時間'],indices:['全球指数','全球指數'],fx:['汇率','匯率'],stocks:['个股行情','個股行情'],weather:['全球天气','全球天氣'],traffic:['全屏行车时间','全屏行車時間'],ticker:['文字走马灯','文字跑馬燈'],rss:['RSS 新闻','RSS 新聞'],trafficNews:['交通消息','交通消息'],rateTicker:['汇率摘要','匯率摘要'],weatherTicker:['天文台天气与警告','天文台天氣與警告']};
+        Object.entries(labels).forEach(([key,names])=>{const input=checkbox(['rss','trafficNews','rateTicker','weatherTicker'].includes(key)?ticker:display,key,text(...names),displaySettings[key],'display');input.addEventListener('change',syncRssControls);});
         stockDialog.querySelector('legend').textContent=text('走马灯子项目','跑馬燈子項目');
         const rss=stockDialog.querySelector('.city-feed-rss-options');rss.replaceChildren();
         const sources=typeof customRSS!=='undefined'?customRSS:[];
@@ -413,20 +413,23 @@
     class HeadlineMarquee {
         constructor(track,viewport) {
             this.track=track;this.viewport=viewport;this.playlist=[];this.pending=null;
-            this.next=0;this.offset=0;this.lastFrame=null;
+            this.next=0;this.offset=0;this.animation=null;this.speed=48;this.active=true;this.reduced=false;
+            this.bootstrap=true;
         }
         setEntries(entries) {
             const normalized=[...new Set(entries.map(entry=>String(entry).replace(/\s+/g,' ').trim()).filter(Boolean))];
             if(!normalized.length) return;
-            if(!this.playlist.length) {
-                this.playlist=normalized;this.track.replaceChildren();this.fill();
+            const loading=normalized.every(entry=>/正在.*(?:汇集|匯集|資料|资料)/.test(entry));
+            if(!this.playlist.length || this.bootstrap && !loading) {
+                this.stop();this.playlist=normalized;this.pending=null;this.next=0;this.offset=0;
+                this.bootstrap=loading;this.track.replaceChildren();this.fill();this.start();
             } else if(JSON.stringify(normalized)!==JSON.stringify(this.pending || this.playlist)) {
                 this.pending=normalized;
+                if(this.reduced) this.refresh();
             }
         }
         fill() {
             if(!this.playlist.length || !this.viewport.clientWidth) return;
-            // One complete extra headline keeps the right edge filled while moving.
             let width=[...this.track.children].reduce((sum,node)=>sum+node.getBoundingClientRect().width,0);
             for(let count=0;width-this.offset<this.viewport.clientWidth+100 && count<100;count++) {
                 const item=document.createElement('span');item.className='city-feed-headline';
@@ -438,7 +441,6 @@
         }
         applyPending() {
             if(!this.pending) return;
-            // Retain every headline that has entered the viewport, including a partial one.
             let position=-this.offset;
             for(const node of [...this.track.children]) {
                 const width=node.getBoundingClientRect().width;
@@ -447,34 +449,44 @@
             }
             this.playlist=this.pending;this.pending=null;this.next=0;
         }
-        frame(now,active=true,reduced=false) {
-            const elapsed=this.lastFrame===null ? 0 : Math.min(100,now-this.lastFrame);
-            this.lastFrame=now;
-            if(!active) return;
-            this.fill();
-            if(reduced) {
-                if(this.pending) {this.playlist=this.pending;this.pending=null;this.next=0;this.offset=0;this.track.replaceChildren();this.fill();}
-            } else {
-                this.offset+=elapsed*.048;
-                let first=this.track.firstElementChild, width=first?.getBoundingClientRect().width || 0;
-                while(width>0 && this.offset>=width) {
-                    this.offset-=width;first.remove();this.applyPending();this.fill();
-                    first=this.track.firstElementChild;width=first?.getBoundingClientRect().width || 0;
-                }
+        stop() {
+            if(this.animation) {
+                this.offset+=Number(this.animation.currentTime || 0)*this.speed/1000;
+                this.animation.onfinish=null;this.animation.cancel();this.animation=null;
             }
+        }
+        start() {
             this.track.style.transform='translate3d('+(-this.offset)+'px,0,0)';
+            if(!this.active || this.reduced || this.animation || !this.viewport.clientWidth) return;
+            const first=this.track.firstElementChild,width=first?.getBoundingClientRect().width || 0;
+            if(!width) return;
+            if(this.offset>=width) {this.offset-=width;first.remove();this.applyPending();this.fill();this.start();return;}
+            // Browser-composited linear motion: no per-frame JavaScript or layout reads.
+            this.animation=this.track.animate([
+                {transform:'translate3d('+(-this.offset)+'px,0,0)'},
+                {transform:'translate3d('+(-width)+'px,0,0)'}
+            ],{duration:(width-this.offset)/this.speed*1000,easing:'linear',fill:'forwards'});
+            this.animation.onfinish=()=> {
+                this.animation.cancel();this.animation=null;this.offset=0;first.remove();
+                this.applyPending();this.fill();this.start();
+            };
+        }
+        refresh(active=this.active,reduced=this.reduced) {
+            this.stop();this.active=active;this.reduced=reduced;
+            if(reduced && this.pending) {this.playlist=this.pending;this.pending=null;this.next=0;this.offset=0;this.track.replaceChildren();}
+            this.fill();this.start();
         }
     }
     const marquee=new HeadlineMarquee(track,windowElement);
     const initialHeadlines=[...track.children].map(node=>node.textContent);
-    window.cityFeedSetHeadlines=entries=>marquee.setEntries(entries);
-    marquee.setEntries(initialHeadlines.length?initialHeadlines:[track.textContent]);
+    window.cityFeedSetHeadlines=(entries,options={})=>{if(!options.initialOnly || marquee.bootstrap)marquee.setEntries(entries);};
     const reducedMarqueeMotion=matchMedia('(prefers-reduced-motion:reduce)');
-    function animateHeadlines(now) {
-        marquee.frame(now,!document.hidden && displaySettings.ticker && windowElement.clientWidth>0,reducedMarqueeMotion.matches);
-        requestAnimationFrame(animateHeadlines);
-    }
-    requestAnimationFrame(animateHeadlines);
+    const refreshMarquee=()=>marquee.refresh(!document.hidden && displaySettings.ticker,reducedMarqueeMotion.matches);
+    marquee.active=!document.hidden && displaySettings.ticker;marquee.reduced=reducedMarqueeMotion.matches;
+    marquee.setEntries(initialHeadlines.length?initialHeadlines:[track.textContent]);
+    new ResizeObserver(refreshMarquee).observe(windowElement);
+    document.addEventListener('visibilitychange',refreshMarquee);
+    reducedMarqueeMotion.addEventListener('change',refreshMarquee);
     async function refreshStocks() {
         const available = new Set();
         try {

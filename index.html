@@ -2217,6 +2217,34 @@ function setBackgroundToCookie(value) {
                 }
             } catch (error) {}
         }
+        function cityFormatHkoTicker(forecast,current,warnings,special,sc=true) {
+            const clean=value=>String(value || '').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+            const parts=[];
+            for(const [key,label] of [['generalSituation',sc?'总体情况':'總體情況'],['forecastDesc',sc?'天气预测':'天氣預測'],['outlook',sc?'展望':'展望']]) {
+                if(clean(forecast?.[key])) parts.push(label+'：'+clean(forecast[key]));
+            }
+            const temperature=current?.temperature?.data?.find(item=>['香港天文台','Hong Kong Observatory'].includes(item.place)) || current?.temperature?.data?.[0];
+            const humidity=current?.humidity?.data?.[0];
+            if(Number.isFinite(temperature?.value)) parts.push((sc?'现时香港录得室外气温':'現時香港錄得室外氣溫')+temperature.value+'°C');
+            if(Number.isFinite(humidity?.value)) parts.push((sc?'相对湿度':'相對濕度')+humidity.value+'%');
+            const active=Object.values(warnings || {}).filter(item=>item && typeof item==='object' && item.actionCode!=='CANCEL' && !(item.expireTime && Date.parse(item.expireTime)<Date.now()) && clean(item.name)).map(item=>clean(item.name));
+            if(active.length) parts.push([...new Set(active)].join('、')+(sc?'现正生效':'現正生效'));
+            const tips=(special?.swt || []).map(item=>clean(item.desc)).filter(Boolean);
+            if(tips.length) parts.push((sc?'特别天气提示：':'特別天氣提示：')+tips.join('；'));
+            return parts.length?(sc?'香港天文台天气报告：':'香港天文台天氣報告：')+parts.join('；'):'';
+        }
+        const cityHkoTickerCache=new Map();
+        function cityReadHkoTicker() {
+            const lang=localStorage.getItem('navi_language')==='sc'?'sc':'tc';
+            const cached=cityHkoTickerCache.get(lang);
+            if(cached && Date.now()-cached.time<60000) return cached.promise;
+            const promise=Promise.allSettled(['flw','rhrread','warnsum','swt'].map(async type=> {
+                const response=await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType='+type+'&lang='+lang,{cache:'no-store',signal:AbortSignal.timeout(8000)});
+                if(!response.ok) throw Error('HKO unavailable');
+                return response.json();
+            })).then(results=>cityFormatHkoTicker(...results.map(result=>result.status==='fulfilled'?result.value:null),lang==='sc'));
+            cityHkoTickerCache.set(lang,{time:Date.now(),promise});return promise;
+        }
         let cityTickerRevision = 0;
         async function updateCityTicker() {
             const revision = ++cityTickerRevision;
@@ -2224,6 +2252,10 @@ function setBackgroundToCookie(value) {
             let settings={};try {settings=JSON.parse(localStorage.getItem('navi_city_feed')) || {};} catch {}
             const enabled=key=>settings[key]!==false;
             const rssSources=customRSS.filter(url=>!Array.isArray(settings.rssSources) || settings.rssSources.includes(url));
+            const hko=enabled('ticker') && enabled('weatherTicker') ? cityReadHkoTicker() : Promise.resolve('');
+            hko.then(report=> {
+                if(report && revision===cityTickerRevision && typeof window.cityFeedSetHeadlines==='function') window.cityFeedSetHeadlines([report],{initialOnly:true});
+            });
             if(enabled('ticker') && enabled('trafficNews')) try {
                 const xml = await cityXml(cityApi.traffic);
                 [...xml.getElementsByTagName('message')].slice(0, 10).forEach((node) => entries.push(cityText(node, 'ChinShort') || cityText(node, 'EngShort')));
@@ -2236,8 +2268,11 @@ function setBackgroundToCookie(value) {
                 const rss = await Promise.allSettled(rssSources.map(cityReadRss));
                 rss.forEach(result=> { if (result.status === 'fulfilled') result.value.slice(0,4).forEach(title=>entries.push(title)); });
             } catch (error) {}
+            const weatherReport=await hko;
+            if(weatherReport) entries.push(weatherReport);
             if (!entries.length) entries.push(enabled('rss') && rssSources.length ? '暂无可用城市资讯，稍后会自动更新。' : '未选择走马灯内容，可在 CITY FEED 设置中调整。');
             for (let i = entries.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [entries[i], entries[j]] = [entries[j], entries[i]]; }
+            if(weatherReport) {entries.splice(entries.indexOf(weatherReport),1);entries.unshift(weatherReport);}
             if (revision !== cityTickerRevision) return;
             if (typeof window.cityFeedSetHeadlines === 'function') window.cityFeedSetHeadlines(entries);
             else document.getElementById('city-ticker-track').innerHTML = entries.map((entry) => `<span>${cityEsc(entry)}</span>`).join('');
