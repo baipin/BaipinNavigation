@@ -38,13 +38,15 @@
 
     const isSC = () => localStorage.getItem('navi_language') === 'sc';
     const text = (sc, tc) => isSC() ? sc : tc;
-    const displayDefaults = {clock:true,indices:true,fx:true,stocks:true,weather:true,traffic:true,ticker:true,rss:true,trafficNews:true,rateTicker:true,weatherTicker:true,rssSources:null};
+    const displayDefaults = {clock:true,indices:true,fx:true,stocks:true,weather:true,traffic:true,ticker:true,rss:true,trafficNews:true,rateTicker:true,weatherTicker:true,rssSources:null,compactSpeed:48,fullscreenSpeed:64};
+    const validMarqueeSpeed = value=>Number.isFinite(value) && value>=24 && value<=160 && value%4===0;
     let displaySettings = {...displayDefaults};
     try {
         const saved=JSON.parse(localStorage.getItem('navi_city_feed'));
         for (const key of Object.keys(displayDefaults)) {
-            if (typeof saved?.[key]==='boolean') displaySettings[key]=saved[key];
+            if (typeof displayDefaults[key]==='boolean' && typeof saved?.[key]==='boolean') displaySettings[key]=saved[key];
         }
+        ['compactSpeed','fullscreenSpeed'].forEach(key=>{if(validMarqueeSpeed(saved?.[key]))displaySettings[key]=saved[key];});
         if (Array.isArray(saved?.rssSources)) displaySettings.rssSources=saved.rssSources.filter(url=>typeof url==='string');
     } catch {}
     const shownFeatured = ()=>featuredMarkets.filter(market=>market.dom ? displaySettings.fx : displaySettings.indices);
@@ -175,7 +177,7 @@
         section.classList.remove('city-feed-expanded'); board.hidden = true; top.append(weather);
         document.body.style.overflow = previousOverflow;
         fullscreenButton.setAttribute('aria-pressed','false');
-        clock(); renderMarkets(); renderWeatherFlip(); previousFocus?.focus({preventScroll:true});
+        clock(); renderMarkets(); renderWeatherFlip(); refreshMarquee(); previousFocus?.focus({preventScroll:true});
     }
     fullscreenButton.addEventListener('click',async()=> {
         if (expanded) {
@@ -184,7 +186,7 @@
         }
         previousFocus = document.activeElement; previousOverflow = document.body.style.overflow;
         expanded = true; board.hidden = false; card.insertBefore(weather,bottom); document.body.style.overflow = 'hidden';
-        section.classList.add('city-feed-expanded'); fullscreenButton.setAttribute('aria-pressed','true'); clock(); renderMarkets(); renderWeatherFlip(); refreshFeedSources();
+        section.classList.add('city-feed-expanded'); fullscreenButton.setAttribute('aria-pressed','true'); clock(); renderMarkets(); renderWeatherFlip(); refreshMarquee(); refreshFeedSources();
         try { if (section.requestFullscreen) {await section.requestFullscreen(); nativeFullscreen = true;} } catch { /* Keep the viewport-filling board when native fullscreen is unavailable. */ }
     });
     document.addEventListener('fullscreenchange',()=> {if (expanded && nativeFullscreen && document.fullscreenElement !== section) finishFullscreen();});
@@ -268,7 +270,7 @@
     const stockDialog = document.createElement('dialog'); stockDialog.className='city-feed-stock-dialog'; stockDialog.id='city-feed-stock-dialog';
     stockDialog.innerHTML=`<form><h2></h2>
         <nav class="city-feed-settings-tabs"><button type="button" data-panel="display" aria-pressed="true"></button><button type="button" data-panel="stocks" aria-pressed="false"></button></nav>
-        <section class="city-feed-settings-panel" data-settings-panel="display"><div class="city-feed-display-options"></div><fieldset class="city-feed-ticker-options"><legend></legend><div class="city-feed-ticker-switches"></div><div class="city-feed-rss-options"></div><p class="city-feed-rss-hint"></p></fieldset></section>
+        <section class="city-feed-settings-panel" data-settings-panel="display"><div class="city-feed-display-options"></div><fieldset class="city-feed-ticker-options"><legend></legend><div class="city-feed-speed-settings"></div><div class="city-feed-ticker-switches"></div><div class="city-feed-rss-options"></div><p class="city-feed-rss-hint"></p></fieldset></section>
         <section class="city-feed-settings-panel" data-settings-panel="stocks" hidden><p class="city-feed-stock-hint"></p><label class="city-feed-symbol-label" for="city-feed-custom-symbols"></label><div class="city-feed-symbol-entry"><input id="city-feed-custom-symbols" type="text" placeholder="BABA, 0700.HK, 600000.SS, 000001.SZ"><button type="button" data-stock-action="add"></button></div><p class="city-feed-stock-error" role="alert" aria-live="polite"></p><p class="city-feed-stock-feedback" role="status"></p><div class="city-feed-custom-list"></div><div class="city-feed-stock-options"></div></section>
         <div class="city-feed-stock-actions"><button type="button" data-stock-action="reset"></button><button type="button" data-stock-action="cancel"></button><button type="submit" data-stock-action="save"></button></div></form>`;
     section.append(stockDialog);
@@ -324,7 +326,19 @@
         const display=stockDialog.querySelector('.city-feed-display-options'),ticker=stockDialog.querySelector('.city-feed-ticker-switches');display.replaceChildren();ticker.replaceChildren();
         const labels={clock:['香港时间','香港時間'],indices:['全球指数','全球指數'],fx:['汇率','匯率'],stocks:['个股行情','個股行情'],weather:['全球天气','全球天氣'],traffic:['全屏行车时间','全屏行車時間'],ticker:['文字走马灯','文字跑馬燈'],rss:['RSS 新闻','RSS 新聞'],trafficNews:['交通消息','交通消息'],rateTicker:['汇率摘要','匯率摘要'],weatherTicker:['天文台天气与警告','天文台天氣與警告']};
         Object.entries(labels).forEach(([key,names])=>{const input=checkbox(['rss','trafficNews','rateTicker','weatherTicker'].includes(key)?ticker:display,key,text(...names),displaySettings[key],'display');input.addEventListener('change',syncRssControls);});
-        stockDialog.querySelector('legend').textContent=text('走马灯子项目','跑馬燈子項目');
+        stockDialog.querySelector('legend').textContent=text('走马灯设置','跑馬燈設定');
+        const speedSettings=stockDialog.querySelector('.city-feed-speed-settings');speedSettings.replaceChildren();
+        ['compactSpeed','fullscreenSpeed'].forEach((key,index)=> {
+            const row=document.createElement('div');row.className='city-feed-speed-row';
+            const label=document.createElement('label');label.htmlFor='city-feed-'+key;
+            label.textContent=text(index?'全屏速度':'小工具速度',index?'全屏速度':'小工具速度');
+            const input=document.createElement('input');input.type='range';input.id='city-feed-'+key;input.min='24';input.max='160';input.step='4';input.value=displaySettings[key];input.dataset.speedKey=key;
+            const output=document.createElement('output');output.htmlFor=input.id;
+            const update=()=>{output.textContent=input.value+text(' 像素/秒',' 像素/秒');input.setAttribute('aria-valuetext',output.textContent);};input.addEventListener('input',update);update();
+            row.append(label,output,input);speedSettings.append(row);
+        });
+        const speedHint=document.createElement('p');speedHint.className='city-feed-speed-hint';speedHint.textContent=text('数值越大越快，保存后生效；速度设置会随用户数据一并导入导出。','數值越大越快，儲存後生效；速度設定會隨使用者資料一併匯入匯出。');speedSettings.append(speedHint);
+        const resetSpeed=document.createElement('button');resetSpeed.type='button';resetSpeed.className='city-feed-speed-reset';resetSpeed.textContent=text('恢复默认速度','恢復預設速度');resetSpeed.addEventListener('click',()=>speedSettings.querySelectorAll('input').forEach(input=>{input.value=displayDefaults[input.dataset.speedKey];input.dispatchEvent(new Event('input'));}));speedSettings.append(resetSpeed);
         const rss=stockDialog.querySelector('.city-feed-rss-options');rss.replaceChildren();
         const sources=typeof customRSS!=='undefined'?customRSS:[];
         const names={'hk.news.yahoo.com':'Yahoo 香港新闻','rthk.hk':'香港电台','www.chinanews.com.cn':'中国新闻网','news.mingpao.com':'明报','www.rti.org.tw':'中央广播电台'};
@@ -335,7 +349,7 @@
         syncRssControls();switchSettingsPanel('display');stockDialog.showModal();stockDialog.scrollTop=0;
     });
     function applySettings() {
-        applyStockSelection();page=boardPage=featuredPage=0;renderMarkets();renderFreshness();renderWeatherFlip();requestAnimationFrame(fitBoard);refreshStocks();
+        applyStockSelection();page=boardPage=featuredPage=0;renderMarkets();renderFreshness();renderWeatherFlip();requestAnimationFrame(fitBoard);refreshMarquee();refreshStocks();
         if(typeof updateCityTicker==='function') updateCityTicker();
     }
     stockDialog.querySelector('[data-stock-action="cancel"]').addEventListener('click',()=>stockDialog.close());
@@ -344,6 +358,7 @@
         event.preventDefault();if(!addSymbols())return;
         const ids=[...stockDialog.querySelectorAll('[data-setting-kind="stock"]:checked')].map(input=>input.value);
         const next={...displaySettings};stockDialog.querySelectorAll('[data-setting-kind="display"]').forEach(input=>next[input.value]=input.checked);
+        stockDialog.querySelectorAll('[data-speed-key]').forEach(input=>{const value=Number(input.value);next[input.dataset.speedKey]=validMarqueeSpeed(value)?value:displayDefaults[input.dataset.speedKey];});
         const rssInputs=[...stockDialog.querySelectorAll('[data-setting-kind="rss"]')];
         next.rssSources=rssInputs.every(input=>input.checked)?null:rssInputs.filter(input=>input.checked).map(input=>input.value);
         if(next.stocks && !ids.length && !draftSymbols.length) {switchSettingsPanel('stocks');stockDialog.querySelector('.city-feed-stock-error').textContent=text('请至少选择或添加一只股票，或关闭个股行情。','請至少選擇或加入一隻股票，或關閉個股行情。');return;}
@@ -471,8 +486,8 @@
                 this.applyPending();this.fill();this.start();
             };
         }
-        refresh(active=this.active,reduced=this.reduced) {
-            this.stop();this.active=active;this.reduced=reduced;
+        refresh(active=this.active,reduced=this.reduced,speed=this.speed) {
+            this.stop();this.speed=speed;this.active=active;this.reduced=reduced;
             if(reduced && this.pending) {this.playlist=this.pending;this.pending=null;this.next=0;this.offset=0;this.track.replaceChildren();}
             this.fill();this.start();
         }
@@ -481,7 +496,8 @@
     const initialHeadlines=[...track.children].map(node=>node.textContent);
     window.cityFeedSetHeadlines=(entries,options={})=>{if(!options.initialOnly || marquee.bootstrap)marquee.setEntries(entries);};
     const reducedMarqueeMotion=matchMedia('(prefers-reduced-motion:reduce)');
-    const refreshMarquee=()=>marquee.refresh(!document.hidden && displaySettings.ticker,reducedMarqueeMotion.matches);
+    const refreshMarquee=()=>marquee.refresh(!document.hidden && displaySettings.ticker,reducedMarqueeMotion.matches,displaySettings[expanded?'fullscreenSpeed':'compactSpeed']);
+    marquee.speed=displaySettings.compactSpeed;
     marquee.active=!document.hidden && displaySettings.ticker;marquee.reduced=reducedMarqueeMotion.matches;
     marquee.setEntries(initialHeadlines.length?initialHeadlines:[track.textContent]);
     new ResizeObserver(refreshMarquee).observe(windowElement);

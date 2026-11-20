@@ -278,3 +278,11 @@
     #city-ticker .city-ticker-window { overflow:hidden; }
     #city-ticker .city-ticker-track { width:max-content; }
 }
+
+.city-feed-speed-settings { padding:0 0 14px; margin-bottom:10px; border-bottom:1px solid #626655; }
+.city-feed-speed-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; margin:10px 0 16px; font-size:13px; }
+.city-feed-speed-row output { color:#e9d792; font-variant-numeric:tabular-nums; }
+.city-feed-speed-row input[type="range"] { grid-column:1/-1; width:100%; margin:4px 0; accent-color:#e9d792; cursor:pointer; }
+.city-feed-speed-row input:focus-visible { outline:2px solid #e9d792; outline-offset:4px; border-radius:8px; }
+.city-feed-speed-hint { color:#b7c1b8; font-size:12px; line-height:1.6; }
+.city-feed-speed-reset { border:1px solid #8c9389; border-radius:20px; min-height:36px; padding:6px 16px; background:transparent; color:#e9d792; font:500 13px Roboto,Arial,sans-serif; cursor:pointer; }
