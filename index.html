@@ -1471,14 +1471,14 @@ function setBackgroundToCookie(value) {
             };
 
             // 收集主要 localStorage 键值（与页面使用的键一致）
-            const lsKeys = ['bp_v7', 'custom_engines', 'last_engine', 'theme_mode', 'custom_rss', 'navi_city_stocks'];
+            const lsKeys = ['bp_v7', 'custom_engines', 'last_engine', 'theme_mode', 'custom_rss', 'navi_city_stocks', 'navi_city_feed', 'navi_rss_expansion_v1'];
             lsKeys.forEach(key => {
                 const val = localStorage.getItem(key);
                 if (val !== null) allData.localStorage[key] = val;
             });
 
-            // Explicit null also backs up the default watchlist, so importing it clears older selections.
-            allData.localStorage.navi_city_stocks = localStorage.getItem('navi_city_stocks');
+            // Explicit null restores defaults instead of retaining settings from the destination browser.
+            ['navi_city_stocks','navi_city_feed'].forEach(key=>allData.localStorage[key]=localStorage.getItem(key));
             const dataStr = JSON.stringify(allData, null, 2);
             const blob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -1510,11 +1510,12 @@ function setBackgroundToCookie(value) {
                     // 恢复 localStorage
                     if (imported.localStorage) {
                         Object.keys(imported.localStorage).forEach(key => {
-                            if (key === 'navi_city_stocks' && imported.localStorage[key] === null) localStorage.removeItem(key);
+                            if (['navi_city_stocks','navi_city_feed'].includes(key) && imported.localStorage[key] === null) localStorage.removeItem(key);
                             else localStorage.setItem(key, imported.localStorage[key]);
                         });
                     }
                     
+                    if (Object.prototype.hasOwnProperty.call(imported.localStorage || {},'custom_rss')) localStorage.setItem('navi_rss_expansion_v1','1');
                     // 恢复 cookies
                     if (imported.cookies) {
                         setAllCookies(imported.cookies);
@@ -2222,19 +2223,22 @@ function setBackgroundToCookie(value) {
         async function updateCityTicker() {
             const revision = ++cityTickerRevision;
             const entries = [];
-            try {
+            let settings={};try {settings=JSON.parse(localStorage.getItem('navi_city_feed')) || {};} catch {}
+            const enabled=key=>settings[key]!==false;
+            const rssSources=customRSS.filter(url=>!Array.isArray(settings.rssSources) || settings.rssSources.includes(url));
+            if(enabled('ticker') && enabled('trafficNews')) try {
                 const xml = await cityXml(cityApi.traffic);
                 [...xml.getElementsByTagName('message')].slice(0, 10).forEach((node) => entries.push(cityText(node, 'ChinShort') || cityText(node, 'EngShort')));
             } catch (error) {}
-            try {
+            if(enabled('ticker') && enabled('rateTicker')) try {
                 const fx = await (await fetch('https://open.er-api.com/v6/latest/HKD?_=' + Date.now(), { cache:'no-store' })).json();
                 entries.push('港币人民币：HK$1 = ¥' + (fx.rates?.CNY ? fx.rates.CNY.toFixed(4) : '--'));
             } catch (error) {}
-            try {
-                const rss = await Promise.allSettled(customRSS.map(cityReadRss));
+            if(enabled('ticker') && enabled('rss')) try {
+                const rss = await Promise.allSettled(rssSources.map(cityReadRss));
                 rss.forEach(result=> { if (result.status === 'fulfilled') result.value.slice(0,4).forEach(title=>entries.push(title)); });
             } catch (error) {}
-            if (!entries.length) entries.push('暂无可用城市资讯，稍后会自动更新。');
+            if (!entries.length) entries.push(enabled('rss') && rssSources.length ? '暂无可用城市资讯，稍后会自动更新。' : '未选择走马灯内容，可在 CITY FEED 设置中调整。');
             for (let i = entries.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [entries[i], entries[j]] = [entries[j], entries[i]]; }
             if (revision !== cityTickerRevision) return;
             document.getElementById('city-ticker-track').innerHTML = entries.map((entry) => `<span>${cityEsc(entry)}</span>`).join('');

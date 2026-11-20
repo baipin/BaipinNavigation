@@ -20,7 +20,7 @@
     const updates = document.createElement('div'); updates.className = 'city-feed-updates';
     const information = document.createElement('div'); information.className = 'city-feed-information'; information.append(updates);
     const stockButton = document.createElement('button'); stockButton.type = 'button'; stockButton.id = 'city-feed-stock-settings'; stockButton.className = 'city-feed-fullscreen-button';
-    stockButton.innerHTML = '<span class="material-icons" aria-hidden="true">playlist_add</span>';
+    stockButton.innerHTML = '<span class="material-icons" aria-hidden="true">tune</span>';
     controls.append(information,stockButton,fullscreenButton);
     const board = document.createElement('div'); board.className = 'city-feed-board'; board.hidden = true;
     const heading = document.createElement('div'); heading.className = 'city-feed-board-title'; const logo = document.createElement('img'); logo.src='img/logo.png'; logo.alt=''; logo.className='city-feed-logo'; heading.append(logo,document.createTextNode('CITY FEED')); top.append(heading);
@@ -38,6 +38,50 @@
 
     const isSC = () => localStorage.getItem('navi_language') === 'sc';
     const text = (sc, tc) => isSC() ? sc : tc;
+    const displayDefaults = {clock:true,indices:true,fx:true,stocks:true,weather:true,traffic:true,ticker:true,rss:true,trafficNews:true,rateTicker:true,rssSources:null};
+    let displaySettings = {...displayDefaults};
+    try {
+        const saved=JSON.parse(localStorage.getItem('navi_city_feed'));
+        for (const key of Object.keys(displayDefaults)) {
+            if (typeof saved?.[key]==='boolean') displaySettings[key]=saved[key];
+        }
+        if (Array.isArray(saved?.rssSources)) displaySettings.rssSources=saved.rssSources.filter(url=>typeof url==='string');
+    } catch {}
+    const shownFeatured = ()=>featuredMarkets.filter(market=>market.dom ? displaySettings.fx : displaySettings.indices);
+    function applyDisplay() {
+        const featuredVisible=shownFeatured().length>0, mobile=matchMedia('(max-width:600px)').matches;
+        const clockElement=top.querySelector('.city-feed-clock'), stockElement=top.querySelector('.city-feed-markets');
+        clockElement.hidden=!displaySettings.clock;
+        featured.hidden=expanded || !featuredVisible; stockElement.hidden=expanded || !displaySettings.stocks;
+        weather.hidden=!displaySettings.weather && !(expanded && displaySettings.traffic);
+        weatherLabel.hidden=weatherWindow.hidden=!displaySettings.weather;
+        trafficFlip.hidden=!displaySettings.traffic;
+        bottom.hidden=!displaySettings.ticker;
+        board.children[0].hidden=!featuredVisible; board.children[1].hidden=!displaySettings.stocks;
+        board.hidden=!expanded || (!featuredVisible && !displaySettings.stocks);
+        board.style.gridTemplateColumns=expanded && (!featuredVisible || !displaySettings.stocks) ? 'minmax(0,1fr)' : '';
+        board.style.gridTemplateRows=expanded && mobile && (!featuredVisible || !displaySettings.stocks) ? 'minmax(0,1fr)' : '';
+        section.classList.toggle('city-feed-no-markets',!featuredVisible && !displaySettings.stocks);
+        top.hidden=!expanded && !displaySettings.clock && !featuredVisible && !displaySettings.weather && !displaySettings.stocks;
+        if (expanded) {
+            top.style.gridTemplateColumns=displaySettings.clock ? (mobile?'100px 1fr':'150px 1fr') : '1fr';
+            top.style.gridTemplateRows='auto';
+            clockElement.style.gridColumn='1';clockElement.style.gridRow='1';
+            heading.style.gridColumn=displaySettings.clock?'2':'1';
+            return;
+        }
+        const broadcast=featuredVisible || displaySettings.weather;
+        const columns=[displaySettings.clock ? (mobile?'72px':'96px') : '',broadcast?'minmax(0,1fr)':'',!mobile && displaySettings.stocks?'minmax(0,2fr)':''].filter(Boolean);
+        top.style.gridTemplateColumns=columns.join(' ') || '1fr';
+        const rowCount=Math.max(1,Number(featuredVisible)+Number(displaySettings.weather));
+        top.style.gridTemplateRows=(broadcast && rowCount===2 ? '40px 32px' : displaySettings.clock || broadcast ? '72px' : '')+(mobile && displaySettings.stocks?' auto':'');
+        weatherFlip.style.height=displaySettings.weather && !featuredVisible?'72px':'';
+        clockElement.style.gridColumn='1';clockElement.style.gridRow='1 / '+(rowCount+1);
+        featured.style.gridColumn=weather.style.gridColumn=displaySettings.clock?'2':'1';
+        featured.style.gridRow='1'; weather.style.gridRow=featuredVisible?'2':'1';
+        stockElement.style.gridColumn=mobile?'1 / -1':String(columns.length);
+        stockElement.style.gridRow=mobile?String(!broadcast && !displaySettings.clock ? 1 : rowCount+1):'1 / '+(rowCount+1);
+    }
     const state = new Map();
     let marketSource = 'Tencent Finance / Yahoo Finance';
     const markets = [
@@ -100,7 +144,7 @@
         const custom = (stockSelection?.symbols || []).filter(symbol=>!defaultStocks.some(stock=>stock.symbol===symbol)).map(symbol=>({id:'custom:'+symbol,symbol,names:[symbol,symbol]}));
         markets.splice(0,markets.length,...markets.filter(m=>!m.id.startsWith('custom:')), ...custom);
         stocks = stockSelection ? defaultStocks.filter(stock=>stockSelection.ids.includes(stock.id) || stockSelection.symbols.includes(stock.symbol)).concat(custom) : [...defaultStocks];
-        if (!stocks.length) {stockSelection=null;stocks=[...defaultStocks];}
+        if (!stocks.length && displaySettings.stocks) {stockSelection=null;stocks=[...defaultStocks];}
     }
     applyStockSelection();
     const featured = top.querySelector('.city-feed-featured');
@@ -202,47 +246,110 @@
             const noteText = text('行情时间 ','行情時間 ') + index.time;
             if (note && note.textContent !== noteText) note.textContent = noteText;
         }
-        renderQuote(featured, featuredMarkets[featuredPage % featuredMarkets.length]);
+        const featuredPool=shownFeatured();
+        if (featuredPool.length) renderQuote(featured, featuredPool[featuredPage % featuredPool.length]);
         // Index/currency and individual-stock pages rotate independently.
         const count = 4;
-        slots.forEach((slot,index) => {slot.hidden = index >= stocks.length; renderQuote(slot, stocks[(page * count + index) % stocks.length]);});
+        slots.forEach((slot,index) => {slot.hidden = index >= stocks.length; if(!slot.hidden) renderQuote(slot, stocks[(page * count + index) % stocks.length]);});
         boardQuotes.forEach(({slot,stock,offset})=> {
-            const pool=stock ? stocks : featuredMarkets, capacity=boardCapacity[stock ? 1 : 0];
+            const pool=stock ? stocks : featuredPool, capacity=boardCapacity[stock ? 1 : 0];
             slot.hidden=offset>=Math.min(capacity,pool.length);
             if (!slot.hidden) renderQuote(slot,pool[((boardPage % Math.ceil(pool.length / capacity)) * capacity + offset) % pool.length]);
         });
-        boardLabels[0].textContent = text('全球指数与汇率','全球指數與匯率');
-        boardLabels[1].textContent = text('重点个股 · 第 ','重點個股 · 第 ') + (boardPage % Math.ceil(stocks.length/boardCapacity[1]) + 1) + ' / ' + Math.ceil(stocks.length/boardCapacity[1]) + text(' 页',' 頁');
+        boardLabels[0].textContent = displaySettings.indices && displaySettings.fx ? text('全球指数与汇率','全球指數與匯率') : displaySettings.indices ? text('全球指数','全球指數') : text('汇率','匯率');
+        boardLabels[1].textContent = text('重点个股 · 第 ','重點個股 · 第 ') + (boardPage % Math.max(1,Math.ceil(stocks.length/boardCapacity[1])) + 1) + ' / ' + Math.max(1,Math.ceil(stocks.length/boardCapacity[1])) + text(' 页',' 頁');
         const fullscreenLabel = text(expanded?'退出全屏':'全屏行情',expanded?'退出全屏':'全屏行情');
         fullscreenButton.querySelector('.material-icons').textContent = expanded?'fullscreen_exit':'fullscreen';
         fullscreenButton.setAttribute('aria-label',fullscreenLabel); fullscreenButton.title = fullscreenLabel;
-        stockButton.setAttribute('aria-label',text('设置自选股','設定自選股')); stockButton.title=stockButton.getAttribute('aria-label');
+        stockButton.setAttribute('aria-label',text('CITY FEED 设置','CITY FEED 設定')); stockButton.title=stockButton.getAttribute('aria-label');
+        applyDisplay();
 
     }
     const stockDialog = document.createElement('dialog'); stockDialog.className='city-feed-stock-dialog'; stockDialog.id='city-feed-stock-dialog';
-    stockDialog.innerHTML='<form><h2></h2><p class="city-feed-stock-hint"></p><div class="city-feed-stock-options"></div><label class="city-feed-symbol-label" for="city-feed-custom-symbols"></label><textarea id="city-feed-custom-symbols" rows="3" placeholder="BABA, 0700.HK, 600000.SS, 000001.SZ"></textarea><p class="city-feed-stock-error" role="alert"></p><div class="city-feed-stock-actions"><button type="button" data-stock-action="reset"></button><button type="button" data-stock-action="cancel"></button><button type="submit" data-stock-action="save"></button></div></form>';
+    stockDialog.innerHTML=`<form><h2></h2>
+        <nav class="city-feed-settings-tabs"><button type="button" data-panel="display" aria-pressed="true"></button><button type="button" data-panel="stocks" aria-pressed="false"></button></nav>
+        <section class="city-feed-settings-panel" data-settings-panel="display"><div class="city-feed-display-options"></div><fieldset class="city-feed-ticker-options"><legend></legend><div class="city-feed-ticker-switches"></div><div class="city-feed-rss-options"></div><p class="city-feed-rss-hint"></p></fieldset></section>
+        <section class="city-feed-settings-panel" data-settings-panel="stocks" hidden><p class="city-feed-stock-hint"></p><label class="city-feed-symbol-label" for="city-feed-custom-symbols"></label><div class="city-feed-symbol-entry"><input id="city-feed-custom-symbols" type="text" placeholder="BABA, 0700.HK, 600000.SS, 000001.SZ"><button type="button" data-stock-action="add"></button></div><p class="city-feed-stock-error" role="alert" aria-live="polite"></p><p class="city-feed-stock-feedback" role="status"></p><div class="city-feed-custom-list"></div><div class="city-feed-stock-options"></div></section>
+        <div class="city-feed-stock-actions"><button type="button" data-stock-action="reset"></button><button type="button" data-stock-action="cancel"></button><button type="submit" data-stock-action="save"></button></div></form>`;
     section.append(stockDialog);
+    let draftSymbols=[];
+    function switchSettingsPanel(panel) {
+        stockDialog.querySelectorAll('[data-settings-panel]').forEach(node=>node.hidden=node.dataset.settingsPanel!==panel);
+        stockDialog.querySelectorAll('[data-panel]').forEach(node=>node.setAttribute('aria-pressed',String(node.dataset.panel===panel)));
+    }
+    stockDialog.querySelectorAll('[data-panel]').forEach(button=>button.addEventListener('click',()=>switchSettingsPanel(button.dataset.panel)));
+    function checkbox(parent,value,title,checked,kind) {
+        const label=document.createElement('label'),input=document.createElement('input');
+        input.type='checkbox'; input.value=value; input.checked=checked; input.dataset.settingKind=kind;
+        const caption=document.createElement('span');caption.textContent=title;label.append(input,caption);parent.append(label);return input;
+    }
+    function renderCustomList() {
+        const list=stockDialog.querySelector('.city-feed-custom-list');list.replaceChildren();
+        draftSymbols.forEach(symbol=> {
+            const row=document.createElement('div');row.className='city-feed-custom-row';
+            const name=document.createElement('span');name.textContent=symbol;
+            const button=document.createElement('button');button.type='button';button.className='city-feed-fullscreen-button';button.setAttribute('aria-label',text('移除 ','移除 ')+symbol);button.innerHTML='<span class="material-icons" aria-hidden="true">close</span>';
+            button.addEventListener('click',()=>{draftSymbols=draftSymbols.filter(item=>item!==symbol);renderCustomList();});row.append(name,button);list.append(row);
+        });
+    }
+    function addSymbols() {
+        const entry=stockDialog.querySelector('#city-feed-custom-symbols'), error=stockDialog.querySelector('.city-feed-stock-error');
+        const symbols=[...new Set(entry.value.toUpperCase().split(/[\s,，;；]+/).filter(Boolean).map(symbol=>/^\d{4,5}\.HK$/.test(symbol) ? String(Number(symbol.split('.')[0])).padStart(4,'0')+'.HK' : symbol))];
+        if(symbols.some(symbol=>!validSymbol(symbol)) || new Set([...draftSymbols,...symbols]).size>20) {switchSettingsPanel('stocks');entry.focus();error.textContent=text('请使用有效的美股、港股或沪深股票代码，最多添加 20 个。','請使用有效的美股、港股或滬深股票代碼，最多加入 20 個。');return false;}
+        symbols.forEach(symbol=> {
+            const preset=defaultStocks.find(stock=>stock.symbol===symbol);
+            if(preset) stockDialog.querySelectorAll('[data-setting-kind="stock"]').forEach(input=>{if(input.value===preset.id)input.checked=true;});
+            else if(!draftSymbols.includes(symbol)) draftSymbols.push(symbol);
+        });
+        entry.value='';error.textContent='';if(symbols.length)stockDialog.querySelector('.city-feed-stock-feedback').textContent=text('已加入：','已加入：')+symbols.join(', ');renderCustomList();return true;
+    }
+    stockDialog.querySelector('[data-stock-action="add"]').addEventListener('click',addSymbols);
+    stockDialog.querySelector('#city-feed-custom-symbols').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addSymbols();}});
+    function syncRssControls() {
+        const checked=key=>stockDialog.querySelector('[data-setting-kind="display"][value="'+key+'"]').checked;
+        stockDialog.querySelectorAll('[data-setting-kind="rss"]').forEach(input=>input.disabled=!checked('ticker') || !checked('rss'));
+        ['rss','trafficNews','rateTicker'].forEach(key=>stockDialog.querySelector('[data-setting-kind="display"][value="'+key+'"]').disabled=!checked('ticker'));
+    }
     stockButton.addEventListener('click',()=> {
-        stockDialog.querySelector('h2').textContent=text('自选股设置','自選股設定');
-        stockDialog.querySelector('.city-feed-stock-hint').textContent=text('勾选需要轮播的股票，或输入其他股票代码。设置保存在当前浏览器。','勾選需要輪播的股票，或輸入其他股票代碼。設定儲存在目前瀏覽器。');
-        stockDialog.querySelector('.city-feed-symbol-label').textContent=text('添加其他代码（逗号或换行分隔，最多 20 个）','加入其他代碼（逗號或換行分隔，最多 20 個）');
+        stockDialog.querySelector('h2').textContent=text('CITY FEED 设置','CITY FEED 設定');
+        stockDialog.querySelector('[data-panel="display"]').textContent=text('显示内容','顯示內容');
+        stockDialog.querySelector('[data-panel="stocks"]').textContent=text('自选股','自選股');
+        stockDialog.querySelector('.city-feed-stock-hint').textContent=text('勾选预设股票；添加的其他代码会显示在下方列表，可逐一移除。保存后应用，设置支持导入导出。','勾選預設股票；加入的其他代碼會顯示在下方清單，可逐一移除。儲存後套用，設定支援匯入匯出。');
+        stockDialog.querySelector('.city-feed-symbol-label').textContent=text('添加股票代码（逗号或换行分隔，最多 20 个）','加入股票代碼（逗號或換行分隔，最多 20 個）');
+        stockDialog.querySelector('#city-feed-custom-symbols').value='';
+        stockDialog.querySelector('[data-stock-action="add"]').textContent=text('添加','加入');
         const options=stockDialog.querySelector('.city-feed-stock-options'); options.replaceChildren();
-        defaultStocks.forEach(stock=> {const label=document.createElement('label');const input=document.createElement('input');input.type='checkbox';input.value=stock.id;input.checked=stocks.some(item=>item.id===stock.id);label.append(input,document.createTextNode(stock.names[isSC()?0:1]+' · '+stock.symbol));options.append(label);});
-        stockDialog.querySelector('textarea').value=(stockSelection?.symbols || []).join(', ');
-        stockDialog.querySelector('.city-feed-stock-error').textContent='';
-        ['reset','cancel','save'].forEach((action,index)=> {stockDialog.querySelector('[data-stock-action="'+action+'"]').textContent=text(['恢复默认','取消','保存'][index],['恢復預設','取消','儲存'][index]);});
-        stockDialog.showModal();
+        defaultStocks.forEach(stock=>checkbox(options,stock.id,stock.names[isSC()?0:1]+' · '+stock.symbol,stocks.some(item=>item.id===stock.id),'stock'));
+        draftSymbols=(stockSelection?.symbols || []).filter(symbol=>!defaultStocks.some(stock=>stock.symbol===symbol));renderCustomList();
+        const display=stockDialog.querySelector('.city-feed-display-options'),ticker=stockDialog.querySelector('.city-feed-ticker-switches');display.replaceChildren();ticker.replaceChildren();
+        const labels={clock:['香港时间','香港時間'],indices:['全球指数','全球指數'],fx:['汇率','匯率'],stocks:['个股行情','個股行情'],weather:['全球天气','全球天氣'],traffic:['全屏行车时间','全屏行車時間'],ticker:['文字走马灯','文字跑馬燈'],rss:['RSS 新闻','RSS 新聞'],trafficNews:['交通消息','交通消息'],rateTicker:['汇率摘要','匯率摘要']};
+        Object.entries(labels).forEach(([key,names])=>{const input=checkbox(['rss','trafficNews','rateTicker'].includes(key)?ticker:display,key,text(...names),displaySettings[key],'display');input.addEventListener('change',syncRssControls);});
+        stockDialog.querySelector('legend').textContent=text('走马灯子项目','跑馬燈子項目');
+        const rss=stockDialog.querySelector('.city-feed-rss-options');rss.replaceChildren();
+        const sources=typeof customRSS!=='undefined'?customRSS:[];
+        const names={'hk.news.yahoo.com':'Yahoo 香港新闻','rthk.hk':'香港电台','www.chinanews.com.cn':'中国新闻网','news.mingpao.com':'明报','www.rti.org.tw':'中央广播电台'};
+        sources.forEach(url=>{let host=url;try{host=new URL(url).hostname;}catch{}const input=checkbox(rss,url,(names[host] || host)+' · '+url,displaySettings.rssSources===null || displaySettings.rssSources.includes(url),'rss');input.closest('label').title=url;});
+        stockDialog.querySelector('.city-feed-rss-hint').textContent=text('这里只选择 CITY FEED 显示哪些 RSS。RSS 列表的添加、编辑和移除，请到上方「香港新闻」容器的 RSS 图标管理；这些设置均支持导入导出。','這裡只選擇 CITY FEED 顯示哪些 RSS。RSS 清單的新增、編輯和移除，請到上方「香港新聞」容器的 RSS 圖示管理；這些設定均支援匯入匯出。');
+        stockDialog.querySelector('.city-feed-stock-error').textContent='';stockDialog.querySelector('.city-feed-stock-feedback').textContent='';
+        ['reset','cancel','save'].forEach((action,index)=> {stockDialog.querySelector('[data-stock-action="'+action+'"]').textContent=text(['恢复全部默认','取消','保存'][index],['恢復全部預設','取消','儲存'][index]);});
+        syncRssControls();switchSettingsPanel('display');stockDialog.showModal();stockDialog.scrollTop=0;
     });
+    function applySettings() {
+        applyStockSelection();page=boardPage=featuredPage=0;renderMarkets();renderFreshness();renderWeatherFlip();requestAnimationFrame(fitBoard);refreshStocks();
+        const loading=document.createElement('span');loading.textContent=text('正在更新所选内容…','正在更新所選內容…');track.replaceChildren(loading);
+        if(typeof updateCityTicker==='function') updateCityTicker();
+    }
     stockDialog.querySelector('[data-stock-action="cancel"]').addEventListener('click',()=>stockDialog.close());
-    stockDialog.querySelector('[data-stock-action="reset"]').addEventListener('click',()=> {stockSelection=null;localStorage.removeItem('navi_city_stocks');applyStockSelection();page=boardPage=0;renderMarkets();refreshStocks();stockDialog.close();});
+    stockDialog.querySelector('[data-stock-action="reset"]').addEventListener('click',()=> {stockSelection=null;displaySettings={...displayDefaults};localStorage.removeItem('navi_city_stocks');localStorage.removeItem('navi_city_feed');applySettings();stockDialog.close();});
     stockDialog.querySelector('form').addEventListener('submit',event=> {
-        event.preventDefault();
-        const ids=[...stockDialog.querySelectorAll('input:checked')].map(input=>input.value);
-        const symbols=[...new Set(stockDialog.querySelector('textarea').value.toUpperCase().split(/[\s,，;；]+/).filter(Boolean).map(symbol=>/^\d{4,5}\.HK$/.test(symbol) ? String(Number(symbol.split('.')[0])).padStart(4,'0')+'.HK' : symbol))];
-        const error=stockDialog.querySelector('.city-feed-stock-error');
-        if (symbols.length>20 || symbols.some(symbol=>!validSymbol(symbol))) {error.textContent=text('请使用有效的美股、港股或沪深股票代码，最多添加 20 个。','請使用有效的美股、港股或滬深股票代碼，最多加入 20 個。');return;}
-        if (!ids.length && !symbols.length) {error.textContent=text('请至少选择或添加一只股票。','請至少選擇或加入一隻股票。');return;}
-        stockSelection={ids,symbols};localStorage.setItem('navi_city_stocks',JSON.stringify(stockSelection));applyStockSelection();page=boardPage=0;renderMarkets();refreshStocks();stockDialog.close();
+        event.preventDefault();if(!addSymbols())return;
+        const ids=[...stockDialog.querySelectorAll('[data-setting-kind="stock"]:checked')].map(input=>input.value);
+        const next={...displaySettings};stockDialog.querySelectorAll('[data-setting-kind="display"]').forEach(input=>next[input.value]=input.checked);
+        const rssInputs=[...stockDialog.querySelectorAll('[data-setting-kind="rss"]')];
+        next.rssSources=rssInputs.every(input=>input.checked)?null:rssInputs.filter(input=>input.checked).map(input=>input.value);
+        if(next.stocks && !ids.length && !draftSymbols.length) {switchSettingsPanel('stocks');stockDialog.querySelector('.city-feed-stock-error').textContent=text('请至少选择或添加一只股票，或关闭个股行情。','請至少選擇或加入一隻股票，或關閉個股行情。');return;}
+        stockSelection={ids,symbols:[...draftSymbols]};displaySettings=next;
+        localStorage.setItem('navi_city_stocks',JSON.stringify(stockSelection));localStorage.setItem('navi_city_feed',JSON.stringify(displaySettings));applySettings();stockDialog.close();
     });
     function syncRates() {
         markets.filter((item) => item.dom).forEach((market) => {
@@ -479,6 +586,7 @@
     if (finance) new MutationObserver(syncRates).observe(finance,{childList:true,subtree:true,characterData:true});
     new MutationObserver(() => { renderMarkets(); renderWorldWeather(); renderFreshness(); }).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
     matchMedia('(max-width:600px)').addEventListener('change',() => { page = 0; renderMarkets(); });
+    window.addEventListener('resize',applyDisplay);
     clock(); syncClock(); syncHeadlines(); syncRates(); refreshStocks(); refreshFX();
     setInterval(()=> {if (!document.hidden) syncClock();},300000);
     document.addEventListener('visibilitychange',()=> {if (!document.hidden && performance.now()-lastTimeAttempt >= 300000) syncClock();});
