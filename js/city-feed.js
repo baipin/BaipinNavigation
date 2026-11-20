@@ -446,12 +446,16 @@
         fill() {
             if(!this.playlist.length || !this.viewport.clientWidth) return;
             let width=[...this.track.children].reduce((sum,node)=>sum+node.getBoundingClientRect().width,0);
-            for(let count=0;width-this.offset<this.viewport.clientWidth+100 && count<100;count++) {
+            // Preload enough text for the entire current animation, including its end.
+            // A fixed 100px buffer runs dry when the leading headline is much longer.
+            let leadingWidth=this.track.firstElementChild?.getBoundingClientRect().width || 0;
+            for(let count=0;width<this.viewport.clientWidth+leadingWidth+100 && count<100;count++) {
                 const item=document.createElement('span');item.className='city-feed-headline';
                 item.textContent=this.playlist[this.next++ % this.playlist.length];this.track.append(item);
                 const itemWidth=item.getBoundingClientRect().width;
                 if(!itemWidth) break;
                 width+=itemWidth;
+                if(!leadingWidth) leadingWidth=itemWidth;
             }
         }
         applyPending(completedText) {
