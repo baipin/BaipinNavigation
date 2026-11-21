@@ -67,23 +67,29 @@
             z-index: 1500;
         }
         
-        /* 修复 mdui-dropdown 错位问题 */
-        #engine-dropdown {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex: 0 0 auto;
-            margin-right: 8px;
-            position: relative;  /* 防止跑到拾遗位置 */
-            z-index: 1600;       /* 确保下拉菜单位于输入框上面 */
+        .hero-search-slot { width:90%; max-width:650px; min-height:72px; }
+        .hero-search-slot .search-container { width:100%; }
+        #engine-dropdown { position:relative; display:flex; flex:none; margin-right:8px; }
+        .engine-trigger { border:0; padding:4px; background:transparent; border-radius:50%; cursor:pointer; color:inherit; }
+        .engine-trigger:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
+        #engine-menu { position:absolute; top:calc(100% + 16px); left:0; min-width:220px; max-width:calc(100vw - 48px); max-height:min(65vh,440px); overflow-y:auto; z-index:1700; }
+        #engine-menu[hidden] { display:none; }
+        .header-search-host { display:none; min-width:0; flex:1; max-width:650px; margin:0 auto 0 24px; }
+        .app-bar.search-docked .header-search-host { display:flex; }
+        .app-bar.search-docked .app-bar-spacer { display:none; }
+        .header-search-host .search-container { width:100%; padding:0 12px; box-shadow:none; backdrop-filter:none; }
+        .header-search-host .search-input { padding:10px 8px; font-size:1rem; }
+        #header-search-toggle, #header-search-close { display:none; color:inherit; flex:none; }
+        @media(max-width:600px) {
+            .app-bar.search-docked .header-search-host { display:none; }
+            .app-bar.search-docked .app-bar-spacer { display:block; }
+            .app-bar.search-docked #header-search-toggle { display:inline-flex; }
+            .app-bar.search-open > :not(.header-search-host) { display:none !important; }
+            .app-bar.search-open .header-search-host { display:flex; margin:0; max-width:none; }
+            .app-bar.search-open #header-search-close { display:inline-flex; }
+            .header-search-host .search-container { padding-right:2px; }
         }
-        
-        #engine-dropdown [slot="trigger"] {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
+
         .engine-favicon {
             width: 24px;
             height: 24px;
@@ -386,14 +392,17 @@
             <img src="img/logo.png" alt="Logo">
             <span>导航</span>
         </div>
-        <div style="flex-grow: 1"></div>
+        <div class="app-bar-spacer" style="flex-grow:1"></div>
+        <div class="header-search-host"></div>
+        <mdui-button-icon id="header-search-toggle" icon="search" aria-label="打开顶栏搜索" title="搜索" aria-expanded="false"></mdui-button-icon>
         <mdui-button-icon id="theme-btn" icon="light_mode" style="color: inherit;"></mdui-button-icon>
     </header>
     <section class="hero-space">
+        <div class="hero-search-slot">
         <div class="search-container">
-            <mdui-dropdown id="engine-dropdown" trigger="click" placement="bottom-start">
-                <span slot="trigger" class="engine-trigger"><img id="cur-engine-img" class="engine-favicon" src="https://www.google.com/favicon.ico"></span>
-                <mdui-menu id="engine-menu">
+            <div id="engine-dropdown">
+                <button type="button" class="engine-trigger" id="engine-trigger" aria-label="切换搜索引擎" aria-haspopup="menu" aria-expanded="false" aria-controls="engine-menu"><img id="cur-engine-img" class="engine-favicon" src="https://www.google.com/favicon.ico" alt="搜索引擎"></button>
+                <mdui-menu id="engine-menu" hidden>
                     <!-- 预设搜索引擎已恢复并置于最前面 -->
                     <mdui-menu-item value="google"><img class="engine-favicon" src="https://www.google.com/favicon.ico" slot="icon">Google</mdui-menu-item>
                     <mdui-menu-item value="baidu"><img class="engine-favicon" src="https://www.baidu.com/favicon.ico" slot="icon">Baidu</mdui-menu-item>
@@ -406,9 +415,11 @@
                     <mdui-menu-item id="add-engine-btn"><mdui-icon name="add" slot="icon"></mdui-icon>添加搜索引擎</mdui-menu-item>
                     <mdui-menu-item id="manage-engine-btn"><mdui-icon name="settings" slot="icon"></mdui-icon>管理自定义搜索引擎</mdui-menu-item>
                 </mdui-menu>
-            </mdui-dropdown>
+            </div>
             <input type="text" class="search-input" id="search-input" placeholder="键入内容并搜索..." autocomplete="off">
+            <mdui-button-icon id="header-search-close" icon="close" aria-label="关闭顶栏搜索" title="关闭搜索"></mdui-button-icon>
             <div id="suggestions" class="suggestions-dropdown"></div>
+        </div>
         </div>
     </section>
     <div class="page-flow">
@@ -768,6 +779,7 @@
         engineMenu.onclick = (e) => {
             const item = e.target.closest('mdui-menu-item');
             if (!item) return;
+            setEngineMenuOpen(false);
             if (item.id === 'add-engine-btn') {
                 document.getElementById('add-engine-dialog').open = true;
                 return;
@@ -780,7 +792,8 @@
             localStorage.setItem('last_engine', curEng);
             const iconSrc = item.querySelector('img').src;
             engineImg.src = iconSrc;
-            document.getElementById('engine-dropdown').open = false;
+            suggestionsContainer.style.display = 'none';
+            searchInput.focus();
         };
 
         document.getElementById('btn-get-engine-icon').onclick = () => {
@@ -930,6 +943,59 @@
         const suggestionsContainer = document.getElementById('suggestions');
         let debounceTimer = null;
         let selectedIndex = -1;
+
+        // Keep one search control so the query, engine and suggestions survive docking.
+        const appBar = document.querySelector('.app-bar');
+        const heroSearchSlot = document.querySelector('.hero-search-slot');
+        const searchBox = heroSearchSlot.querySelector('.search-container');
+        const headerSearchHost = document.querySelector('.header-search-host');
+        const engineTrigger = document.getElementById('engine-trigger');
+        const mobileSearchToggle = document.getElementById('header-search-toggle');
+        const mobileSearchMedia = matchMedia('(max-width:600px)');
+        let searchDocked = false;
+        function setEngineMenuOpen(open) {
+            engineMenu.hidden = !open;
+            engineTrigger.setAttribute('aria-expanded', String(open));
+        }
+        engineTrigger.onclick = () => setEngineMenuOpen(engineMenu.hidden);
+        document.addEventListener('click', event => {
+            if (!event.composedPath().includes(document.getElementById('engine-dropdown'))) setEngineMenuOpen(false);
+        });
+        document.getElementById('engine-dropdown').addEventListener('keydown', event => {
+            if (event.key === 'Escape') { setEngineMenuOpen(false); engineTrigger.focus(); event.stopPropagation(); }
+            if (event.key === 'ArrowDown' && event.target === engineTrigger) {
+                event.preventDefault(); setEngineMenuOpen(true); engineMenu.querySelector('mdui-menu-item')?.focus();
+            }
+        });
+        function closeHeaderSearch() {
+            appBar.classList.remove('search-open');
+            mobileSearchToggle.setAttribute('aria-expanded', 'false');
+            setEngineMenuOpen(false);
+            suggestionsContainer.style.display = 'none';
+        }
+        function placeSearch() {
+            closeHeaderSearch();
+            const dock = searchDocked;
+            appBar.classList.toggle('search-docked', dock);
+            (dock ? headerSearchHost : heroSearchSlot).appendChild(searchBox);
+        }
+        mobileSearchToggle.onclick = () => {
+            appBar.classList.add('search-open');
+            mobileSearchToggle.setAttribute('aria-expanded', 'true');
+            searchInput.focus();
+        };
+        document.getElementById('header-search-close').onclick = () => { closeHeaderSearch(); mobileSearchToggle.focus(); };
+        searchInput.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && mobileSearchMedia.matches && appBar.classList.contains('search-open')) {
+                closeHeaderSearch(); mobileSearchToggle.focus();
+            }
+        });
+        new IntersectionObserver(([entry]) => {
+            const dock = !entry.isIntersecting && entry.boundingClientRect.bottom <= 64;
+            if (dock !== searchDocked) { searchDocked = dock; placeSearch(); }
+        }, { rootMargin:'-64px 0px 0px 0px' }).observe(heroSearchSlot);
+        mobileSearchMedia.addEventListener('change', placeSearch);
+
 
         const suggestionConfigs = {
             baidu: { url: "https://unionsug.baidu.com/su?wd={q}&cb=sugCallback", parse: (data) => data.s },
