@@ -205,16 +205,6 @@
     position: relative;
 }
 
-.fullscreen-marquee span {
-    display: inline-block;
-    padding-left: 100%;
-    animation: marqueeScroll 25s linear infinite;
-}
-
-@keyframes marqueeScroll {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-100%); }
-}
         /* Hong Kong city dashboard */
         .city-dashboard { max-width: 1240px; margin: 0 auto 32px; padding: 0 20px; }
         .city-dashboard-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-flow:dense; gap:18px; align-items:start; }
@@ -540,9 +530,9 @@
                 </div>
 
                 <div class="news-ticker">
-                    <marquee id="news-marquee" behavior="scroll" direction="left" scrollamount="3">
+                    <div id="news-marquee" class="hk-news-viewport" aria-label="香港新闻跑马灯">
                         正在加载新闻...
-                    </marquee>
+                    </div>
                 </div>
 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
@@ -1136,8 +1126,7 @@
             'https://rthk.hk/rthk/news/rss/c_expressnews_efinance.xml'
         ];
         const additionalRSS = [
-            'https://news.mingpao.com/rss/pns/s00004.xml',
-            'https://www.bbc.com/zhongwen/trad/business/index.xml'
+            'https://news.mingpao.com/rss/pns/s00004.xml'
         ];
         let savedRSS;
         try { savedRSS = JSON.parse(localStorage.getItem('custom_rss')); } catch {}
@@ -1148,12 +1137,9 @@
             localStorage.setItem('custom_rss',JSON.stringify(customRSS));
             localStorage.setItem('navi_rss_expansion_v1','1');
         }
-        // Add BBC once for existing installations; later removal remains respected.
-        if (!localStorage.getItem('navi_rss_bbc_v1')) {
-            if (customRSS.length) customRSS=[...new Set([...customRSS,'https://www.bbc.com/zhongwen/trad/business/index.xml'])];
-            localStorage.setItem('custom_rss',JSON.stringify(customRSS));
-            localStorage.setItem('navi_rss_bbc_v1','1');
-        }
+        // Remove the retired BBC feed, including copies added by the previous default migration.
+        customRSS=customRSS.filter(url=>url!=='https://www.bbc.com/zhongwen/trad/business/index.xml');
+        localStorage.setItem('custom_rss',JSON.stringify(customRSS));
         const cityRssCache = new Map();
         function cityReadRss(url) {
             const cached = cityRssCache.get(url);
@@ -1187,9 +1173,8 @@
             if (revision !== cityRssRevision) return;
             const headlines = [...new Set(results.flatMap(result=>result.status === 'fulfilled' ? result.value.slice(0,12) : []))];
             const text = headlines.length ? headlines.join('　|　') : '暂无最新新闻，请稍后刷新...';
-            document.getElementById('news-marquee').textContent = text;
-            const span = document.createElement('span'); span.textContent = text;
-            document.getElementById('fullscreen-marquee').replaceChildren(span);
+            if(typeof window.hkNewsSetHeadlines==='function') window.hkNewsSetHeadlines(headlines.length?headlines:[text]);
+            else {document.getElementById('news-marquee').textContent=text;document.getElementById('fullscreen-marquee').textContent=text;}
             document.getElementById('update-time').textContent = '更新时间: ' + new Date().toLocaleTimeString('zh-CN');
             document.dispatchEvent(new CustomEvent('city-feed-source-update',{detail:{kind:'rss',success:headlines.length>0}}));
             await updateCityTicker();
@@ -1476,7 +1461,7 @@ function setBackgroundToCookie(value) {
             };
 
             // 收集主要 localStorage 键值（与页面使用的键一致）
-            const lsKeys = ['bp_v7', 'custom_engines', 'last_engine', 'theme_mode', 'custom_rss', 'navi_city_stocks', 'navi_city_feed', 'navi_rss_expansion_v1', 'navi_rss_bbc_v1'];
+            const lsKeys = ['bp_v7', 'custom_engines', 'last_engine', 'theme_mode', 'custom_rss', 'navi_city_stocks', 'navi_city_feed', 'navi_rss_expansion_v1'];
             lsKeys.forEach(key => {
                 const val = localStorage.getItem(key);
                 if (val !== null) allData.localStorage[key] = val;
@@ -1520,7 +1505,7 @@ function setBackgroundToCookie(value) {
                         });
                     }
                     
-                    if (Object.prototype.hasOwnProperty.call(imported.localStorage || {},'custom_rss')) {localStorage.setItem('navi_rss_expansion_v1','1');localStorage.setItem('navi_rss_bbc_v1','1');}
+                    if (Object.prototype.hasOwnProperty.call(imported.localStorage || {},'custom_rss')) {localStorage.setItem('navi_rss_expansion_v1','1');}
                     // 恢复 cookies
                     if (imported.cookies) {
                         setAllCookies(imported.cookies);

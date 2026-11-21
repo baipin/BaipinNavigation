@@ -300,3 +300,10 @@
 .city-feed-speed-row input:focus-visible { outline:2px solid #e9d792; outline-offset:4px; border-radius:8px; }
 .city-feed-speed-hint { color:#b7c1b8; font-size:12px; line-height:1.6; }
 .city-feed-speed-reset { border:1px solid #8c9389; border-radius:20px; min-height:36px; padding:6px 16px; background:transparent; color:#e9d792; font:500 13px Roboto,Arial,sans-serif; cursor:pointer; }
+
+/* Modern Hong Kong news marquee, shared with the fullscreen news view. */
+.hk-news-viewport,#fullscreen-marquee { display:block; overflow:hidden; min-width:0; text-align:left; -webkit-text-size-adjust:100%; }
+.news-ticker { padding:12px 0; min-height:30px; line-height:1.8; }
+.hk-news-track { display:flex; width:max-content; will-change:transform; gap:0; }
+.hk-news-track .city-feed-headline { flex:none; display:block; margin:0; padding:0 40px 0 0; white-space:nowrap; line-height:1.8; }
+#fullscreen-marquee { padding:16px 0; }

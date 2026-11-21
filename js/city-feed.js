@@ -152,10 +152,9 @@
         { id:'chf', dom:'city-chf', names:['港币 / 瑞郎','港幣 / 瑞郎'] },
         { id:'usd', dom:'city-usd', names:['美元 / 港币','美元 / 港幣'] }
     ];
-    const cnyCurrencies=[['usd','美元','美元'],['chf','瑞士法郎','瑞士法郎'],['twd','新台币','新臺幣'],['jpy','100日元','100日圓'],['eur','欧元','歐元'],['gbp','英镑','英鎊'],['aud','澳元','澳元'],['cad','加元','加元'],['sgd','新加坡元','新加坡元'],['krw','韩元','韓圜']];
+    const cnyCurrencies=[['usd','美元','美元'],['chf','瑞士法郎','瑞士法郎'],['twd','100新台币','100新臺幣'],['jpy','100日元','100日圓'],['eur','欧元','歐元'],['gbp','英镑','英鎊'],['aud','澳元','澳元'],['cad','加元','加元'],['sgd','新加坡元','新加坡元'],['krw','100韩元','100韓圜']];
     cnyCurrencies.forEach(([currency,sc,tc])=> {
-        const cnyBase=['twd','krw'].includes(currency);
-        markets.push({id:cnyBase?'cny_'+currency:currency+'_cny',fx:true,url:'https://finance.yahoo.com/quote/'+(cnyBase?'CNY'+currency.toUpperCase():currency.toUpperCase()+'CNY')+'%3DX/',names:cnyBase?['人民币 / '+sc,'人民幣 / '+tc]:[sc+' / 人民币',tc+' / 人民幣'],unitNames:cnyBase?['每1人民币可兑换的'+sc+'金额','每1人民幣可兌換的'+tc+'金額']:[(currency==='jpy'?'每100日元':'每1'+sc)+'可兑换的人民币金额',(currency==='jpy'?'每100日圓':'每1'+tc)+'可兌換的人民幣金額']});
+        markets.push({id:currency+'_cny',fx:true,url:'https://finance.yahoo.com/quote/'+currency.toUpperCase()+'CNY%3DX/',names:[sc+' / 人民币',tc+' / 人民幣'],unitNames:[(['jpy','twd','krw'].includes(currency)?'每'+sc:'每1'+sc)+'可兑换的人民币金额',(['jpy','twd','krw'].includes(currency)?'每'+tc:'每1'+tc)+'可兌換的人民幣金額']});
     });
     const featuredMarkets = markets.filter((market) => ['hsi','nasdaq','sp500','ftse'].includes(market.id) || market.index || market.dom || market.fx);
     const defaultStocks = markets.filter((market) => market.symbol && !featuredMarkets.includes(market));
@@ -362,7 +361,7 @@
         const resetSpeed=document.createElement('button');resetSpeed.type='button';resetSpeed.className='city-feed-speed-reset';resetSpeed.textContent=text('恢复默认速度','恢復預設速度');resetSpeed.addEventListener('click',()=>speedSettings.querySelectorAll('input').forEach(input=>{input.value=displayDefaults[input.dataset.speedKey];input.dispatchEvent(new Event('input'));}));speedSettings.append(resetSpeed);
         const rss=stockDialog.querySelector('.city-feed-rss-options');rss.replaceChildren();
         const sources=typeof customRSS!=='undefined'?customRSS:[];
-        const names={'hk.news.yahoo.com':'Yahoo 香港新闻','rthk.hk':'香港电台','www.chinanews.com.cn':'中国新闻网','news.mingpao.com':'明报','www.rti.org.tw':'中央广播电台','www.bbc.com':'BBC 中文商业'};
+        const names={'hk.news.yahoo.com':'Yahoo 香港新闻','rthk.hk':'香港电台','www.chinanews.com.cn':'中国新闻网','news.mingpao.com':'明报','www.rti.org.tw':'中央广播电台'};
         sources.forEach(url=>{let host=url;try{host=new URL(url).hostname;}catch{}const input=checkbox(rss,url,(names[host] || host)+' · '+url,displaySettings.rssSources===null || displaySettings.rssSources.includes(url),'rss');input.closest('label').title=url;});
         stockDialog.querySelector('.city-feed-rss-hint').textContent=text('这里只选择 CITY FEED 显示哪些 RSS。RSS 列表的添加、编辑和移除，请到上方「香港新闻」容器的 RSS 图标管理；这些设置均支持导入导出。','這裡只選擇 CITY FEED 顯示哪些 RSS。RSS 清單的新增、編輯和移除，請到上方「香港新聞」容器的 RSS 圖示管理；這些設定均支援匯入匯出。');
         stockDialog.querySelector('.city-feed-stock-error').textContent='';stockDialog.querySelector('.city-feed-stock-feedback').textContent='';
@@ -411,21 +410,22 @@
         f:'0,8 3,5 6,8 6,17 3,20 0,17',
         g:'4,19 18,19 21,22 18,25 4,25 1,22'
     };
+    let lastTimeSyncFailed=false;
     let networkEpoch = null, networkAnchor = 0, networkSource = '', syncingTime = false, lastTimeAttempt = -Infinity;
     async function syncClock() {
         if (syncingTime) return;
         syncingTime = true; lastTimeAttempt = performance.now();
         const started = performance.now();
         try {
-            const response = await fetch('/api/time?_=' + Date.now(),{cache:'no-store',signal:AbortSignal.timeout(10000)});
+            const response = await fetch('/api/time?_=' + Date.now(),{cache:'no-store',signal:AbortSignal.timeout(15000)});
             if (!response.ok) throw new Error('Network clock unavailable');
             const data = await response.json();
             if (!Number.isFinite(data.timestamp) || data.timestamp < 1577836800000 || data.timestamp > 4102444800000) throw new Error('Invalid network time');
             const received = performance.now();
             networkEpoch = data.timestamp + (received-started)/2;
-            networkAnchor = received; networkSource = data.source || 'Network';
+            networkAnchor = received; networkSource = data.source || 'Network';lastTimeSyncFailed=false;
         } catch {
-            networkEpoch = null; networkSource = '';
+            lastTimeSyncFailed=true;
         } finally {syncingTime = false; clock();}
     }
     function clock() {
@@ -455,7 +455,7 @@
         setEntries(entries) {
             const normalized=[...new Set(entries.map(entry=>String(entry).replace(/\s+/g,' ').trim()).filter(Boolean))];
             if(!normalized.length) return;
-            const loading=normalized.every(entry=>/正在.*(?:汇集|匯集|資料|资料)/.test(entry));
+            const loading=normalized.every(entry=>/正在.*(?:汇集|匯集|加载|載入|資料|资料)/.test(entry));
             if(!this.playlist.length || this.bootstrap && !loading) {
                 this.stop();this.playlist=normalized;this.pending=null;this.next=0;this.offset=0;
                 this.bootstrap=loading;this.track.replaceChildren();this.fill();this.start();
@@ -532,6 +532,19 @@
     new ResizeObserver(refreshMarquee).observe(windowElement);
     document.addEventListener('visibilitychange',refreshMarquee);
     reducedMarqueeMotion.addEventListener('change',refreshMarquee);
+    // Reuse the smooth queue for the Hong Kong news card and its fullscreen view.
+    const newsQueues=[];
+    for(const [id,fullscreen] of [['news-marquee',false],['fullscreen-marquee',true]]) {
+        const viewport=document.getElementById(id);if(!viewport)continue;
+        const initial=viewport.textContent;
+        const newsTrack=document.createElement('div');newsTrack.className='hk-news-track';viewport.replaceChildren(newsTrack);
+        const queue=new HeadlineMarquee(newsTrack,viewport);queue.speed=fullscreen?72:48;queue.reduced=reducedMarqueeMotion.matches;
+        queue.setEntries([initial]);
+        const refresh=()=>queue.refresh(!document.hidden,reducedMarqueeMotion.matches,fullscreen?72:48);
+        new ResizeObserver(refresh).observe(viewport);document.addEventListener('visibilitychange',refresh);reducedMarqueeMotion.addEventListener('change',refresh);
+        newsQueues.push(queue);
+    }
+    window.hkNewsSetHeadlines=entries=>newsQueues.forEach(queue=>queue.setEntries(entries));
     async function refreshStocks() {
         const available = new Set();
         try {
@@ -693,7 +706,8 @@
     matchMedia('(max-width:600px)').addEventListener('change',() => { page = 0; renderMarkets(); });
     window.addEventListener('resize',applyDisplay);
     clock(); syncClock(); syncRates(); refreshStocks(); refreshFX();
-    setInterval(()=> {if (!document.hidden) syncClock();},300000);
+    setInterval(()=> {if (!document.hidden && performance.now()-lastTimeAttempt >= (lastTimeSyncFailed?30000:300000)) syncClock();},30000);
+    window.addEventListener('online',syncClock);
     document.addEventListener('visibilitychange',()=> {if (!document.hidden && performance.now()-lastTimeAttempt >= 300000) syncClock();});
     setInterval(clock,1000);
     setInterval(() => { if (!document.hidden) { page++; featuredPage++; weatherPage++; renderWeatherFlip(); boardPage++; renderMarkets(); } },6000);
