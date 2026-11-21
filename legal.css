@@ -1,20 +1,24 @@
-:root { color-scheme:light dark; font-family:system-ui,-apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif; background:#f5f7f6; color:#1b2521; }
+/* Shared visual language with the navigation page: wallpaper, glass and Material controls. */
+:root { --nav-height:64px; --glass-bg:rgba(255,255,255,.85); --glass-border:rgba(255,255,255,.4); --text-main:#212121; color-scheme:light; }
+:root.mdui-theme-dark { --glass-bg:rgba(30,30,35,.85); --glass-border:rgba(255,255,255,.1); --text-main:#fff; color-scheme:dark; }
 * { box-sizing:border-box; }
-body { margin:0; }
-header { display:flex; align-items:center; gap:16px; padding:16px max(20px,calc((100% - 860px)/2)); border-bottom:1px solid #d6dfd9; background:#fff; }
-header a { display:flex; align-items:center; gap:10px; font-size:18px; font-weight:700; text-decoration:none; white-space:nowrap; }
-header img { width:30px; height:30px; }
-button { margin-left:auto; border:1px solid #6a7970; border-radius:24px; padding:10px 18px; background:transparent; color:inherit; cursor:pointer; font:inherit; white-space:nowrap; }
-button:hover { background:#e1ece5; }
-button:focus-visible,a:focus-visible { outline:3px solid #32694c; outline-offset:4px; }
-main { max-width:860px; margin:32px auto; padding:32px; background:#fff; border:1px solid #d6dfd9; border-radius:24px; }
-h1 { margin:0 0 10px; font-size:clamp(26px,5vw,36px); }
-h2 { margin:28px 0 8px; font-size:20px; }
-p { line-height:1.9; margin:10px 0; overflow-wrap:anywhere; }
-a { color:#24623f; text-underline-offset:3px; }
-.updated { color:#55675b; font-size:14px; }
-nav,footer { display:flex; flex-wrap:wrap; gap:20px; }
-nav { padding-top:12px; }
-footer { max-width:860px; margin:24px auto 48px; padding:0 24px; font-size:14px; }
-@media(max-width:600px) { main { margin:16px 12px; padding:24px 20px; } header { padding:14px 20px; } }
-@media(prefers-color-scheme:dark) { :root { background:#111a15; color:#dce8df; } header,main { background:#1c2820; border-color:#3b4e41; } a { color:#a4d5b1; } .updated { color:#b2c5b7; } button:hover { background:#304538; } }
+html,body { margin:0; padding:0; min-height:100vh; background:transparent !important; color:var(--text-main); }
+body::before { content:""; position:fixed; inset:0; background-image:var(--legal-wallpaper,url('/img/home.jpg')); background-position:center; background-size:cover; background-repeat:no-repeat; z-index:-2; }
+header { position:fixed; top:0; left:0; right:0; height:var(--nav-height); z-index:2000; display:flex; align-items:center; gap:16px; padding:0 5%; background:var(--glass-bg); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-bottom:1px solid var(--glass-border); }
+header > a { display:flex; align-items:center; gap:12px; font-weight:900; font-size:1.2rem; text-decoration:none; color:inherit; white-space:nowrap; }
+header img { height:32px; width:32px; }
+.legal-toolbar { margin-left:auto; display:flex; gap:4px; align-items:center; }
+.legal-toolbar mdui-button-icon { color:inherit; flex:none; }
+main,footer { width:calc(100% - 40px); max-width:1040px; margin-left:auto; margin-right:auto; border-radius:28px; background:var(--glass-bg); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid var(--glass-border); }
+main { margin-top:112px; margin-bottom:24px; padding:clamp(24px,4vw,48px); }
+h1 { margin:0 0 12px; font-size:clamp(28px,5vw,40px); font-weight:900; }
+h2 { margin:32px 0 12px; font-size:1.25rem; font-weight:800; }
+p { line-height:1.9; margin:12px 0; overflow-wrap:anywhere; }
+a { color:inherit; text-underline-offset:4px; }
+a:hover { text-decoration-thickness:2px; }
+a:focus-visible { outline:2px solid currentColor; outline-offset:4px; border-radius:4px; }
+.updated { opacity:.65; font-size:.85rem; }
+main nav { display:flex; flex-wrap:wrap; gap:14px 24px; padding-top:24px; margin-top:28px; border-top:1px solid var(--glass-border); font-size:.9rem; }
+footer { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:12px 24px; margin-bottom:48px; padding:16px 24px; font-size:.9rem; }
+#legal-photo-credit { opacity:.8; }
+@media(max-width:600px) { main,footer { width:calc(100% - 24px); } main { margin-top:88px; padding:24px 20px; } header > a { gap:8px; font-size:1.1rem; } main nav { flex-direction:column; gap:16px; } #legal-photo-credit { flex-basis:100%; text-align:center; } }
