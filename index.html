@@ -103,7 +103,7 @@
             .app-bar.search-docked .app-bar-spacer { display:block; }
             .app-bar.search-docked #header-search-toggle { display:inline-flex; }
             .app-bar.search-open > :not(.header-search-host) { display:none !important; }
-            .app-bar.search-open .header-search-host { display:flex; left:5%; right:5%; width:auto; transform:translateY(-50%); }
+            .app-bar.search-open .header-search-host { display:flex; align-items:center; gap:8px; left:5%; right:5%; width:auto; transform:translateY(-50%); }
             .app-bar.search-open .header-search-host .search-container { animation:materialSearchExpand 300ms cubic-bezier(.2,0,0,1); transform-origin:right center; }
             @keyframes materialSearchExpand {
                 from { opacity:0; clip-path:inset(0 0 0 calc(100% - 48px) round 28px); }
@@ -455,14 +455,13 @@
             <span>导航</span>
         </div>
         <div class="app-bar-spacer" style="flex-grow:1"></div>
-        <div class="header-search-host"></div>
+        <div class="header-search-host"><mdui-button-icon id="header-search-close" icon="close" aria-label="关闭顶栏搜索" title="关闭搜索"></mdui-button-icon></div>
         <mdui-button-icon id="header-search-toggle" icon="search" aria-label="打开顶栏搜索" title="搜索" aria-expanded="false"></mdui-button-icon>
         <mdui-button-icon id="theme-btn" icon="light_mode" style="color: inherit;"></mdui-button-icon>
     </header>
     <section class="hero-space">
         <div class="hero-search-slot">
         <div class="search-container">
-            <mdui-button-icon id="header-search-close" icon="arrow_back" aria-label="关闭顶栏搜索" title="关闭搜索"></mdui-button-icon>
             <div id="engine-dropdown">
                 <button type="button" class="engine-trigger" id="engine-trigger" aria-label="切换搜索引擎" aria-haspopup="menu" aria-expanded="false" aria-controls="engine-menu"><img id="cur-engine-img" class="engine-favicon" src="https://www.google.com/favicon.ico" alt="搜索引擎"></button>
                 <mdui-menu id="engine-menu" hidden>
@@ -1111,7 +1110,8 @@
             closeHeaderSearch(false);
             const dock = searchDocked;
             appBar.classList.toggle('search-docked', dock);
-            (dock ? headerSearchHost : heroSearchSlot).appendChild(searchBox);
+            if (dock) headerSearchHost.insertBefore(searchBox,document.getElementById('header-search-close'));
+            else heroSearchSlot.appendChild(searchBox);
         }
         mobileSearchToggle.onclick = () => {
             if(searchCloseAnimation) {searchCloseAnimation.cancel();searchCloseAnimation=null;}
