@@ -141,7 +141,10 @@
         { id:'usd', dom:'city-usd', names:['美元 / 港币','美元 / 港幣'] }
     ];
     const cnyCurrencies=[['usd','美元','美元'],['chf','瑞士法郎','瑞士法郎'],['twd','新台币','新臺幣'],['jpy','100日元','100日圓'],['eur','欧元','歐元'],['gbp','英镑','英鎊'],['aud','澳元','澳元'],['cad','加元','加元'],['sgd','新加坡元','新加坡元'],['krw','韩元','韓圜']];
-    cnyCurrencies.forEach(([currency,sc,tc])=>markets.push({id:currency+'_cny',fx:true,url:'https://finance.yahoo.com/quote/'+currency.toUpperCase()+'CNY%3DX/',names:[sc+' / 人民币',tc+' / 人民幣'],unitNames:[(currency==='jpy'?'每100日元':'每1'+sc)+'可兑换的人民币金额',(currency==='jpy'?'每100日圓':'每1'+tc)+'可兌換的人民幣金額']}));
+    cnyCurrencies.forEach(([currency,sc,tc])=> {
+        const cnyBase=['twd','krw'].includes(currency);
+        markets.push({id:cnyBase?'cny_'+currency:currency+'_cny',fx:true,url:'https://finance.yahoo.com/quote/'+(cnyBase?'CNY'+currency.toUpperCase():currency.toUpperCase()+'CNY')+'%3DX/',names:cnyBase?['人民币 / '+sc,'人民幣 / '+tc]:[sc+' / 人民币',tc+' / 人民幣'],unitNames:cnyBase?['每1人民币可兑换的'+sc+'金额','每1人民幣可兌換的'+tc+'金額']:[(currency==='jpy'?'每100日元':'每1'+sc)+'可兑换的人民币金额',(currency==='jpy'?'每100日圓':'每1'+tc)+'可兌換的人民幣金額']});
+    });
     const featuredMarkets = markets.filter((market) => ['hsi','nasdaq','sp500','ftse'].includes(market.id) || market.index || market.dom || market.fx);
     const defaultStocks = markets.filter((market) => market.symbol && !featuredMarkets.includes(market));
     const validSymbol = symbol=>/^(?:[A-Z]{1,6}|\d{4,5}\.HK|\d{6}\.(?:SS|SZ))$/.test(symbol);
@@ -575,7 +578,7 @@
             const ids=data.quotes.map(quote=>quote.id);
             if(new Set(ids).size!==ids.length || !['cny','jpy','chf','usd'].every(id=>ids.includes(id)) || data.quotes.some(quote=>!Number.isFinite(quote.price)||quote.price<=0||!Number.isFinite(quote.percent)))throw Error('Invalid FX quote');
             for(const quote of data.quotes) {
-                const currency=quote.id.endsWith('_cny') ? 'CNY ' : {cny:'¥',jpy:'¥',chf:'CHF ',usd:'HK$'}[quote.id];
+                const currency=quote.id.endsWith('_cny') ? 'CNY ' : quote.id.startsWith('cny_') ? quote.id.slice(4).toUpperCase()+' ' : {cny:'¥',jpy:'¥',chf:'CHF ',usd:'HK$'}[quote.id];
                 if(!currency || !markets.some(item=>item.id===quote.id))continue;
                 state.set(quote.id,{price:currency+quote.price.toFixed(4),change:(quote.percent>0?'+':'')+quote.percent.toFixed(2)+'%',direction:quote.percent>0?'up':quote.percent<0?'down':'flat',time:quote.date+text(' · 较 ',' · 較 ')+(quote.previousDate==='previous close'?text('前收市','前收市'):quote.previousDate),fxSource:true});
             }
