@@ -49,7 +49,7 @@
         ['compactSpeed','fullscreenSpeed'].forEach(key=>{if(validMarqueeSpeed(saved?.[key]))displaySettings[key]=saved[key];});
         if (Array.isArray(saved?.rssSources)) displaySettings.rssSources=saved.rssSources.filter(url=>typeof url==='string');
     } catch {}
-    const shownFeatured = ()=>featuredMarkets.filter(market=>market.dom ? displaySettings.fx : displaySettings.indices);
+    const shownFeatured = ()=>featuredMarkets.filter(market=>(market.dom || market.fx) ? displaySettings.fx : displaySettings.indices);
     function applyDisplay() {
         const featuredVisible=shownFeatured().length>0, mobile=matchMedia('(max-width:600px)').matches;
         const clockElement=top.querySelector('.city-feed-clock'), stockElement=top.querySelector('.city-feed-markets');
@@ -87,7 +87,6 @@
     const state = new Map();
     let marketSource = 'Tencent Finance / Yahoo Finance';
     const markets = [
-        { id:'cfets', index:true, external:true, url:'https://www.chinamoney.com.cn/chinese/bkrmbidx/', names:['CFETS人民币指数','CFETS人民幣指數'] },
         { id:'gold', index:true, external:true, url:'https://finance.sina.com.cn/futures/quotes/XAU.shtml', names:['伦敦金卖出/盎司','倫敦金賣出/盎司'] },
         { id:'hsi', symbol:'^HSI', names:['恒生指数','恒生指數'] },
         { id:'dow', symbol:'^DJI', index:true, names:['道琼斯工业','道瓊斯工業'] },
@@ -141,7 +140,9 @@
         { id:'chf', dom:'city-chf', names:['港币 / 瑞郎','港幣 / 瑞郎'] },
         { id:'usd', dom:'city-usd', names:['美元 / 港币','美元 / 港幣'] }
     ];
-    const featuredMarkets = markets.filter((market) => ['hsi','nasdaq','sp500','ftse'].includes(market.id) || market.index || market.dom);
+    const cnyCurrencies=[['usd','美元','美元'],['chf','瑞士法郎','瑞士法郎'],['twd','新台币','新臺幣'],['jpy','日元','日圓'],['hkd','港币','港幣'],['eur','欧元','歐元'],['gbp','英镑','英鎊'],['aud','澳元','澳元'],['cad','加元','加元'],['sgd','新加坡元','新加坡元'],['krw','韩元','韓圜']];
+    cnyCurrencies.forEach(([currency,sc,tc])=>markets.push({id:'cny_'+currency,fx:true,url:'https://finance.yahoo.com/quote/CNY'+currency.toUpperCase()+'%3DX/',names:['人民币 / '+sc,'人民幣 / '+tc]}));
+    const featuredMarkets = markets.filter((market) => ['hsi','nasdaq','sp500','ftse'].includes(market.id) || market.index || market.dom || market.fx);
     const defaultStocks = markets.filter((market) => market.symbol && !featuredMarkets.includes(market));
     const validSymbol = symbol=>/^(?:[A-Z]{1,6}|\d{4,5}\.HK|\d{6}\.(?:SS|SZ))$/.test(symbol);
     let stockSelection = null;
@@ -233,7 +234,7 @@
             span.textContent = value;
             face.append(span);
         });
-        slot.title = name + (quote?.time ? ' · ' + text('行情时间 ','行情時間 ') + quote.time : '') + (quote?.stale ? text(' · 更新失败，保留上次数据',' · 更新失敗，保留上次數據') : '');
+        slot.title = name + (market.fx ? text(' · 1 人民币可兑换的金额',' · 1 人民幣可兌換的金額') : '') + (quote?.time ? ' · ' + text('行情时间 ','行情時間 ') + quote.time : '') + (quote?.stale ? text(' · 更新失败，保留上次数据',' · 更新失敗，保留上次數據') : '');
         if (previous) {
             previous.className = 'city-feed-face city-feed-outgoing';
             previous.setAttribute('aria-hidden','true');
@@ -570,17 +571,18 @@
             const response=await fetch('/api/fx',{signal:AbortSignal.timeout(12000)});
             if(!response.ok)throw Error('FX unavailable');
             const data=await response.json();
-            if(!Array.isArray(data.quotes)||data.quotes.length!==4)throw Error('Incomplete FX');
+            if(!Array.isArray(data.quotes)||data.quotes.length<4)throw Error('Incomplete FX');
             const ids=data.quotes.map(quote=>quote.id);
-            if(new Set(ids).size!==4 || !['cny','jpy','chf','usd'].every(id=>ids.includes(id)) || data.quotes.some(quote=>!Number.isFinite(quote.price)||quote.price<=0||!Number.isFinite(quote.percent)))throw Error('Invalid FX quote');
+            if(new Set(ids).size!==ids.length || !['cny','jpy','chf','usd'].every(id=>ids.includes(id)) || data.quotes.some(quote=>!Number.isFinite(quote.price)||quote.price<=0||!Number.isFinite(quote.percent)))throw Error('Invalid FX quote');
             for(const quote of data.quotes) {
-                const currency={cny:'¥',jpy:'¥',chf:'CHF ',usd:'HK$'}[quote.id];
-                if(!currency)continue;
-                state.set(quote.id,{price:currency+quote.price.toFixed(4),change:(quote.percent>0?'+':'')+quote.percent.toFixed(2)+'%',direction:quote.percent>0?'up':quote.percent<0?'down':'flat',time:quote.date+text(' · 较 ',' · 較 ')+quote.previousDate,fxSource:true});
+                const currency=quote.id.startsWith('cny_') ? quote.id.slice(4).toUpperCase()+' ' : {cny:'¥',jpy:'¥',chf:'CHF ',usd:'HK$'}[quote.id];
+                if(!currency || !markets.some(item=>item.id===quote.id))continue;
+                state.set(quote.id,{price:currency+quote.price.toFixed(4),change:(quote.percent>0?'+':'')+quote.percent.toFixed(2)+'%',direction:quote.percent>0?'up':quote.percent<0?'down':'flat',time:quote.date+text(' · 较 ',' · 較 ')+(quote.previousDate==='previous close'?text('前收市','前收市'):quote.previousDate),fxSource:true});
             }
+            markets.filter(item=>item.fx && !ids.includes(item.id)).forEach(item=>{const previous=state.get(item.id);state.set(item.id,previous?{...previous,stale:true}:{failed:true});});
             markFresh('fx',true);renderMarkets();
         } catch {
-            markets.filter(item=>item.dom).forEach(market=> {const previous=state.get(market.id);if(previous?.fxSource)state.set(market.id,{...previous,stale:true});});
+            markets.filter(item=>item.dom || item.fx).forEach(market=> {const previous=state.get(market.id);if(previous?.fxSource)state.set(market.id,{...previous,stale:true});else if(market.fx)state.set(market.id,{failed:true});});
             markFresh('fx',false);renderMarkets();
         }
     }

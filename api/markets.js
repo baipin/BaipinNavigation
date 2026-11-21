@@ -65,14 +65,6 @@ export default async function handler(req,res) {
     try {
         const referenceRequest = Promise.allSettled([
             (async()=> {
-                const response=await fetch('https://www.chinamoney.com.cn/r/cms/www/chinamoney/data/fx/rmb-idx.json',{headers:{'User-Agent':'Mozilla/5.0'},signal:AbortSignal.timeout(7000)});
-                if(!response.ok) throw Error('CFETS unavailable');
-                const payload=await response.json(),vo=payload.data?.vo;
-                const price=Number(vo?.cfetsIndexRate),changePoints=Number(vo?.cfetsIndexBp);
-                if(!vo?.cfetsIndexRate || !vo?.cfetsIndexBp || !Number.isFinite(price)||price<=0||!Number.isFinite(changePoints)||price-changePoints<=0) throw Error('Invalid CFETS quote');
-                return {id:'cfets',price,changePoints,percent:changePoints/(price-changePoints)*100,time:payload.data.date,zone:'Asia/Shanghai'};
-            })(),
-            (async()=> {
                 const response=await fetch('https://hq.sinajs.cn/list=hf_XAU',{headers:{'User-Agent':'Mozilla/5.0','Referer':'https://finance.sina.com.cn/'},signal:AbortSignal.timeout(7000)});
                 if(!response.ok) throw Error('Gold unavailable');
                 const raw=await response.text(),match=raw.match(/hq_str_hf_XAU="([^"]*)"/),fields=match?.[1].split(',');
