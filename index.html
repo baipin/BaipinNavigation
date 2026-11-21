@@ -425,6 +425,10 @@
     </style>
     <style>
         #data-manage-dialog [hidden], #search-clear[hidden], #footer-account[hidden], #footer-avatar[hidden], #footer-account [hidden] { display:none !important; }
+        #data-manage-dialog::part(panel) { display:flex; flex-direction:column; box-sizing:border-box; width:min(560px,calc(100vw - 32px)); height:min(680px,calc(100dvh - 48px)); max-width:calc(100vw - 32px); max-height:calc(100dvh - 48px); }
+        #data-manage-dialog::part(header),#data-manage-dialog::part(action) { flex-shrink:0; }
+        #data-manage-dialog::part(body) { flex:1 1 0; min-height:0; overflow-y:auto; scrollbar-gutter:stable; }
+        #settings-tabs::part(container) { position:sticky; top:0; z-index:1; }
         .settings-actions { display:flex; flex-wrap:wrap; gap:8px; }
         .settings-tabs { display:block; width:100%; min-width:0; }
         .settings-tabs mdui-tab { min-width:0; }
