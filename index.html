@@ -143,6 +143,19 @@
             background: rgba(255, 255, 255, 0.12);
         }
 
+        .site-legal-links { display:flex; flex-wrap:wrap; justify-content:center; gap:24px; margin:0 20px 32px; font-size:.85rem; }
+        .site-legal-links a { color:inherit; padding:10px 16px; background:var(--glass-bg); border-radius:20px; text-underline-offset:3px; }
+        #preset-sync-panel a { color:inherit; text-underline-offset:3px; }
+        #preset-sync-panel { min-width:0; max-width:520px; }
+        #preset-sync-panel [hidden] { display:none !important; }
+        #preset-sync-panel p { overflow-wrap:anywhere; margin:10px 0; line-height:1.6; }
+        .preset-sync-hint { font-size:.85rem; opacity:.75; }
+        .preset-sync-actions { display:flex; flex-wrap:wrap; gap:8px; }
+        .preset-sync-actions mdui-button { max-width:100%; }
+        #preset-sync-panel mdui-checkbox { margin-top:10px; }
+        [data-sync-status] { font-size:.9rem; }
+        #data-manage-btn.sync-attention { outline:2px solid rgb(var(--mdui-color-primary)); border-radius:50%; }
+
         .quick-access-actions { display:flex; align-items:center; gap:4px; }
         .quick-access-actions mdui-button-icon { color:inherit; flex:none; }
         .bookmark-actions { display:flex; justify-content:center; gap:2px; margin-top:12px; }
@@ -670,14 +683,33 @@
 
     <!-- 新增：数据导出导入对话框 -->
     <mdui-dialog id="data-manage-dialog" close-on-overlay-click>
-        <span slot="headline">导出 / 导入 Cookies 数据</span>
+        <span slot="headline">预设同步与备份</span>
         <div style="padding: 20px 0; display: flex; flex-direction: column; gap: 16px;">
-            <mdui-button variant="tonal" id="export-data-btn" icon="download">导出所有 Cookies 数据（JSON）</mdui-button>
-            <mdui-button variant="tonal" id="import-data-btn" icon="upload">导入 Cookies 数据</mdui-button>
+            <section id="preset-sync-panel" aria-label="Google 多端预设同步">
+                <strong>Google 多端同步</strong>
+                <p data-sync-account>使用同一 Google 账号同步多个设备</p>
+                <p class="preset-sync-hint">预设保存在你的 Google Drive 应用专用空间，仅访问本站配置。包括书签、搜索引擎、RSS、CITY FEED 自选股票与显示配置、语言、天气地区、主题和背景。</p>
+                <div class="preset-sync-actions">
+                    <mdui-button variant="outlined" icon="login" data-sync-login>使用 Google 登录</mdui-button>
+                    <mdui-button variant="tonal" icon="sync" data-sync-now disabled>立即同步</mdui-button>
+                    <mdui-button variant="text" data-sync-logout hidden>退出登录</mdui-button>
+                </div>
+                <mdui-checkbox data-sync-auto disabled>此设备自动同步（每 30 秒检查）</mdui-checkbox>
+                <p data-sync-status role="status" aria-live="polite">正在检查登录状态…</p>
+                <div class="preset-sync-actions" data-sync-conflict hidden>
+                    <mdui-button variant="tonal" icon="cloud_download" data-sync-use-cloud>使用云端预设</mdui-button>
+                    <mdui-button variant="outlined" icon="cloud_upload" data-sync-use-local>用本机替换云端</mdui-button>
+                </div>
+                <p class="preset-sync-hint">首次同步或两端均有修改时，请选择保留哪一端。自动同步在编辑时暂停；退出登录不会删除预设。</p>
+                <p class="preset-sync-hint"><a href="/privacy.html" data-site-legal="privacy">隐私政策</a> · <a href="/terms.html" data-site-legal="terms">服务条款</a></p>
+            </section>
+            <mdui-divider></mdui-divider>
+            <mdui-button variant="tonal" id="export-data-btn" icon="download">导出预设（JSON）</mdui-button>
+            <mdui-button variant="tonal" id="import-data-btn" icon="upload">导入预设</mdui-button>
             <input type="file" id="import-file-input" accept=".json" style="display: none;">
             
             <div style="margin-top: 8px; font-size: 0.85rem; opacity: 0.7; line-height: 1.5;">
-                导出将包含所有书签、自定义搜索引擎、RSS源、主题设置、背景等。<br>
+                导出与同步使用相同的预设范围，不包含登录凭证或实时数据缓存。<br>
                 导入后页面将自动刷新。
             </div>
         </div>
@@ -1535,92 +1567,7 @@ function setBackgroundToCookie(value) {
                 updateAttributionFooter({ isDefault:true });
         };
 
-        /* ==================== 新增功能：导出/导入所有 Cookies 数据 ==================== */
-        function getAllCookies() {
-            const cookies = {};
-            document.cookie.split(';').forEach(cookie => {
-                const [name, value] = cookie.trim().split('=');
-                if (name) {
-                    cookies[name] = decodeURIComponent(value || '');
-                }
-            });
-            return cookies;
-        }
-
-        function setAllCookies(cookiesObj) {
-            Object.keys(cookiesObj).forEach(name => {
-                const expires = new Date();
-                expires.setTime(expires.getTime() + 365 * 24 * 60 * 60 * 1000);
-                document.cookie = `${name}=${encodeURIComponent(cookiesObj[name])}; expires=${expires.toUTCString()}; path=/`;
-            });
-        }
-
-        // 导出按钮
-        document.getElementById('export-data-btn').onclick = () => {
-            const allData = {
-                localStorage: {},
-                cookies: getAllCookies()
-            };
-
-            // 收集主要 localStorage 键值（与页面使用的键一致）
-            const lsKeys = ['bp_v7', 'custom_engines', 'last_engine', 'theme_mode', 'custom_rss', 'navi_city_stocks', 'navi_city_feed', 'navi_rss_expansion_v1'];
-            lsKeys.forEach(key => {
-                const val = localStorage.getItem(key);
-                if (val !== null) allData.localStorage[key] = val;
-            });
-
-            // Explicit null restores defaults instead of retaining settings from the destination browser.
-            ['navi_city_stocks','navi_city_feed'].forEach(key=>allData.localStorage[key]=localStorage.getItem(key));
-            const dataStr = JSON.stringify(allData, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `baipin_nav_backup_${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            alert('数据已导出为 JSON 文件！\n包含 localStorage 和 Cookies 中的所有内容。');
-        };
-
-        // 导入按钮
-        document.getElementById('import-data-btn').onclick = () => {
-            document.getElementById('import-file-input').click();
-        };
-
-        document.getElementById('import-file-input').onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                try {
-                    const imported = JSON.parse(event.target.result);
-                    
-                    // 恢复 localStorage
-                    if (imported.localStorage) {
-                        Object.keys(imported.localStorage).forEach(key => {
-                            if (['navi_city_stocks','navi_city_feed'].includes(key) && imported.localStorage[key] === null) localStorage.removeItem(key);
-                            else localStorage.setItem(key, imported.localStorage[key]);
-                        });
-                    }
-                    
-                    if (Object.prototype.hasOwnProperty.call(imported.localStorage || {},'custom_rss')) {localStorage.setItem('navi_rss_expansion_v1','1');}
-                    // 恢复 cookies
-                    if (imported.cookies) {
-                        setAllCookies(imported.cookies);
-                    }
-
-                    alert('数据导入成功！页面即将刷新以应用所有更改。');
-                    setTimeout(() => location.reload(), 800);
-                } catch (err) {
-                    alert('导入失败：文件格式不正确或数据损坏。\n' + err.message);
-                }
-            };
-            reader.readAsText(file);
-        };
+        // Preset import, export and Google sync share js/preset-schema.js.
 
         /* ==================== 新增：设置按钮入口（添加到 app-bar） ==================== */
         // 在 header 中动态添加设置按钮（不修改原有 HTML 结构）
@@ -3936,5 +3883,10 @@ function setBackgroundToCookie(value) {
     </script>
     <script src="js/city-feed.js"></script>
     <script src="js/layout.js"></script>
+    <footer class="site-legal-links" aria-label="政策与条款">
+        <a href="/privacy.html" data-site-legal="privacy">隐私政策</a>
+        <a href="/terms.html" data-site-legal="terms">服务条款</a>
+    </footer>
+    <script type="module" src="js/sync.js"></script>
 </body>
 </html>
