@@ -532,19 +532,6 @@
     new ResizeObserver(refreshMarquee).observe(windowElement);
     document.addEventListener('visibilitychange',refreshMarquee);
     reducedMarqueeMotion.addEventListener('change',refreshMarquee);
-    // Reuse the smooth queue for the Hong Kong news card and its fullscreen view.
-    const newsQueues=[];
-    for(const [id,fullscreen] of [['news-marquee',false],['fullscreen-marquee',true]]) {
-        const viewport=document.getElementById(id);if(!viewport)continue;
-        const initial=viewport.textContent;
-        const newsTrack=document.createElement('div');newsTrack.className='hk-news-track';viewport.replaceChildren(newsTrack);
-        const queue=new HeadlineMarquee(newsTrack,viewport);queue.speed=fullscreen?72:48;queue.reduced=reducedMarqueeMotion.matches;
-        queue.setEntries([initial]);
-        const refresh=()=>queue.refresh(!document.hidden,reducedMarqueeMotion.matches,fullscreen?72:48);
-        new ResizeObserver(refresh).observe(viewport);document.addEventListener('visibilitychange',refresh);reducedMarqueeMotion.addEventListener('change',refresh);
-        newsQueues.push(queue);
-    }
-    window.hkNewsSetHeadlines=entries=>newsQueues.forEach(queue=>queue.setEntries(entries));
     async function refreshStocks() {
         const available = new Set();
         try {

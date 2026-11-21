@@ -51,6 +51,8 @@
         .logo-area img { height: 32px; }
         .hero-space { height: var(--hero-height); display: flex; align-items: center; justify-content: center; padding-top: var(--nav-height); }
         .search-container {
+            box-sizing: border-box;
+            min-width: 0;
             width: 90%;
             max-width: 650px;
             background: var(--glass-bg);
@@ -91,6 +93,7 @@
         }
         
         .search-input {
+            min-width: 0;
             flex: 1;
             border: none;
             background: transparent;
@@ -1165,6 +1168,29 @@
             localStorage.setItem('custom_rss', JSON.stringify(customRSS));
         }
 
+        // Isolated CSS marquee for the news card; it never controls page layout.
+        window.hkNewsSetHeadlines = entries => {
+            for(const id of ['news-marquee','fullscreen-marquee']) {
+                const viewport=document.getElementById(id);if(!viewport)continue;
+                const content=entries.join('　|　');
+                if(viewport.dataset.headlines===content)continue;
+                viewport.dataset.headlines=content;
+                const track=document.createElement('div');track.className='hk-news-track';
+                const copy=document.createElement('span');copy.className='hk-news-copy';copy.textContent=content;
+                const duplicate=copy.cloneNode(true);duplicate.setAttribute('aria-hidden','true');
+                track.append(copy,duplicate);viewport.replaceChildren(track);
+                const measure=()=>{
+                    const currentTrack=viewport.querySelector('.hk-news-track');
+                    const width=viewport.querySelector('.hk-news-copy')?.getBoundingClientRect().width;
+                    if(width>0)currentTrack.style.setProperty('--news-duration',Math.max(1,width/(id==='news-marquee'?48:72))+'s');
+                };
+                if(!viewport.newsResizeObserver) {
+                    viewport.newsResizeObserver=new ResizeObserver(measure);
+                    viewport.newsResizeObserver.observe(viewport);
+                }
+                measure();document.fonts?.ready.then(measure);
+            }
+        };
         let cityRssRevision = 0;
         async function fetchHKNews(force = false) {
             if (force === true) cityRssCache.clear();
