@@ -54,7 +54,10 @@
         const results=await Promise.allSettled(['flw','fnd','rhrread','swt','warnsum'].map(get));
         if(current!==revision || !dialog.open)return;
         const [flw,fnd,now,special,warnings]=results.map(r=>r.status==='fulfilled'?r.value:null);narrative.replaceChildren();
-        if(now){const reading=el('div');reading.className='weather-detail-current';const temp=now.temperature?.data?.find(x=>x.place==='香港天文台') || now.temperature?.data?.[0];const humidity=now.humidity?.data?.[0];paragraph(reading,(temp?.value ?? '--')+'°C');paragraph(reading,t('相对湿度：','相對濕度：')+(humidity?.value ?? '--')+'%');narrative.append(reading);}
+        if(now){const reading=el('div');reading.className='weather-detail-current';
+            const icon=Number(now.icon?.[0]);
+            if(Number.isInteger(icon) && icon>=50 && icon<=99){const image=el('img');image.src='https://www.hko.gov.hk/images/HKOWxIconOutline/pic'+icon+'.png';image.width=64;image.height=64;image.alt=t('香港天文台当前天气图示','香港天文台目前天氣圖示')+' '+icon;image.onerror=()=>image.remove();reading.append(image);}
+            const temp=now.temperature?.data?.find(x=>x.place==='香港天文台') || now.temperature?.data?.[0];const humidity=now.humidity?.data?.[0];paragraph(reading,(temp?.value ?? '--')+'°C').className='weather-detail-temperature';paragraph(reading,t('相对湿度：','相對濕度：')+(humidity?.value ?? '--')+'%');narrative.append(reading);}
         if(flw){section(narrative,t('总体情况','總體情況'),flw.generalSituation);section(narrative,t('本港地区天气预测','本港地區天氣預測'),flw.forecastDesc);section(narrative,t('展望','展望'),flw.outlook);}
         else paragraph(narrative,t('本港天气预测暂时无法取得，请刷新重试。','本港天氣預測暫時無法取得，請重新整理。'));
         const active=Object.entries(warnings || {}).filter(([,x])=>x.actionCode!=='CANCEL' && (!x.expireTime || Date.parse(x.expireTime)>Date.now()));

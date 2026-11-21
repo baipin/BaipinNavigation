@@ -494,8 +494,10 @@
         .weather-detail-overview section { min-width:0; }
         .weather-detail-overview h3 { font-size:1rem; margin:0 0 10px; }
         .weather-detail-overview p { margin:0 0 16px; white-space:pre-line; overflow-wrap:anywhere; }
-        .weather-detail-current { display:flex; align-items:baseline; flex-wrap:wrap; gap:12px; margin-bottom:12px; }
-        .weather-detail-current p:first-child { font-size:2rem; font-weight:700; }
+        .weather-detail-current { display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px; }
+        .weather-detail-current p { margin:0; }
+        .weather-detail-current .weather-detail-temperature { font-size:2rem; font-weight:700; }
+        .weather-detail-current img { width:64px; height:64px; object-fit:contain; flex:none; }
         .weather-forecast-grid { display:flex; gap:8px; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x proximity; padding:6px 4px 14px; scrollbar-width:thin; }
         .weather-day-card { flex:0 0 112px; scroll-snap-align:start; box-shadow:0 2px 4px rgba(0,0,0,.16),0 5px 12px rgba(0,0,0,.09); display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 8px; min-width:0; border-radius:16px; border:1px solid rgba(128,128,128,.22); background:rgba(128,128,128,.06); color:inherit; font:inherit; font-size:.8rem; cursor:pointer; transition:background-color .2s,border-color .2s,box-shadow .2s,transform .2s; }
         .weather-day-card:hover { background:rgba(128,128,128,.14); box-shadow:0 4px 8px rgba(0,0,0,.18),0 8px 18px rgba(0,0,0,.12); transform:translateY(-2px); }
@@ -909,7 +911,7 @@
         <mdui-button slot="action" variant="filled" id="settings-reset-confirm">恢复默认设置</mdui-button>
     </mdui-dialog>
     <script src="js/weather-warning-dialog.js?v=material-table-v3"></script>
-    <script src="js/weather-detail.js?v=weather-cards-close-v3"></script>
+    <script src="js/weather-detail.js?v=weather-current-icon-v4"></script>
     <script src="js/aed-wait.js?v=wait-colors-v1"></script>
     <script src="js/weather-upgrades.js?v=warning-details-v1"></script>
     <script>
