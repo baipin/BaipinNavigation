@@ -4,7 +4,7 @@
 -->
 
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="mdui-theme-light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -452,7 +452,7 @@
     </style>
     <link rel="stylesheet" href="city-feed.css">
 </head>
-<body class="mdui-theme-auto">
+<body>
     <header class="app-bar">
         <div class="logo-area">
             <img src="img/logo.png" alt="Logo">
@@ -1317,7 +1317,7 @@
 
         const savedTheme = localStorage.getItem('theme_mode');
         if (savedTheme === 'dark') {
-            document.documentElement.classList.add('mdui-theme-dark');
+            document.documentElement.classList.replace('mdui-theme-light', 'mdui-theme-dark');
             document.getElementById('theme-btn').icon = 'dark_mode';
         }
 
