@@ -40,12 +40,12 @@ export async function startWebcastVideo(id,{signal,onError}={}) {
                 finished=true;clearTimeout(timeout);video.removeEventListener('loadeddata',loaded);
                 resolve({video,destroy});
             };
-            timeout=setTimeout(()=>fail(new Error('Webcast timeout')),20000);
+            timeout=setTimeout(()=>fail(new Error('Webcast timeout')),45000);
             signal?.addEventListener('abort',abort,{once:true});video.addEventListener('error',error);
             video.addEventListener('loadeddata',loaded);document.body.append(video);
             const url='/api/webcast?area='+id;
             if(Hls) {
-                hls=new Hls({backBufferLength:0,maxBufferLength:2,maxMaxBufferLength:4,liveSyncDurationCount:1,lowLatencyMode:false,manifestLoadingMaxRetry:2,levelLoadingMaxRetry:2,fragLoadingMaxRetry:2});
+                hls=new Hls({backBufferLength:0,maxBufferLength:2,maxMaxBufferLength:4,liveSyncDurationCount:3,lowLatencyMode:false,manifestLoadingTimeOut:15000,levelLoadingTimeOut:15000,fragLoadingTimeOut:25000,manifestLoadingMaxRetry:2,levelLoadingMaxRetry:2,fragLoadingMaxRetry:3});
                 hls.on(Hls.Events.ERROR,(_,data)=>{if(data.fatal)error();});
                 hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(error));
                 hls.loadSource(url);hls.attachMedia(video);

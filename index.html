@@ -188,7 +188,8 @@
         #main-container { display:flex; flex-direction:column; min-width:0; }
         .quick-access-ad { flex:none; min-width:0; width:100%; text-align:center; margin-top:24px; padding-top:16px; border-top:1px solid rgba(128,128,128,.16); }
         .quick-access-ad-label { margin:0 0 8px; text-align:left; font-size:.72rem; line-height:1.5; letter-spacing:.08em; color:var(--text-main); opacity:.6; }
-        .quick-access-ad .adsbygoogle { max-width:100%; vertical-align:top; }
+        .quick-access-ad-viewport { width:100%; min-width:0; overflow:hidden; contain:inline-size; }
+        .quick-access-ad .adsbygoogle { display:block; width:100%; height:260px; max-width:100%; vertical-align:top; }
         .quick-access-ad:has(.adsbygoogle[data-ad-status="unfilled"]) { display:none; }
         @media(max-width:600px) { .quick-access-ad { margin-top:20px; padding-top:12px; } }
         .links-grid { flex:1 0 auto; align-content:start; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 18px; margin-top: 18px; padding: 8px 4px 4px; overflow: visible; }
@@ -474,6 +475,44 @@
         .warning-active-label { display:inline-block; padding:4px 10px; border-radius:8px; font-size:.75rem; font-weight:500; background:rgb(var(--mdui-color-primary-container)); color:rgb(var(--mdui-color-on-primary-container)); }
         @media(max-width:600px) { .warning-history-table th,.warning-history-table td { padding:12px 8px; } .warning-signal { flex-direction:column; align-items:flex-start; gap:6px; } .warning-history-table img { width:36px; height:36px; } .warning-active-label { padding:4px 6px; } }
         @media(prefers-reduced-motion:reduce) { .warning-history-table tbody tr { transition:none; } }
+
+        .aed-wait.aed-wait-short { color:#65d4a4; }
+        .aed-wait.aed-wait-medium { color:#f5c66b; }
+        .aed-wait.aed-wait-long { color:#ff9189; }
+        .aed-wait.aed-wait-unknown { color:rgba(255,255,255,.62); }
+        .weather-card-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+        .weather-card-heading mdui-button-icon { color:inherit; flex:none; }
+        #weather-detail-dialog { --mdui-color-surface-container-high:255,255,255; color:var(--text-main); }
+        .mdui-theme-dark #weather-detail-dialog { --mdui-color-surface-container-high:30,30,35; }
+        #weather-detail-dialog::part(panel) { width:min(1180px,calc(100vw - 32px)); max-width:min(1180px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); background:rgb(var(--mdui-color-surface-container-high)); color:var(--text-main); box-sizing:border-box; }
+        #weather-detail-dialog::part(body) { min-width:0; }
+        #weather-detail-tabs { width:100%; min-width:0; }
+        #weather-detail-tabs mdui-tab-panel { min-width:0; box-sizing:border-box; padding-top:20px; }
+        .weather-detail-overview { display:grid; grid-template-columns:minmax(220px,.75fr) minmax(0,2fr); gap:24px; line-height:1.7; }
+        .weather-detail-overview section { min-width:0; }
+        .weather-detail-overview h3 { font-size:1rem; margin:0 0 10px; }
+        .weather-detail-overview p { margin:0 0 16px; white-space:pre-line; overflow-wrap:anywhere; }
+        .weather-detail-current { display:flex; align-items:baseline; flex-wrap:wrap; gap:12px; margin-bottom:12px; }
+        .weather-detail-current p:first-child { font-size:2rem; font-weight:700; }
+        .weather-forecast-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+        .weather-day-card { display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 8px; min-width:0; border-radius:16px; border:1px solid rgba(128,128,128,.22); background:rgba(128,128,128,.06); color:inherit; font:inherit; font-size:.8rem; cursor:pointer; transition:background-color .2s,border-color .2s; }
+        .weather-day-card:hover { background:rgba(128,128,128,.14); }
+        .weather-day-card[aria-pressed="true"] { border-color:rgb(var(--mdui-color-primary)); background:rgba(var(--mdui-color-primary),.09); }
+        .weather-day-card:focus-visible { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:2px; }
+        .weather-day-card img { object-fit:contain; box-sizing:border-box; padding:5px; width:64px; height:64px; border-radius:14px; background:#486b91; }
+        .weather-rain-chance { font-size:.72rem; text-align:center; overflow-wrap:anywhere; }
+        .weather-day-details { margin-top:16px; padding:16px; border-radius:16px; background:rgba(128,128,128,.07); }
+        .weather-detail-meta { font-size:.75rem; opacity:.65; line-height:1.6; }
+        .weather-imagery { margin:0; text-align:center; min-width:0; }
+        .weather-imagery figcaption { font-weight:600; margin-bottom:12px; }
+        .weather-imagery p { font-size:.8rem; opacity:.7; }
+        .weather-imagery img { display:block; width:auto; max-width:100%; max-height:58dvh; height:auto; object-fit:contain; margin:0 auto 16px; border-radius:12px; }
+        .weather-imagery img[hidden] { display:none; }
+        .weather-imagery a { color:inherit; font-size:.8rem; }
+        @media(min-width:1100px) { .weather-forecast-grid { grid-template-columns:repeat(5,minmax(0,1fr)); } }
+        @media(max-width:760px) { #weather-detail-dialog { padding:8px; } .weather-detail-overview { grid-template-columns:minmax(0,1fr); } #weather-detail-dialog::part(panel) { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); } }
+        @media(max-width:400px) { .weather-forecast-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+        @media(prefers-reduced-motion:reduce) { .weather-day-card { transition:none; } }
         .settings-reset { margin-top:24px; padding-top:16px; border-top:1px solid var(--glass-border); }
         .settings-background-actions { display:flex; flex-direction:column; align-items:flex-start; gap:12px; }
         .webcast-capture-video { position:fixed; left:-9999px; top:0; width:1px; height:1px; pointer-events:none; }
@@ -622,7 +661,7 @@
             <section class="quick-access-ad" aria-label="最新推介" id="quick-access-ad">
                 <p class="quick-access-ad-label" data-ad-label>最新推介：</p>
                 <!-- 导航AD -->
-                <ins class="adsbygoogle" style="display:inline-block;width:728px;height:260px" data-ad-client="ca-pub-3664886958722859" data-ad-slot="4606570127"></ins>
+                <div class="quick-access-ad-viewport"><ins class="adsbygoogle" style="display:block;width:100%;height:260px" data-ad-client="ca-pub-3664886958722859" data-ad-slot="4606570127" data-ad-format="horizontal" data-full-width-responsive="true"></ins></div>
             </section>
         </main>
         <aside class="side-stack" style="display:flex; flex-direction:column; gap:24px;">
@@ -631,7 +670,7 @@
                 <strong><span id="jinrishici-sentence">加载中...</span></strong>
             </div>
             <div class="card-glass">
-                <div style="font-size:0.7rem; opacity:0.6; font-weight:bold; margin-bottom:12px; letter-spacing:1px;">本港天气</div>
+                <div class="weather-card-heading"><span style="font-size:0.7rem; opacity:0.6; font-weight:bold; letter-spacing:1px;">本港天气</span><mdui-button-icon id="weather-detail-btn" icon="open_in_full" aria-label="查看详细天气" aria-haspopup="dialog" title="详细天气"></mdui-button-icon></div>
                 <div class="weather-header">
                     <img id="weather-icon-img" src="" style="display:none;">
                     <div>
@@ -864,6 +903,8 @@
         <mdui-button slot="action" variant="filled" id="settings-reset-confirm">恢复默认设置</mdui-button>
     </mdui-dialog>
     <script src="js/weather-warning-dialog.js?v=material-table-v3"></script>
+    <script src="js/weather-detail.js?v=weather-detail-v1"></script>
+    <script src="js/aed-wait.js?v=wait-colors-v1"></script>
     <script src="js/weather-upgrades.js?v=warning-details-v1"></script>
     <script>
         /* ==================== 原有代码完全保留 ==================== */
@@ -2261,7 +2302,7 @@ function setBackgroundToCookie(value) {
             try {
                 const data = await (await fetch('https://www.ha.org.hk/opendata/aed/aedwtdata2-tc.json?_=' + Date.now(), { cache:'no-store' })).json();
                 const list = (data.waitTime || []).slice(0, 8);
-                document.getElementById('city-aed').innerHTML = list.map((hospital) => `<div class="city-mini-row"><span><strong>${cityEsc(hospital.hospName)}</strong><small>T3 中位数 ${cityEsc(hospital.t3p50 || '--')} · T45 中位数 ${cityEsc(hospital.t45p50 || '--')}</small></span><span class="city-chip ${String(hospital.t45p50 || '').includes('小时') || String(hospital.t45p50 || '').includes('小時') ? 'warn' : ''}">${cityEsc(hospital.t45p50 || '--')}</span></div>`).join('') || '<div class="city-card-caption">暂无急症室资料。</div>'; cityLive('city-aed-live', 'online', '在线');
+                document.getElementById('city-aed').innerHTML = list.map((hospital) => `<div class="city-mini-row"><span><strong>${cityEsc(hospital.hospName)}</strong><small>T3 中位数 <span class="aed-wait aed-wait-${window.naviWaitLevel(hospital.t3p50)}">${cityEsc(hospital.t3p50 || '--')}</span> · T45 中位数 <span class="aed-wait aed-wait-${window.naviWaitLevel(hospital.t45p50)}">${cityEsc(hospital.t45p50 || '--')}</span></small></span><span class="city-chip aed-wait aed-wait-${window.naviWaitLevel(hospital.t45p50)}">${cityEsc(hospital.t45p50 || '--')}</span></div>`).join('') || '<div class="city-card-caption">暂无急症室资料。</div>'; cityLive('city-aed-live', 'online', '在线');
             } catch (error) { document.getElementById('city-aed').innerHTML = '<div class="city-card-caption">急症室资料暂时无法取得。</div>'; cityLive('city-aed-live', 'offline', '离线'); }
         }
         async function updateCityHolidaysLive() {
@@ -3200,7 +3241,7 @@ function setBackgroundToCookie(value) {
             const newsCaption = newsArticle?.querySelector('.city-card-caption');
             const bus = busArticle?.querySelector('.city-card-title');
             const busCaption = busArticle?.querySelector('.city-card-caption');
-            const weather = document.querySelector('.side-stack .card-glass:nth-child(2) > div:first-child');
+            const weather = document.querySelector('.weather-card-heading > span');
             const humidity = document.querySelector('.hum-display');
             if (pulse) pulse.textContent = strings.cityTraffic;
             if (pulseCaption) pulseCaption.textContent = strings.trafficCaption;
@@ -4075,7 +4116,7 @@ function setBackgroundToCookie(value) {
     </script>
     <script src="js/app-info.js?v=local-greeting-title-v2"></script>
     <script src="js/settings.js?v=material-tabs-v2"></script>
-    <script type="module" src="js/camera-background.js?v=traffic-webcast-v2"></script>
+    <script type="module" src="js/camera-background.js?v=traffic-webcast-v3"></script>
     <script type="module" src="js/sync.js?v=camera-background-v1"></script>
 </body>
 </html>

@@ -27,7 +27,7 @@ export default async function handler(req,res) {
     const url=new URL('/api/cctv/'+area.toLowerCase()+'/'+(file || ''),ORIGIN);
     if(token){url.searchParams.set('deviceid','WEBSITE');url.searchParams.set('token',token);}
     try {
-        const upstream=await fetch(url,{headers:{Accept:'*/*',Referer:ORIGIN+'/', 'User-Agent':'Mozilla/5.0'},cache:'no-store',redirect:'error',signal:AbortSignal.timeout(8000)});
+        const upstream=await fetch(url,{headers:{Accept:'*/*',Referer:ORIGIN+'/', 'User-Agent':'Mozilla/5.0'},cache:'no-store',redirect:'error',signal:AbortSignal.timeout(file && !file.endsWith('.m3u8')?20000:12000)});
         if(!upstream.ok){await upstream.body?.cancel();throw new Error('unavailable');}
         const bytes=Buffer.from(await upstream.arrayBuffer());
         if(bytes.length>2*1024*1024)throw new Error('oversized');
