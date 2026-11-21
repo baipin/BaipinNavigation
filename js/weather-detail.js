@@ -1,7 +1,7 @@
 (() => {
     const sc=()=>document.documentElement.lang==='zh-CN',t=(s,c)=>sc()?s:c;
     const dialog=document.createElement('mdui-dialog');dialog.id='weather-detail-dialog';dialog.setAttribute('close-on-overlay-click','');
-    dialog.innerHTML=`<span slot="headline" data-wd="title"></span>
+    dialog.innerHTML=`<div slot="headline" class="weather-detail-headline"><span data-wd="title"></span><mdui-button-icon icon="close" data-weather-close-top aria-label="关闭"></mdui-button-icon></div>
       <mdui-tabs value="forecast" id="weather-detail-tabs" aria-label="天气详情分类">
         <mdui-tab value="forecast" data-wd="forecastTab"></mdui-tab><mdui-tab value="radar" data-wd="radarTab"></mdui-tab><mdui-tab value="satellite" data-wd="satelliteTab"></mdui-tab>
         <mdui-tab-panel slot="panel" value="forecast"><div class="weather-detail-overview"><section data-weather-narrative aria-live="polite"></section><section><h3 data-wd="nineDays"></h3><p data-weather-outlook></p><div class="weather-forecast-grid" data-weather-days></div><div class="weather-day-details" data-weather-day-details aria-live="polite"></div></section></div><p class="weather-detail-meta" data-weather-updated></p></mdui-tab-panel>
@@ -18,6 +18,7 @@
     function timestamp(value) {const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleString(sc()?'zh-CN':'zh-HK',{timeZone:'Asia/Hong_Kong',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})+' UTC+8':'--';}
     function labelsUpdate(){
         for(const [key,pair] of Object.entries(labels))dialog.querySelector('[data-wd="'+key+'"]').textContent=pair[sc()?0:1];
+        dialog.querySelector('[data-weather-close-top]').setAttribute('aria-label',t('关闭天气详情','關閉天氣詳情'));dialog.querySelector('[data-weather-close-top]').title=t('关闭','關閉');
         button.setAttribute('aria-label',t('查看详细天气','查看詳細天氣'));button.title=t('详细天气','詳細天氣');
         tabs.setAttribute('aria-label',t('天气详情分类','天氣詳情分類'));
         dialog.querySelector('[data-weather-close]').textContent=t('关闭','關閉');dialog.querySelector('[data-weather-refresh]').textContent=t('刷新','重新整理');
@@ -92,7 +93,7 @@
     const refresh=()=>{if(tabs.value==='forecast')loadForecast();else loadImagery(tabs.value,true);};
     button.onclick=()=>{labelsUpdate();dialog.open=true;loadForecast();if(tabs.value!=='forecast')loadImagery(tabs.value,true);clearInterval(refreshTimer);refreshTimer=setInterval(()=>{if(document.visibilityState==='visible')refresh();},300000);};
     tabs.addEventListener('change',e=>{if(e.target===tabs && tabs.value!=='forecast')loadImagery(tabs.value);});
-    dialog.querySelector('[data-weather-close]').onclick=()=>{dialog.open=false;};dialog.querySelector('[data-weather-refresh]').onclick=refresh;
+    for(const close of dialog.querySelectorAll('[data-weather-close],[data-weather-close-top]'))close.onclick=()=>{dialog.open=false;};dialog.querySelector('[data-weather-refresh]').onclick=refresh;
     dialog.addEventListener('closed',()=>{revision++;controller?.abort();clearInterval(refreshTimer);imageRequests.radar=(imageRequests.radar || 0)+1;imageRequests.satellite=(imageRequests.satellite || 0)+1;});
     new MutationObserver(()=>{labelsUpdate();if(dialog.open){imagery={};refresh();}}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});labelsUpdate();
 })();

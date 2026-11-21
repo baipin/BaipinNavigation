@@ -486,6 +486,8 @@
         .mdui-theme-dark #weather-detail-dialog { --mdui-color-surface-container-high:30,30,35; }
         #weather-detail-dialog::part(panel) { width:min(1180px,calc(100vw - 32px)); max-width:min(1180px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); background:rgb(var(--mdui-color-surface-container-high)); color:var(--text-main); box-sizing:border-box; }
         #weather-detail-dialog::part(body) { min-width:0; }
+        .weather-detail-headline { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; }
+        .weather-detail-headline mdui-button-icon { color:inherit; flex:none; }
         #weather-detail-tabs { width:100%; min-width:0; }
         #weather-detail-tabs mdui-tab-panel { min-width:0; box-sizing:border-box; padding-top:20px; }
         .weather-detail-overview { display:grid; grid-template-columns:minmax(220px,.75fr) minmax(0,2fr); gap:24px; line-height:1.7; }
@@ -513,13 +515,13 @@
         .weather-imagery img { display:block; width:auto; max-width:100%; max-height:58dvh; height:auto; object-fit:contain; margin:0 auto 16px; border-radius:12px; }
         .weather-imagery img[hidden] { display:none; }
         .weather-imagery a { color:inherit; font-size:.8rem; }
-        
+
         @media(max-width:760px) { #weather-detail-dialog { padding:8px; } .weather-detail-overview { grid-template-columns:minmax(0,1fr); } #weather-detail-dialog::part(panel) { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); } }
-        
+
         @media(prefers-reduced-motion:reduce) { .weather-day-card { transition:none; } }
         .settings-reset { margin-top:24px; padding-top:16px; border-top:1px solid var(--glass-border); }
         .settings-background-actions { display:flex; flex-direction:column; align-items:flex-start; gap:12px; }
-        .webcast-capture-video { position:fixed; left:-9999px; top:0; width:1px; height:1px; pointer-events:none; }
+        .webcast-capture-video { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; opacity:.001; z-index:-1; pointer-events:none; }
         .webcast-live-background { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:-1; pointer-events:none; }
         .camera-gallery { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:16px 0; }
         .camera-thumbnail { position:relative; min-width:0; min-height:120px; padding:0; overflow:hidden; border:2px solid transparent; border-radius:12px; background:rgba(128,128,128,.1); color:inherit; text-align:left; font:inherit; cursor:pointer; transition:border-color .15s,background-color .15s; }
@@ -907,7 +909,7 @@
         <mdui-button slot="action" variant="filled" id="settings-reset-confirm">恢复默认设置</mdui-button>
     </mdui-dialog>
     <script src="js/weather-warning-dialog.js?v=material-table-v3"></script>
-    <script src="js/weather-detail.js?v=weather-cards-v2"></script>
+    <script src="js/weather-detail.js?v=weather-cards-close-v3"></script>
     <script src="js/aed-wait.js?v=wait-colors-v1"></script>
     <script src="js/weather-upgrades.js?v=warning-details-v1"></script>
     <script>
