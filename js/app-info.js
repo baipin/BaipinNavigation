@@ -10,8 +10,8 @@ const labels = {
 function renderTitle() {
     const simple=document.documentElement.lang==='zh-CN';
     const hour=new Date().getHours();
-    const greeting=hour<5 || hour>=23?(simple?'早点睡~早唞~':'早點睡~早唞~'):
-        hour<11?'Good Morning! 早晨~':hour<14?'中午好~':hour<18?'下午好~':'晚上好~';
+    const greeting=hour<5 || hour>=23?(simple?'这么晚了，早点睡啦~早唞~':'咁夜，早點瞓啦~早唞~'):
+        hour<11?'Good Morning! 早晨~':hour<14?'午安吶~ 中午好~':hour<18?'Good Afternoon! 下午好~':'Good evening~ 晚上好~';
     document.title=(simple?'百品导航':'百品導航')+' - '+greeting;
 }
 function renderOverview() {
