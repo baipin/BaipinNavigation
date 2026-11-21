@@ -26,7 +26,7 @@ export async function startWebcastVideo(id,{signal,onError}={}) {
         video.pause();hls?.destroy();video.removeAttribute('src');video.load();video.remove();
     };
     const abort=()=>{if(!finished)fail?.(aborted());else destroy();};
-    const error=()=>{if(!finished)fail?.(new Error('Webcast unavailable'));else {destroy();onError?.();}};
+    const error=reason=>{const failure=reason instanceof Error?reason:new Error('Webcast unavailable');if(!finished)fail?.(failure);else {destroy();onError?.();}};
     try {
         let Hls=null;
         if(!video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -46,7 +46,7 @@ export async function startWebcastVideo(id,{signal,onError}={}) {
             const url='/api/webcast?area='+id;
             if(Hls) {
                 hls=new Hls({backBufferLength:0,maxBufferLength:2,maxMaxBufferLength:4,liveSyncDurationCount:3,lowLatencyMode:false,manifestLoadingTimeOut:15000,levelLoadingTimeOut:15000,fragLoadingTimeOut:25000,manifestLoadingMaxRetry:2,levelLoadingMaxRetry:2,fragLoadingMaxRetry:3});
-                hls.on(Hls.Events.ERROR,(_,data)=>{if(data.fatal)error();});
+                hls.on(Hls.Events.ERROR,(_,data)=>{if(data.fatal){console.warn('Traffic webcast failed',{type:data.type,details:data.details,status:data.response?.code || 0});error(new Error('Webcast '+data.details));}});
                 hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(error));
                 hls.loadSource(url);hls.attachMedia(video);
             } else {video.src=url;video.play().catch(error);}

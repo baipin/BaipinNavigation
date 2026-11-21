@@ -1,4 +1,4 @@
-import {startWebcastVideo,getWebcastFrame,webcastFrameBlob} from './traffic-webcast.js?v=live-retry-v3';
+import {startWebcastVideo,getWebcastFrame,webcastFrameBlob} from './traffic-webcast.js?v=live-retry-v4';
 import {CAMERA_BACKGROUND_KEY,parseCameraPreference,cameraImageUrl,cameraRefreshInterval} from './camera-background-model.js';
 
 const sourcePicker=document.getElementById('background-camera-source');
