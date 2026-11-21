@@ -66,7 +66,10 @@
             const prefix = icons[warning.code] || icons[key];
             const link = document.createElement('a');
             link.href = 'https://www.hko.gov.hk/' + (sc()?'sc':'tc') + '/wxinfo/dailywx/wxwarntoday.htm';
-            link.target = '_blank'; link.rel = 'noopener noreferrer'; link.title = warning.name || warning.code || key;
+            link.title = warning.name || warning.code || key;
+            link.setAttribute('role','button');link.setAttribute('aria-haspopup','dialog');
+            link.addEventListener('click',event=>{event.preventDefault();window.naviOpenWeatherWarning?.({...warning,key});});
+            link.addEventListener('keydown',event=>{if(event.key===' '){event.preventDefault();link.click();}});
             if (prefix) {
                 const image = document.createElement('img');
                 image.src = 'img/hko-warnings/' + prefix + '.gif';

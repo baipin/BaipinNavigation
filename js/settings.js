@@ -2,8 +2,8 @@
     const dialog=document.getElementById('data-manage-dialog');
     let current='general';
     const texts={
-        sc:{title:'设置',general:'常规',background:'背景',sync:'登录与备份',appearance:'语言与显示',content:'内容配置',engine:'当前搜索引擎',weather:'天气预设地区',rain:'降雨量监测地区',aqhi:'空气质素 AQHI 监测地区',bookmarks:'快捷访问配置',engines:'搜索引擎配置',rss:'RSS 配置',city:'CITY FEED 配置',backgroundTitle:'首页背景',random:'从 Unsplash 获取随机背景',reset:'恢复默认背景',backgroundHint:'背景会保存在此设备，开启同步后也可随预设同步。'},
-        tc:{title:'設定',general:'一般',background:'背景',sync:'登入與備份',appearance:'語言與顯示',content:'內容設定',engine:'目前搜尋引擎',weather:'天氣預設地區',rain:'降雨量監測地區',aqhi:'空氣質素 AQHI 監測地區',bookmarks:'快速訪問設定',engines:'搜尋引擎設定',rss:'RSS 設定',city:'CITY FEED 設定',backgroundTitle:'首頁背景',random:'從 Unsplash 取得隨機背景',reset:'還原預設背景',backgroundHint:'背景會儲存在此裝置，開啟同步後亦可隨預設同步。'}
+        sc:{title:'设置',general:'常规',background:'背景',sync:'登录与备份',appearance:'语言与显示',content:'内容配置',engine:'当前搜索引擎',weather:'天气预设地区',rain:'降雨量监测地区',aqhi:'空气质素 AQHI 监测地区',bookmarks:'快捷访问配置',engines:'搜索引擎配置',rss:'RSS 配置',city:'CITY FEED 配置',backgroundTitle:'首页背景',random:'从 Unsplash 获取随机背景',reset:'恢复默认背景',resetAll:'恢复默认设置',undoReset:'撤销上次恢复',backgroundHint:'背景会保存在此设备，开启同步后也可随预设同步。'},
+        tc:{title:'設定',general:'一般',background:'背景',sync:'登入與備份',appearance:'語言與顯示',content:'內容設定',engine:'目前搜尋引擎',weather:'天氣預設地區',rain:'降雨量監測地區',aqhi:'空氣質素 AQHI 監測地區',bookmarks:'快速訪問設定',engines:'搜尋引擎設定',rss:'RSS 設定',city:'CITY FEED 設定',backgroundTitle:'首頁背景',random:'從 Unsplash 取得隨機背景',reset:'還原預設背景',resetAll:'還原預設設定',undoReset:'復原上次還原',backgroundHint:'背景會儲存在此裝置，開啟同步後亦可隨預設同步。'}
     };
     function render() {
         const sc=document.documentElement.lang==='zh-CN',labels=texts[sc?'sc':'tc'];
@@ -36,6 +36,7 @@
         const timer=setTimeout(open,350);
         dialog.addEventListener('closed',open,{once:true});dialog.open=false;
     }
+    document.getElementById('settings-reset').onclick=()=>shortcut(()=>{document.getElementById('settings-reset-dialog').open=true;});
     document.getElementById('settings-rss').onclick=()=>shortcut('manage-rss-btn');
     document.getElementById('settings-city-feed').onclick=()=>shortcut('city-feed-stock-settings');
     document.getElementById('settings-bookmarks').onclick=()=>shortcut(()=> {

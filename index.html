@@ -435,6 +435,15 @@
         .settings-districts select { box-sizing:border-box; width:100%; min-width:0; min-height:48px; padding:10px 12px; border:1px solid rgba(128,128,128,.5); border-radius:12px; background:transparent; color:inherit; font:inherit; }
         .settings-districts select:focus-visible { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:2px; }
         .settings-districts option { color:rgb(var(--mdui-color-on-surface,33 33 33)); background:rgb(var(--mdui-color-surface,255 255 255)); }
+        #weather-warning-dialog { --mdui-color-surface-container-high:255,255,255; --mdui-color-on-surface:33,33,33; --mdui-color-primary:70,80,120; color:#212121; }
+        #weather-warning-dialog::part(panel) { background:#fff; color:#212121; }
+        .warning-dialog-content { max-width:600px; line-height:1.7; overflow-wrap:anywhere; }
+        .warning-dialog-content h3 { font-size:1rem; margin:12px 0; }
+        .warning-dialog-content p { margin:8px 0; white-space:pre-line; }
+        .warning-meta { font-size:.82rem; opacity:.72; }
+        .warning-dialog-content a { color:inherit; }
+        .warning-record { padding:12px 0; border-top:1px solid #ddd; }
+        .settings-reset { margin-top:24px; padding-top:16px; border-top:1px solid var(--glass-border); }
         .settings-background-actions { display:flex; flex-direction:column; align-items:flex-start; gap:12px; }
         #search-clear { flex:none; color:inherit; }
         .footer-bottom { display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid var(--glass-border); }
@@ -735,6 +744,7 @@
                 <mdui-button variant="outlined" icon="rss_feed" id="settings-rss" data-settings-text="rss">RSS 配置</mdui-button>
                 <mdui-button variant="outlined" icon="dashboard_customize" id="settings-city-feed" data-settings-text="city">CITY FEED 配置</mdui-button>
             </div>
+            <div class="settings-reset"><mdui-button variant="outlined" icon="restart_alt" id="settings-reset" data-settings-text="resetAll">恢复默认设置</mdui-button> <mdui-button variant="text" id="settings-reset-undo" data-settings-text="undoReset" hidden>撤销上次恢复</mdui-button></div>
         </section>
         <section class="settings-panel" data-settings-panel="background" hidden>
             <h3 data-settings-text="backgroundTitle">首页背景</h3>
@@ -783,7 +793,16 @@
         <mdui-button slot="action" variant="text" id="data-manage-close">关闭</mdui-button>
     </mdui-dialog>
 
-    <script src="js/weather-upgrades.js"></script>
+    <mdui-dialog id="settings-reset-dialog" close-on-overlay-click>
+        <span slot="headline" data-reset-title>恢复默认设置？</span>
+        <p data-reset-description>将恢复本设备的书签、搜索引擎、RSS、CITY FEED、天气地区、语言、主题和背景。登录状态及云端预设保留；本设备自动同步将暂停。可先导出备份，恢复后也可在本标签页撤销。</p>
+        <p data-reset-error role="status" aria-live="polite"></p>
+        <mdui-button slot="action" variant="text" id="settings-reset-export">先导出备份</mdui-button>
+        <mdui-button slot="action" variant="text" id="settings-reset-cancel">取消</mdui-button>
+        <mdui-button slot="action" variant="filled" id="settings-reset-confirm">恢复默认设置</mdui-button>
+    </mdui-dialog>
+    <script src="js/weather-warning-dialog.js?v=warning-details-v1"></script>
+    <script src="js/weather-upgrades.js?v=warning-details-v1"></script>
     <script>
         /* ==================== 原有代码完全保留 ==================== */
         const initLinks = [
@@ -3979,7 +3998,7 @@ function setBackgroundToCookie(value) {
         </section>
     </footer>
     <script src="js/app-info.js?v=unified-settings-v1"></script>
-    <script src="js/settings.js?v=unified-settings-v1"></script>
-    <script type="module" src="js/sync.js?v=unified-settings-v1"></script>
+    <script src="js/settings.js?v=reset-settings-v1"></script>
+    <script type="module" src="js/sync.js?v=reset-settings-v1"></script>
 </body>
 </html>

@@ -289,6 +289,46 @@ document.getElementById('import-file-input').onchange = async event => {
     catch (error) { show('导入失败：'+error.message); }
     finally { event.target.value = ''; }
 };
+// Reset only the shared preference allowlist; retain auth cookies and cloud files.
+const resetDialog=document.getElementById('settings-reset-dialog');
+const resetUndo=document.getElementById('settings-reset-undo');
+const resetBackupKey='navi_before_preferences_reset';
+function resetLabels() {
+    const sc=simplified();
+    resetDialog.querySelector('[data-reset-title]').textContent=sc?'恢复默认设置？':'還原預設設定？';
+    resetDialog.querySelector('[data-reset-description]').textContent=sc?'将恢复本设备的书签、搜索引擎、RSS、CITY FEED、天气地区、语言、主题和背景。登录状态及云端预设保留；本设备自动同步将暂停。可先导出备份，恢复后也可在本标签页撤销。':'將還原本裝置的書籤、搜尋引擎、RSS、CITY FEED、天氣地區、語言、主題及背景。登入狀態及雲端預設保留；本裝置自動同步將暫停。可先匯出備份，還原後亦可在本分頁復原。';
+    document.getElementById('settings-reset-export').textContent=sc?'先导出备份':'先匯出備份';
+    document.getElementById('settings-reset-cancel').textContent=sc?'取消':'取消';
+    document.getElementById('settings-reset-confirm').textContent=sc?'恢复默认设置':'還原預設設定';
+    try {resetUndo.hidden=!sessionStorage.getItem(resetBackupKey);}catch {resetUndo.hidden=true;}
+}
+resetLabels();
+new MutationObserver(resetLabels).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+document.getElementById('settings-reset-export').onclick=()=>document.getElementById('export-data-btn').click();
+document.getElementById('settings-reset-cancel').onclick=()=>{resetDialog.open=false;};
+function pauseAutoSync() {
+    // Both providers and every previously used account on this device.
+    for(const key of Object.keys(localStorage))if(key.startsWith('navi_sync_auto:'))localStorage.removeItem(key);
+    auto.checked=false;
+}
+document.getElementById('settings-reset-confirm').onclick=()=> {
+    const error=resetDialog.querySelector('[data-reset-error]');
+    if(busy) {error.textContent=simplified()?'同步正在进行，请稍后重试。':'同步正在進行，請稍後再試。';return;}
+    try {
+        sessionStorage.setItem(resetBackupKey,JSON.stringify(snapshot()));
+        pauseAutoSync();pending=null;
+        applyPreset({localStorage:{},cookies:{}});
+        location.reload();
+    } catch {error.textContent=simplified()?'无法保存撤销备份或恢复设置，请检查浏览器存储权限。':'無法儲存復原備份或還原設定，請檢查瀏覽器儲存權限。';}
+};
+resetUndo.onclick=()=> {
+    try {
+        if(busy)throw new Error('busy');
+        const previous=sessionStorage.getItem(resetBackupKey);if(!previous)return;
+        pauseAutoSync();pending=null;applyPreset(JSON.parse(previous));
+        sessionStorage.removeItem(resetBackupKey);location.reload();
+    } catch {show(simplified()?'暂时无法撤销，请稍后重试。':'暫時無法復原，請稍後再試。');}
+};
 const result = new URL(location.href).searchParams.get('sync');
 if (result) {
     localStorage.setItem('navi_sync_provider',provider);
