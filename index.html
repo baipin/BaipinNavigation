@@ -494,14 +494,18 @@
         .weather-detail-overview p { margin:0 0 16px; white-space:pre-line; overflow-wrap:anywhere; }
         .weather-detail-current { display:flex; align-items:baseline; flex-wrap:wrap; gap:12px; margin-bottom:12px; }
         .weather-detail-current p:first-child { font-size:2rem; font-weight:700; }
-        .weather-forecast-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
-        .weather-day-card { display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 8px; min-width:0; border-radius:16px; border:1px solid rgba(128,128,128,.22); background:rgba(128,128,128,.06); color:inherit; font:inherit; font-size:.8rem; cursor:pointer; transition:background-color .2s,border-color .2s; }
-        .weather-day-card:hover { background:rgba(128,128,128,.14); }
+        .weather-forecast-grid { display:flex; gap:8px; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x proximity; padding:6px 4px 14px; scrollbar-width:thin; }
+        .weather-day-card { flex:0 0 112px; scroll-snap-align:start; box-shadow:0 2px 4px rgba(0,0,0,.16),0 5px 12px rgba(0,0,0,.09); display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 8px; min-width:0; border-radius:16px; border:1px solid rgba(128,128,128,.22); background:rgba(128,128,128,.06); color:inherit; font:inherit; font-size:.8rem; cursor:pointer; transition:background-color .2s,border-color .2s,box-shadow .2s,transform .2s; }
+        .weather-day-card:hover { background:rgba(128,128,128,.14); box-shadow:0 4px 8px rgba(0,0,0,.18),0 8px 18px rgba(0,0,0,.12); transform:translateY(-2px); }
         .weather-day-card[aria-pressed="true"] { border-color:rgb(var(--mdui-color-primary)); background:rgba(var(--mdui-color-primary),.09); }
         .weather-day-card:focus-visible { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:2px; }
         .weather-day-card img { object-fit:contain; box-sizing:border-box; padding:5px; width:64px; height:64px; border-radius:14px; background:#486b91; }
         .weather-rain-chance { font-size:.72rem; text-align:center; overflow-wrap:anywhere; }
         .weather-day-details { margin-top:16px; padding:16px; border-radius:16px; background:rgba(128,128,128,.07); }
+        .weather-detail-warnings { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px; }
+        .weather-detail-warnings button { display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid rgba(128,128,128,.22); border-radius:16px; background:rgba(128,128,128,.06); color:inherit; font:inherit; cursor:pointer; }
+        .weather-detail-warnings button:hover { background:rgba(128,128,128,.15); }
+        .weather-detail-warnings img { width:42px; height:42px; object-fit:contain; }
         .weather-detail-meta { font-size:.75rem; opacity:.65; line-height:1.6; }
         .weather-imagery { margin:0; text-align:center; min-width:0; }
         .weather-imagery figcaption { font-weight:600; margin-bottom:12px; }
@@ -509,9 +513,9 @@
         .weather-imagery img { display:block; width:auto; max-width:100%; max-height:58dvh; height:auto; object-fit:contain; margin:0 auto 16px; border-radius:12px; }
         .weather-imagery img[hidden] { display:none; }
         .weather-imagery a { color:inherit; font-size:.8rem; }
-        @media(min-width:1100px) { .weather-forecast-grid { grid-template-columns:repeat(5,minmax(0,1fr)); } }
+        
         @media(max-width:760px) { #weather-detail-dialog { padding:8px; } .weather-detail-overview { grid-template-columns:minmax(0,1fr); } #weather-detail-dialog::part(panel) { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); } }
-        @media(max-width:400px) { .weather-forecast-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+        
         @media(prefers-reduced-motion:reduce) { .weather-day-card { transition:none; } }
         .settings-reset { margin-top:24px; padding-top:16px; border-top:1px solid var(--glass-border); }
         .settings-background-actions { display:flex; flex-direction:column; align-items:flex-start; gap:12px; }
@@ -903,7 +907,7 @@
         <mdui-button slot="action" variant="filled" id="settings-reset-confirm">恢复默认设置</mdui-button>
     </mdui-dialog>
     <script src="js/weather-warning-dialog.js?v=material-table-v3"></script>
-    <script src="js/weather-detail.js?v=weather-detail-v1"></script>
+    <script src="js/weather-detail.js?v=weather-cards-v2"></script>
     <script src="js/aed-wait.js?v=wait-colors-v1"></script>
     <script src="js/weather-upgrades.js?v=warning-details-v1"></script>
     <script>
@@ -4116,7 +4120,7 @@ function setBackgroundToCookie(value) {
     </script>
     <script src="js/app-info.js?v=local-greeting-title-v2"></script>
     <script src="js/settings.js?v=material-tabs-v2"></script>
-    <script type="module" src="js/camera-background.js?v=traffic-webcast-v4"></script>
+    <script type="module" src="js/camera-background.js?v=traffic-webcast-v5"></script>
     <script type="module" src="js/sync.js?v=camera-background-v1"></script>
 </body>
 </html>

@@ -19,9 +19,9 @@ export async function startWebcastVideo(id,{signal,onError}={}) {
     if(signal?.aborted)throw aborted();
     const video=document.createElement('video');video.muted=true;video.playsInline=true;video.preload='auto';video.autoplay=true;
     video.setAttribute('aria-hidden','true');video.className='webcast-capture-video';
-    let hls=null,finished=false,dead=false,timeout,fail,loaded=()=>{};
+    let hls=null,finished=false,dead=false,timeout,fail,frameId=null,loaded=()=>{};
     const destroy=()=>{
-        if(dead)return;dead=true;clearTimeout(timeout);signal?.removeEventListener('abort',abort);
+        if(dead)return;dead=true;clearTimeout(timeout);if(frameId!==null)video.cancelVideoFrameCallback?.(frameId);signal?.removeEventListener('abort',abort);
         video.removeEventListener('loadeddata',loaded);video.removeEventListener('error',error);
         video.pause();hls?.destroy();video.removeAttribute('src');video.load();video.remove();
     };
@@ -37,8 +37,10 @@ export async function startWebcastVideo(id,{signal,onError}={}) {
             fail=reason=>{if(finished)return;finished=true;destroy();reject(reason);};
             loaded=()=>{
                 if(finished || !video.videoWidth || video.readyState<2)return;
-                finished=true;clearTimeout(timeout);video.removeEventListener('loadeddata',loaded);
-                resolve({video,destroy});
+                const present=()=>{if(dead || finished)return;finished=true;clearTimeout(timeout);video.removeEventListener('loadeddata',loaded);resolve({video,destroy});};
+                if(video.requestVideoFrameCallback){if(frameId===null)frameId=video.requestVideoFrameCallback(present);}
+                else if(video.currentTime>0)present();
+                else video.addEventListener('timeupdate',present,{once:true});
             };
             timeout=setTimeout(()=>fail(new Error('Webcast timeout')),45000);
             signal?.addEventListener('abort',abort,{once:true});video.addEventListener('error',error);

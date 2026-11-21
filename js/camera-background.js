@@ -1,4 +1,4 @@
-import {startWebcastVideo,getWebcastFrame,webcastFrameBlob} from './traffic-webcast.js?v=live-retry-v4';
+import {startWebcastVideo,getWebcastFrame,webcastFrameBlob} from './traffic-webcast.js?v=live-first-frame-v5';
 import {CAMERA_BACKGROUND_KEY,parseCameraPreference,cameraImageUrl,cameraRefreshInterval} from './camera-background-model.js';
 
 const sourcePicker=document.getElementById('background-camera-source');
@@ -28,7 +28,7 @@ function updateAttribution() {
 function showStatus(message) {status.textContent=message;}
 function schedule() {
     clearTimeout(timer);timer=null;
-    if(choice?.refresh)timer=setTimeout(()=>{if(document.visibilityState==='visible')updateBackground();else schedule();},cameraRefreshInterval(choice.source));
+    if(choice?.refresh)timer=setTimeout(()=>{if(document.visibilityState==='visible')updateBackground();else schedule();},failed && choice.source.startsWith('webcast')?10000:cameraRefreshInterval(choice.source));
 }
 function preloadImage(url) {
     return new Promise((resolve,reject)=>{
@@ -54,7 +54,7 @@ async function updateBackground(candidate=choice,persist=false) {
         if(candidate.source==='webcast-live') {
             candidate={...candidate,refresh:true};
             liveSession=await startWebcastVideo(candidate.id,{signal,onError:()=>{
-                if(activePlayer===liveSession){stopLivePlayer();failed=true;showStatus(t('直播连接中断，已保留最后画面，稍后自动重试。','直播連線中斷，已保留最後畫面，稍後自動重試。'));}
+                if(activePlayer===liveSession){stopLivePlayer();failed=true;schedule();showStatus(t('直播连接中断，已保留最后画面，稍后自动重试。','直播連線中斷，已保留最後畫面，稍後自動重試。'));}
             }});
             newPlayer=liveSession;url=URL.createObjectURL(await webcastFrameBlob(newPlayer.video));owned=true;
         } else if(candidate.source==='webcast') {

@@ -31,7 +31,7 @@
         paragraph(target,t('风向及风力：','風向及風力：')+row.forecastWind);
     }
     function renderDays(rows){
-        forecastRows=rows;selected=Math.min(selected,Math.max(0,rows.length-1));const grid=dialog.querySelector('[data-weather-days]');grid.replaceChildren();
+        forecastRows=rows;selected=Math.min(selected,Math.max(0,rows.length-1));const grid=dialog.querySelector('[data-weather-days]');grid.tabIndex=0;grid.setAttribute('role','region');grid.setAttribute('aria-label',t('九天天气预报，可左右滑动','九天天氣預報，可左右滑動'));grid.replaceChildren();
         for(const [i,row] of rows.entries()){
             const card=el('button');card.type='button';card.className='weather-day-card';card.onclick=()=>{selected=i;showDay();};
             const date=String(row.forecastDate || ''),day=el('strong');day.textContent=date.slice(4,6)+'/'+date.slice(6,8);card.append(day);
@@ -56,8 +56,19 @@
         if(now){const reading=el('div');reading.className='weather-detail-current';const temp=now.temperature?.data?.find(x=>x.place==='香港天文台') || now.temperature?.data?.[0];const humidity=now.humidity?.data?.[0];paragraph(reading,(temp?.value ?? '--')+'°C');paragraph(reading,t('相对湿度：','相對濕度：')+(humidity?.value ?? '--')+'%');narrative.append(reading);}
         if(flw){section(narrative,t('总体情况','總體情況'),flw.generalSituation);section(narrative,t('本港地区天气预测','本港地區天氣預測'),flw.forecastDesc);section(narrative,t('展望','展望'),flw.outlook);}
         else paragraph(narrative,t('本港天气预测暂时无法取得，请刷新重试。','本港天氣預測暫時無法取得，請重新整理。'));
-        const active=Object.values(warnings || {}).filter(x=>x.actionCode!=='CANCEL' && (!x.expireTime || Date.parse(x.expireTime)>Date.now()));
-        if(active.length)section(narrative,t('生效天气警告','生效天氣警告'),active.map(x=>x.name).join('、'));
+        const active=Object.entries(warnings || {}).filter(([,x])=>x.actionCode!=='CANCEL' && (!x.expireTime || Date.parse(x.expireTime)>Date.now()));
+        if(active.length){
+            const heading=el('h3');heading.textContent=t('生效天气警告','生效天氣警告');narrative.prepend(heading);
+            const warningList=el('div');warningList.className='weather-detail-warnings';heading.after(warningList);
+            const icons={WCOLD:'cold',WHOT:'vhot',WMSGNL:'msn',WFROST:'frost',WFNTSA:'ntfl',WL:'landslip',WTMW:'tsunami-warn',WTM:'tsunami-warn',WFIREY:'firey',WFIRER:'firer',WRAINA:'raina',WRAINR:'rainr',WRAINB:'rainb',WTS:'ts',TC1:'tc1',TC3:'tc3',TC8NE:'tc8ne',TC8NW:'tc8nw',TC8SE:'tc8se',TC8SW:'tc8sw',TC9:'tc9',TC10:'tc10'};
+            for(const [key,warning] of active){
+                const control=el('button');control.type='button';control.setAttribute('aria-haspopup','dialog');control.title=t('查看警告详情','查看警告詳情');
+                const icon=icons[warning.code] || icons[key];
+                if(icon){const image=el('img');image.src='/img/hko-warnings/'+icon+'.gif';image.alt='';image.width=42;image.height=42;control.append(image);}
+                const label=el('span');label.textContent=warning.name || warning.code || key;control.append(label);
+                control.onclick=()=>window.naviOpenWeatherWarning?.({...warning,key});warningList.append(control);
+            }
+        }
         for(const item of special?.swt || [])section(narrative,t('特别天气提示','特別天氣提示'),item.desc);
         const uv=now?.uvindex?.data?.[0];if(uv)section(narrative,t('紫外线指数','紫外線指數'),uv.value+' · '+uv.desc);
         dialog.querySelector('[data-weather-outlook]').textContent=fnd?.generalSituation || '';renderDays(Array.isArray(fnd?.weatherForecast)?fnd.weatherForecast.slice(0,9):[]);
