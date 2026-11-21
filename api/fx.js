@@ -26,10 +26,11 @@ export default async function handler(req,res) {
             return {id,price,percent:(price-close)/close*100,date:latest.date,previousDate:previous.date};
         });
         for(const currency of ['USD','CHF','JPY','HKD','EUR','GBP','AUD','CAD','SGD','KRW']) {
-            const price=currency==='HKD'?1/latest.rates.CNY:latest.rates?.[currency]/latest.rates.CNY;
-            const close=currency==='HKD'?1/previous.rates.CNY:previous.rates?.[currency]/previous.rates.CNY;
+            let price=currency==='HKD'?1/latest.rates.CNY:latest.rates?.[currency]/latest.rates.CNY;
+            let close=currency==='HKD'?1/previous.rates.CNY:previous.rates?.[currency]/previous.rates.CNY;
             if(!Number.isFinite(price)||price<=0||!Number.isFinite(close)||close<=0)continue;
-            quotes.push({id:'cny_'+currency.toLowerCase(),price,percent:(price-close)/close*100,date:latest.date,previousDate:previous.date});
+            if(currency==='USD'){price=1/price;close=1/close;}
+            quotes.push({id:currency==='USD'?'usd_cny':'cny_'+currency.toLowerCase(),price,percent:(price-close)/close*100,date:latest.date,previousDate:previous.date});
         }
         const twd=await twdRequest;if(twd)quotes.push(twd);
         res.setHeader('Cache-Control','public, s-maxage=300, stale-while-revalidate=600');
