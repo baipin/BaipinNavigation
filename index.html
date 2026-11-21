@@ -1136,7 +1136,8 @@
             'https://rthk.hk/rthk/news/rss/c_expressnews_efinance.xml'
         ];
         const additionalRSS = [
-            'https://news.mingpao.com/rss/pns/s00004.xml'
+            'https://news.mingpao.com/rss/pns/s00004.xml',
+            'https://www.bbc.com/zhongwen/trad/business/index.xml'
         ];
         let savedRSS;
         try { savedRSS = JSON.parse(localStorage.getItem('custom_rss')); } catch {}
@@ -1146,6 +1147,12 @@
             if (customRSS.length) customRSS = [...new Set([...customRSS, ...additionalRSS])];
             localStorage.setItem('custom_rss',JSON.stringify(customRSS));
             localStorage.setItem('navi_rss_expansion_v1','1');
+        }
+        // Add BBC once for existing installations; later removal remains respected.
+        if (!localStorage.getItem('navi_rss_bbc_v1')) {
+            if (customRSS.length) customRSS=[...new Set([...customRSS,'https://www.bbc.com/zhongwen/trad/business/index.xml'])];
+            localStorage.setItem('custom_rss',JSON.stringify(customRSS));
+            localStorage.setItem('navi_rss_bbc_v1','1');
         }
         const cityRssCache = new Map();
         function cityReadRss(url) {
@@ -1469,7 +1476,7 @@ function setBackgroundToCookie(value) {
             };
 
             // 收集主要 localStorage 键值（与页面使用的键一致）
-            const lsKeys = ['bp_v7', 'custom_engines', 'last_engine', 'theme_mode', 'custom_rss', 'navi_city_stocks', 'navi_city_feed', 'navi_rss_expansion_v1'];
+            const lsKeys = ['bp_v7', 'custom_engines', 'last_engine', 'theme_mode', 'custom_rss', 'navi_city_stocks', 'navi_city_feed', 'navi_rss_expansion_v1', 'navi_rss_bbc_v1'];
             lsKeys.forEach(key => {
                 const val = localStorage.getItem(key);
                 if (val !== null) allData.localStorage[key] = val;
@@ -1513,7 +1520,7 @@ function setBackgroundToCookie(value) {
                         });
                     }
                     
-                    if (Object.prototype.hasOwnProperty.call(imported.localStorage || {},'custom_rss')) localStorage.setItem('navi_rss_expansion_v1','1');
+                    if (Object.prototype.hasOwnProperty.call(imported.localStorage || {},'custom_rss')) {localStorage.setItem('navi_rss_expansion_v1','1');localStorage.setItem('navi_rss_bbc_v1','1');}
                     // 恢复 cookies
                     if (imported.cookies) {
                         setAllCookies(imported.cookies);

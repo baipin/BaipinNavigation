@@ -135,6 +135,18 @@
         { id:'microsoft', symbol:'MSFT', names:['微软','微軟'] },
         { id:'nvidia', symbol:'NVDA', names:['英伟达','輝達'] },
         { id:'tesla', symbol:'TSLA', names:['特斯拉','特斯拉'] },
+        { id:'pdd', symbol:'PDD', names:['拼多多','拼多多'] },
+        { id:'babaadr', symbol:'BABA', names:['阿里巴巴 ADR','阿里巴巴 ADR'] },
+        { id:'qualcomm', symbol:'QCOM', names:['高通','高通'] },
+        { id:'oracle', symbol:'ORCL', names:['甲骨文','甲骨文'] },
+        { id:'costco', symbol:'COST', names:['好市多','好市多'] },
+        { id:'exxon', symbol:'XOM', names:['埃克森美孚','埃克森美孚'] },
+        { id:'goldman', symbol:'GS', names:['高盛','高盛'] },
+        { id:'sony', symbol:'SONY', names:['索尼 ADR','索尼 ADR'] },
+        { id:'trip', symbol:'9961.HK', names:['携程集团','攜程集團'] },
+        { id:'netease', symbol:'9999.HK', names:['网易','網易'] },
+        { id:'jdhealth', symbol:'6618.HK', names:['京东健康','京東健康'] },
+        { id:'midea', symbol:'000333.SZ', names:['美的集团','美的集團'] },
         { id:'cny', dom:'city-fx', names:['港币 / 人民币','港幣 / 人民幣'] },
         { id:'jpy', dom:'city-jpy', names:['港币 / 日圆','港幣 / 日圓'] },
         { id:'chf', dom:'city-chf', names:['港币 / 瑞郎','港幣 / 瑞郎'] },
@@ -350,7 +362,7 @@
         const resetSpeed=document.createElement('button');resetSpeed.type='button';resetSpeed.className='city-feed-speed-reset';resetSpeed.textContent=text('恢复默认速度','恢復預設速度');resetSpeed.addEventListener('click',()=>speedSettings.querySelectorAll('input').forEach(input=>{input.value=displayDefaults[input.dataset.speedKey];input.dispatchEvent(new Event('input'));}));speedSettings.append(resetSpeed);
         const rss=stockDialog.querySelector('.city-feed-rss-options');rss.replaceChildren();
         const sources=typeof customRSS!=='undefined'?customRSS:[];
-        const names={'hk.news.yahoo.com':'Yahoo 香港新闻','rthk.hk':'香港电台','www.chinanews.com.cn':'中国新闻网','news.mingpao.com':'明报','www.rti.org.tw':'中央广播电台'};
+        const names={'hk.news.yahoo.com':'Yahoo 香港新闻','rthk.hk':'香港电台','www.chinanews.com.cn':'中国新闻网','news.mingpao.com':'明报','www.rti.org.tw':'中央广播电台','www.bbc.com':'BBC 中文商业'};
         sources.forEach(url=>{let host=url;try{host=new URL(url).hostname;}catch{}const input=checkbox(rss,url,(names[host] || host)+' · '+url,displaySettings.rssSources===null || displaySettings.rssSources.includes(url),'rss');input.closest('label').title=url;});
         stockDialog.querySelector('.city-feed-rss-hint').textContent=text('这里只选择 CITY FEED 显示哪些 RSS。RSS 列表的添加、编辑和移除，请到上方「香港新闻」容器的 RSS 图标管理；这些设置均支持导入导出。','這裡只選擇 CITY FEED 顯示哪些 RSS。RSS 清單的新增、編輯和移除，請到上方「香港新聞」容器的 RSS 圖示管理；這些設定均支援匯入匯出。');
         stockDialog.querySelector('.city-feed-stock-error').textContent='';stockDialog.querySelector('.city-feed-stock-feedback').textContent='';

@@ -1,5 +1,18 @@
 // One same-origin request supplies the broadcast strip; no API key is needed.
 const instruments = {
+    usPDD:{id:'pdd',symbol:'PDD',zone:'America/New_York'},
+    usBABA:{id:'babaadr',symbol:'BABA',zone:'America/New_York'},
+    usQCOM:{id:'qualcomm',symbol:'QCOM',zone:'America/New_York'},
+    usORCL:{id:'oracle',symbol:'ORCL',zone:'America/New_York'},
+    usCOST:{id:'costco',symbol:'COST',zone:'America/New_York'},
+    usXOM:{id:'exxon',symbol:'XOM',zone:'America/New_York'},
+    usGS:{id:'goldman',symbol:'GS',zone:'America/New_York'},
+    usSONY:{id:'sony',symbol:'SONY',zone:'America/New_York'},
+    hk09961:{id:'trip',symbol:'9961.HK',zone:'Asia/Hong_Kong'},
+    hk09999:{id:'netease',symbol:'9999.HK',zone:'Asia/Hong_Kong'},
+    hk06618:{id:'jdhealth',symbol:'6618.HK',zone:'Asia/Hong_Kong'},
+    sz000333:{id:'midea',symbol:'000333.SZ',zone:'Asia/Shanghai'},
+
     hkHSI:{id:'hsi',symbol:'^HSI',zone:'Asia/Hong_Kong'},
     usDJI:{id:'dow',symbol:'^DJI',zone:'America/New_York'},
     usIXIC:{id:'nasdaq',symbol:'^IXIC',zone:'America/New_York'},
