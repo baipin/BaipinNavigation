@@ -76,3 +76,7 @@ OAuth 品牌信息的“应用首页”必须使用 `https://123.baipon.com/`，
 背景设置增加天文台天气摄影机和运输署交通快拍：可搜索地点并点击缩略图设为背景，镜头每批展示 12 个，图像按可见范围载入。天气背景每 3 分钟、交通背景每 2 分钟更新，支持暂停自动更新、手动刷新及恢复照片背景；后台页面不定时请求图片，加载失败保留最后背景。`navi_camera_background` 只保存来源、镜头编号及刷新偏好，随预设导入导出、Google/GitHub 同步及恢复默认设置处理，照片 Cookie 保留为备用背景。
 
 镜头目录 `data/background-cameras.json` 于 2026-11-22 取自 [天文台天气照片](https://www.hko.gov.hk/tc/wxinfo/ts/index_webcam.htm)（34 个）及 [运输署交通快拍官方目录](https://static.data.gov.hk/td/traffic-snapshot-images/code/Traffic_Camera_Locations_Tc.csv)（973 个）。交通快拍本身通常为 320×240，并非视频。广告保持在快捷访问容器底部，剩余高度由上方快捷访问区域承担。
+
+交通直播背景提供香港、九龙、荃湾、屯门及屯门（汀九—大榄角）五组官方轮播，可选首帧静态背景或静音视频背景，支持缩略图选择。首帧截取后停止播放；视频每 2 分钟重新请求，切至后台暂停并保留静态画面，返回后重新连接。偏好随导入导出及同步保存，不包含视频或短期播放令牌。来源：https://www.hkemobility.gov.hk/sc/traffic-information/live/webcast 。
+
+`api/webcast.js` 仅代理上述五组官方 HLS 清单与限定文件名的视频片段，不接受任意上游地址；响应不缓存。浏览器使用原生 HLS 或本地 `js/vendor/hls.light.min.js`（hls.js 1.6.15，BSD-2-Clause，许可证见同目录 hls-LICENSE）。

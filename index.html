@@ -55,8 +55,8 @@
         .logo-area { display: flex; align-items: center; gap: 12px; font-weight: 900; font-size: 1.2rem; }
         .logo-area img { height: 32px; }
         .hero-space { height:var(--hero-height); display:flex; align-items:center; justify-content:center; padding-top:var(--nav-height); }
-        .app-site-footer { width:100%; margin-top:16px; padding:24px 5% 20px; box-sizing:border-box; background:rgba(255,255,255,.65); color:var(--text-main); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-top:1px solid var(--glass-border); }
-        .mdui-theme-dark .app-site-footer { background:rgba(30,30,35,.65); }
+        .app-site-footer { width:100%; margin-top:16px; padding:24px 5% 20px; box-sizing:border-box; background:rgba(255,255,255,.4); color:var(--text-main); backdrop-filter:blur(28px) saturate(140%); -webkit-backdrop-filter:blur(28px) saturate(140%); border-top:1px solid rgba(255,255,255,.35); }
+        .mdui-theme-dark .app-site-footer { background:rgba(30,30,35,.4); border-top-color:rgba(255,255,255,.12); }
         .app-overview { box-sizing:border-box; width:100%; max-width:1160px; margin:0 auto; }
         .footer-brand { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
         .footer-brand img { width:36px; height:36px; flex:none; }
@@ -476,6 +476,8 @@
         @media(prefers-reduced-motion:reduce) { .warning-history-table tbody tr { transition:none; } }
         .settings-reset { margin-top:24px; padding-top:16px; border-top:1px solid var(--glass-border); }
         .settings-background-actions { display:flex; flex-direction:column; align-items:flex-start; gap:12px; }
+        .webcast-capture-video { position:fixed; left:-9999px; top:0; width:1px; height:1px; pointer-events:none; }
+        .webcast-live-background { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:-1; pointer-events:none; }
         .camera-gallery { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:16px 0; }
         .camera-thumbnail { position:relative; min-width:0; min-height:120px; padding:0; overflow:hidden; border:2px solid transparent; border-radius:12px; background:rgba(128,128,128,.1); color:inherit; text-align:left; font:inherit; cursor:pointer; transition:border-color .15s,background-color .15s; }
         .camera-thumbnail:hover { background:rgba(128,128,128,.2); }
@@ -798,7 +800,7 @@
         </mdui-tab-panel>
         <mdui-tab-panel slot="panel" value="background" class="settings-panel" data-settings-panel="background">
             <h3 data-settings-text="backgroundTitle">首页背景</h3>
-            <div class="settings-districts"><label><span data-camera-source-label>背景来源</span><select id="background-camera-source"><option value="photo">照片／默认背景</option><option value="hko">天文台天气摄影机</option><option value="traffic">交通快拍图像</option></select></label></div>
+            <div class="settings-districts"><label><span data-camera-source-label>背景来源</span><select id="background-camera-source"><option value="photo">照片／默认背景</option><option value="hko">天文台天气摄影机</option><option value="traffic">交通快拍图像</option><option value="webcast">交通直播首帧</option><option value="webcast-live">交通直播视频</option></select></label></div>
             <div class="settings-background-actions">
                 <mdui-button variant="tonal" id="random-bg-btn" icon="image" data-settings-text="random">从 Unsplash 获取随机背景</mdui-button>
                 <mdui-button variant="outlined" id="reset-bg-btn" icon="restore" data-settings-text="reset">恢复默认背景</mdui-button>
@@ -4073,7 +4075,7 @@ function setBackgroundToCookie(value) {
     </script>
     <script src="js/app-info.js?v=local-greeting-title-v2"></script>
     <script src="js/settings.js?v=material-tabs-v2"></script>
-    <script type="module" src="js/camera-background.js?v=camera-background-v1"></script>
+    <script type="module" src="js/camera-background.js?v=traffic-webcast-v2"></script>
     <script type="module" src="js/sync.js?v=camera-background-v1"></script>
 </body>
 </html>
