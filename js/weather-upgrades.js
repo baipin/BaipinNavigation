@@ -52,11 +52,15 @@
     const icons = {WCOLD:'cold',WHOT:'vhot',WMSGNL:'msn',WFROST:'frost',WFNTSA:'ntfl',WL:'landslip',WTMW:'tsunami-warn',WTM:'tsunami-warn',WFIREY:'firey',WFIRER:'firer',WRAINA:'raina',WRAINR:'rainr',WRAINB:'rainb',WTS:'ts',TC1:'tc1',TC3:'tc3',TC8NE:'tc8ne',TC8NW:'tc8nw',TC8SE:'tc8se',TC8SW:'tc8sw',TC9:'tc9',TC10:'tc10'};
     const warnings = document.createElement('span'); warnings.id = 'city-weather-warnings'; warnings.className = 'city-weather-warnings';
     const temperature = document.querySelector('.temp-display');
-    const tempRow = document.createElement('div'); tempRow.className = 'city-temperature-row';
-    temperature?.before(tempRow); if (temperature) tempRow.append(temperature,warnings);
+    const weatherHeader = temperature?.closest('.weather-header');
+    temperature?.parentElement.classList.add('city-weather-reading');
+    weatherHeader?.append(warnings);
+    warnings.setAttribute('role','group');
+    warnings.setAttribute('aria-label',t('生效天气警告','生效天氣警告'));
     let summary = {};
     function renderWarnings() {
         warnings.replaceChildren();
+        warnings.setAttribute('aria-label',t('生效天气警告','生效天氣警告'));
         Object.entries(summary).forEach(([key,warning])=> {
             if (warning.actionCode === 'CANCEL' || (warning.expireTime && Date.parse(warning.expireTime) < Date.now())) return;
             const prefix = icons[warning.code] || icons[key];

@@ -87,7 +87,12 @@
     const state = new Map();
     let marketSource = 'Tencent Finance / Yahoo Finance';
     const markets = [
+        { id:'cfets', index:true, external:true, url:'https://www.chinamoney.com.cn/chinese/bkrmbidx/', names:['CFETS人民币指数','CFETS人民幣指數'] },
+        { id:'gold', index:true, external:true, url:'https://finance.sina.com.cn/futures/quotes/XAU.shtml', names:['伦敦金卖出/盎司','倫敦金賣出/盎司'] },
         { id:'hsi', symbol:'^HSI', names:['恒生指数','恒生指數'] },
+        { id:'dow', symbol:'^DJI', index:true, names:['道琼斯工业','道瓊斯工業'] },
+        { id:'nikkei', symbol:'^N225', index:true, names:['日经225','日經225'] },
+        { id:'kospi', symbol:'^KS11', index:true, names:['韩国KOSPI','韓國KOSPI'] },
         { id:'nasdaq', symbol:'^IXIC', names:['纳斯达克','納斯達克'] },
         { id:'sp500', symbol:'^GSPC', names:['标普500','標普500'] },
         { id:'ftse', symbol:'^FTSE', names:['富时100','富時100'] },
@@ -209,7 +214,7 @@
     const timers = new WeakMap();
     function renderQuote(slot, market) {
         const quote = state.get(market.id);
-        slot.href = market.symbol ? 'https://finance.yahoo.com/quote/' + encodeURIComponent(market.symbol) + '/' : 'https://www.google.com/finance/quote/' + ({cny:'HKD-CNY',jpy:'HKD-JPY',chf:'HKD-CHF',usd:'USD-HKD'}[market.id]);
+        slot.href = market.url || (market.symbol ? 'https://finance.yahoo.com/quote/' + encodeURIComponent(market.symbol) + '/' : 'https://www.google.com/finance/quote/' + ({cny:'HKD-CNY',jpy:'HKD-JPY',chf:'HKD-CHF',usd:'USD-HKD'}[market.id]));
         const name = market.names[isSC() ? 0 : 1];
         const price = quote?.price || '--';
         const change = quote?.change || (quote?.failed ? text('不可用','不可用') : text('读取中','讀取中'));
@@ -523,15 +528,16 @@
                 const custom=markets.find(item=>item.id===quote.id && item.id.startsWith('custom:'));
                 if (custom && quote.name) custom.names=[String(quote.name),String(quote.name)];
                 state.set(quote.id, {
-                    price:quote.price.toLocaleString('en-HK',{minimumFractionDigits:2,maximumFractionDigits:2}),
-                    change:(quote.percent>0?'+':'') + quote.percent.toFixed(2) + '%',
+                    price:(quote.id==='gold'?'US$':'')+quote.price.toLocaleString('en-HK',{minimumFractionDigits:2,maximumFractionDigits:2}),
+                    change:Number.isFinite(quote.changePoints) ? (quote.changePoints>0?'+':'')+quote.changePoints.toFixed(2)+text('点','點') : (quote.percent>0?'+':'') + quote.percent.toFixed(2) + '%',
                     direction:quote.percent>0?'up':quote.percent<0?'down':'flat',
                     time:quote.time + ' (' + quote.zone + ')'
                 });
                 available.add(quote.id);
             }
+            markets.filter(item=>item.external && !available.has(item.id)).forEach(item=>{const previous=state.get(item.id);state.set(item.id,previous?{...previous,stale:true}:{failed:true});});
             if (available.size) { markFresh('markets',true); marketSource = payload.source || 'Tencent Finance'; renderMarkets(); }
-        } catch { markFresh('markets',false); /* Static hosting can still use the public chart fallback. */ }
+        } catch { markets.filter(item=>item.external).forEach(item=>{const previous=state.get(item.id);state.set(item.id,previous?{...previous,stale:true}:{failed:true});});markFresh('markets',false); /* Static hosting can still use the public chart fallback. */ }
         await Promise.allSettled(markets.filter((item) => item.symbol && !available.has(item.id)).map(async (market) => {
             try {
                 const url = 'https://query2.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(market.symbol) + '?interval=1d&range=1d&_=' + Date.now();

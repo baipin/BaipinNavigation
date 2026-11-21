@@ -1,6 +1,7 @@
 // One same-origin request supplies the broadcast strip; no API key is needed.
 const instruments = {
     hkHSI:{id:'hsi',symbol:'^HSI',zone:'Asia/Hong_Kong'},
+    usDJI:{id:'dow',symbol:'^DJI',zone:'America/New_York'},
     usIXIC:{id:'nasdaq',symbol:'^IXIC',zone:'America/New_York'},
     usINX:{id:'sp500',symbol:'^GSPC',zone:'America/New_York'},
     ukUKX:{id:'ftse',symbol:'^FTSE',zone:'Europe/London'},
@@ -62,16 +63,41 @@ export default async function handler(req,res) {
         if(!requestedInstruments[code]) requestedInstruments[code]={id:'custom:'+symbol,symbol,zone};
     });
     try {
-        const taiwanRequest = fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5ETWII?interval=1d&range=1d',{
-            headers:{'User-Agent':'Mozilla/5.0'},signal:AbortSignal.timeout(7000)
-        }).then(async response=> {
-            if (!response.ok) return null;
-            const payload = await response.json();
-            const meta = payload.chart?.result?.[0]?.meta;
-            const price = Number(meta?.regularMarketPrice), close = Number(meta?.previousClose ?? meta?.chartPreviousClose);
-            if (!Number.isFinite(price) || price<=0 || !Number.isFinite(close) || close<=0) return null;
-            return {id:'taiwan',symbol:'^TWII',zone:'Asia/Taipei',price,percent:Number.isFinite(meta.regularMarketChangePercent)?meta.regularMarketChangePercent:(price-close)/close*100,time:meta.regularMarketTime?new Date(meta.regularMarketTime*1000).toLocaleString('sv-SE',{timeZone:'Asia/Taipei'}):''};
-        }).catch(()=>null);
+        const referenceRequest = Promise.allSettled([
+            (async()=> {
+                const response=await fetch('https://www.chinamoney.com.cn/r/cms/www/chinamoney/data/fx/rmb-idx.json',{headers:{'User-Agent':'Mozilla/5.0'},signal:AbortSignal.timeout(7000)});
+                if(!response.ok) throw Error('CFETS unavailable');
+                const payload=await response.json(),vo=payload.data?.vo;
+                const price=Number(vo?.cfetsIndexRate),changePoints=Number(vo?.cfetsIndexBp);
+                if(!vo?.cfetsIndexRate || !vo?.cfetsIndexBp || !Number.isFinite(price)||price<=0||!Number.isFinite(changePoints)||price-changePoints<=0) throw Error('Invalid CFETS quote');
+                return {id:'cfets',price,changePoints,percent:changePoints/(price-changePoints)*100,time:payload.data.date,zone:'Asia/Shanghai'};
+            })(),
+            (async()=> {
+                const response=await fetch('https://hq.sinajs.cn/list=hf_XAU',{headers:{'User-Agent':'Mozilla/5.0','Referer':'https://finance.sina.com.cn/'},signal:AbortSignal.timeout(7000)});
+                if(!response.ok) throw Error('Gold unavailable');
+                const raw=await response.text(),match=raw.match(/hq_str_hf_XAU="([^"]*)"/),fields=match?.[1].split(',');
+                // hf_XAU fields: last, change, bid, ask, high, low, time, previous close ... date.
+                const price=Number(fields?.[3]),close=Number(fields?.[7]);
+                if(!fields?.[3] || !Number.isFinite(price)||price<=0||!Number.isFinite(close)||close<=0) throw Error('Invalid gold ask');
+                return {id:'gold',price,percent:(price-close)/close*100,time:[fields[12],fields[6]].join(' '),zone:'Asia/Shanghai',unit:'USD/troy oz',quoteType:'ask'};
+            })()
+        ]);
+        const internationalRequest = Promise.all([
+            {id:'taiwan',symbol:'^TWII',zone:'Asia/Taipei'},
+            {id:'nikkei',symbol:'^N225',zone:'Asia/Tokyo'},
+            {id:'kospi',symbol:'^KS11',zone:'Asia/Seoul'}
+        ].map(async instrument=> {
+            try {
+                const response=await fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(instrument.symbol)+'?interval=1d&range=1d',{
+                    headers:{'User-Agent':'Mozilla/5.0'},signal:AbortSignal.timeout(7000)
+                });
+                if(!response.ok) return null;
+                const payload=await response.json(),meta=payload.chart?.result?.[0]?.meta;
+                const price=Number(meta?.regularMarketPrice),close=Number(meta?.previousClose ?? meta?.chartPreviousClose);
+                if(!Number.isFinite(price)||price<=0||!Number.isFinite(close)||close<=0) return null;
+                return {...instrument,price,percent:Number.isFinite(meta.regularMarketChangePercent)?meta.regularMarketChangePercent:(price-close)/close*100,time:meta.regularMarketTime?new Date(meta.regularMarketTime*1000).toLocaleString('sv-SE',{timeZone:instrument.zone}):''};
+            } catch {return null;}
+        }));
         const response = await fetch('https://qt.gtimg.cn/q=' + Object.keys(requestedInstruments).join(','), {
             headers:{'User-Agent':'Mozilla/5.0'}, signal:AbortSignal.timeout(8000)
         });
@@ -87,11 +113,12 @@ export default async function handler(req,res) {
             if (!fields[3] || !fields[32] || !Number.isFinite(price) || price <= 0 || !Number.isFinite(percent)) continue;
             quotes.push({...instrument,...(instrument.id.startsWith('custom:') ? {name:fields[1]} : {}),price,percent,time:fields[30] || ''});
         }
-        const taiwan = await taiwanRequest;
-        if (taiwan) quotes.push(taiwan);
+        const international = (await internationalRequest).filter(Boolean);
+        quotes.push(...international);
+        quotes.push(...(await referenceRequest).flatMap(result=>result.status==='fulfilled'?[result.value]:[]));
         if (!quotes.length) throw new Error('No valid market quotes');
         res.setHeader('Cache-Control','public, s-maxage=60, stale-while-revalidate=300');
-        return res.status(200).json({source:taiwan?'Tencent Finance / Yahoo Finance':'Tencent Finance',quotes,fetchedAt:new Date().toISOString()});
+        return res.status(200).json({source:international.length?'Tencent Finance / Yahoo Finance':'Tencent Finance',quotes,fetchedAt:new Date().toISOString()});
     } catch {
         return res.status(502).json({error:'Market quotes temporarily unavailable'});
     }
