@@ -8,7 +8,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>百品导航 · Baipin Navigation</title>
+    <title>百品导航</title>
     <meta name="description" content="百品导航是无需登录即可使用的个人导航与香港资讯首页，支持书签、搜索、RSS、天气、交通、市场资讯及可选的 Google Drive 多端预设同步。">
     <link rel="canonical" href="https://123.baipon.com/">
     <link rel="icon" type="image/png" href="img/logo.png">
@@ -160,10 +160,7 @@
             background: rgba(255, 255, 255, 0.12);
         }
 
-        .site-legal-links { display:inline-flex; flex-wrap:wrap; justify-content:center; gap:18px; margin:0; font-size:.85rem; }
-        .site-legal-links a { color:inherit; padding:8px 0; text-underline-offset:3px; }
         #photo-credit { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:12px; }
-        @media(max-width:600px) { #photo-credit .site-legal-links { flex-basis:100%; } }
         #preset-sync-panel a { color:inherit; text-underline-offset:3px; }
         #preset-sync-panel { min-width:0; max-width:520px; }
         #preset-sync-panel [hidden] { display:none !important; }
@@ -609,10 +606,6 @@
     ">
          <span id="photo-attribution">浙江丽水云和梯田 / 站长拍摄</span>
          <mdui-button-icon id="language-toggle-btn" class="city-language-btn" icon="translate" title="切换简繁中文" aria-label="切换简繁中文"></mdui-button-icon>
-    <nav class="site-legal-links" aria-label="政策与条款">
-        <a href="/privacy.html" data-site-legal="privacy">隐私政策</a>
-        <a href="/terms.html" data-site-legal="terms">服务条款</a>
-    </nav>
     </div>
 </div>
     </div>
@@ -3907,17 +3900,15 @@ function setBackgroundToCookie(value) {
     <script src="js/layout.js"></script>
     <footer class="app-site-footer" aria-label="关于百品导航">
         <section class="app-overview" id="app-overview" aria-labelledby="app-name">
-            <div class="footer-brand"><img src="/img/logo.png" alt=""><h1 id="app-name" data-app-info="name">百品导航 · Baipin Navigation</h1></div>
+            <div class="footer-brand"><img src="/img/logo.png" alt=""><h1 id="app-name" data-app-info="name">百品导航</h1></div>
             <p class="app-purpose" data-app-info="purpose">一站式个人导航与香港资讯首页</p>
             <div class="footer-description"><div>
             <p data-app-info="features">管理快捷书签、切换搜索引擎、订阅 RSS 新闻，查看香港天气、交通及市场资讯，并自定义首页布局与偏好。</p>
-            <p data-app-info="access">无需登录即可使用导航、搜索、资讯和本机设置，也可直接阅读本站的隐私政策与服务条款。</p>
+            <p data-app-info="access">无需登录即可使用导航、搜索、资讯和本机设置。</p>
             </div><div>
-            <p class="app-data-use" data-app-info="sync">Google 登录仅用于可选的多端预设同步：用账号标识、姓名和邮箱识别同步账号，在你自己的 Google Drive 应用专用空间保存本站预设。只申请 drive.appdata，不读取其他 Drive 文件、Gmail、通讯录或日历。</p>
-            <p class="app-data-use" data-app-info="limits">本站的 Google API 功能仅用于账号识别与预设同步；不提供 AI 图像生成，不将 Google API 或用户数据用于 AI 生成的未经当事人同意的私密图像（AI NCII），也不用于通用 AI 模型训练。</p>
+            <p class="app-data-use" data-app-info="sync">Google 登录仅用于可选的多端预设同步：本站使用账号标识、姓名和邮箱识别同步账号，并在你自己的 Google Drive 应用专用空间保存本站预设。本站的 Google API 功能仅用于账号识别与预设同步；不提供 AI 图像生成，不将 Google API 或用户数据用于 AI 生成的未经当事人同意的私密图像（AI NCII），也不用于通用 AI 模型训练。本站不建立用户个人信息或预设数据库；同步所需资料仅在请求期间由服务器临时处理，不另行持久保存。</p>
             </div></div>
             <nav aria-label="应用信息与政策">
-                <a href="#main-container" data-app-info="continue">无需登录，直接使用</a>
                 <a href="/privacy.html" data-app-policy="privacy" data-app-info="privacy">隐私政策</a>
                 <a href="/terms.html" data-app-policy="terms" data-app-info="terms">服务条款</a>
             </nav>
