@@ -8,7 +8,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>百品导航 - Hi!</title>
+    <title>百品导航 · Baipin Navigation</title>
+    <meta name="description" content="百品导航是无需登录即可使用的个人导航与香港资讯首页，支持书签、搜索、RSS、天气、交通、市场资讯及可选的 Google Drive 多端预设同步。">
+    <link rel="canonical" href="https://123.baipon.com/">
     <link rel="icon" type="image/png" href="img/logo.png">
    
     <link rel="stylesheet" href="https://unpkg.com/mdui@2.0.3/mdui.css">
@@ -49,7 +51,22 @@
         }
         .logo-area { display: flex; align-items: center; gap: 12px; font-weight: 900; font-size: 1.2rem; }
         .logo-area img { height: 32px; }
-        .hero-space { height: var(--hero-height); display: flex; align-items: center; justify-content: center; padding-top: var(--nav-height); }
+        .hero-space { height:var(--hero-height); display:flex; align-items:center; justify-content:center; padding-top:var(--nav-height); }
+        .app-site-footer { width:100%; margin-top:16px; padding:48px 5% 40px; box-sizing:border-box; background:#15171b; color:#b6bac3; }
+        .app-overview { box-sizing:border-box; width:100%; max-width:1160px; margin:0 auto; }
+        .footer-brand { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
+        .footer-brand img { width:48px; height:48px; filter:grayscale(1) brightness(1.3); opacity:.55; flex:none; }
+        .app-overview h1 { margin:0; color:#d1d3d8; font-size:clamp(1.25rem,3vw,1.6rem); font-weight:800; }
+        .app-overview p { margin:10px 0; line-height:1.8; font-size:.88rem; overflow-wrap:anywhere; }
+        .app-overview .app-purpose { color:#d1d3d8; font-weight:600; }
+        .footer-description { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px 48px; }
+        .app-overview .app-data-use { font-size:.82rem; color:#9ba1ac; }
+        .app-overview nav { display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; margin-top:24px; padding-top:20px; border-top:1px solid #34373e; font-size:.85rem; }
+        .app-overview a { color:#d1d3d8; text-underline-offset:4px; }
+        .app-overview a:hover { color:#fff; }
+        .app-overview a:focus-visible { outline:2px solid currentColor; outline-offset:4px; }
+        #main-container { scroll-margin-top:88px; }
+        @media(max-width:600px) { .app-site-footer { padding:32px 24px; } .footer-description { grid-template-columns:minmax(0,1fr); gap:0; } .footer-brand { gap:12px; } .footer-brand img { width:40px; height:40px; } }
         .search-container {
             box-sizing: border-box;
             min-width: 0;
@@ -3888,6 +3905,25 @@ function setBackgroundToCookie(value) {
     </script>
     <script src="js/city-feed.js"></script>
     <script src="js/layout.js"></script>
+    <footer class="app-site-footer" aria-label="关于百品导航">
+        <section class="app-overview" id="app-overview" aria-labelledby="app-name">
+            <div class="footer-brand"><img src="/img/logo.png" alt=""><h1 id="app-name" data-app-info="name">百品导航 · Baipin Navigation</h1></div>
+            <p class="app-purpose" data-app-info="purpose">一站式个人导航与香港资讯首页</p>
+            <div class="footer-description"><div>
+            <p data-app-info="features">管理快捷书签、切换搜索引擎、订阅 RSS 新闻，查看香港天气、交通及市场资讯，并自定义首页布局与偏好。</p>
+            <p data-app-info="access">无需登录即可使用导航、搜索、资讯和本机设置，也可直接阅读本站的隐私政策与服务条款。</p>
+            </div><div>
+            <p class="app-data-use" data-app-info="sync">Google 登录仅用于可选的多端预设同步：用账号标识、姓名和邮箱识别同步账号，在你自己的 Google Drive 应用专用空间保存本站预设。只申请 drive.appdata，不读取其他 Drive 文件、Gmail、通讯录或日历。</p>
+            <p class="app-data-use" data-app-info="limits">本站的 Google API 功能仅用于账号识别与预设同步；不提供 AI 图像生成，不将 Google API 或用户数据用于 AI 生成的未经当事人同意的私密图像（AI NCII），也不用于通用 AI 模型训练。</p>
+            </div></div>
+            <nav aria-label="应用信息与政策">
+                <a href="#main-container" data-app-info="continue">无需登录，直接使用</a>
+                <a href="/privacy.html" data-app-policy="privacy" data-app-info="privacy">隐私政策</a>
+                <a href="/terms.html" data-app-policy="terms" data-app-info="terms">服务条款</a>
+            </nav>
+        </section>
+    </footer>
+    <script src="js/app-info.js"></script>
     <script type="module" src="js/sync.js"></script>
 </body>
 </html>
