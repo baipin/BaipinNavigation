@@ -14,7 +14,7 @@
     function labels() {
         dialog.querySelector('[slot="headline"]').textContent=t('天气警告','天氣警告');
         dialog.querySelector('[data-warning-heading="details"]').textContent=selected?.name || t('警告详情','警告詳情');
-        dialog.querySelector('[data-warning-heading="history"]').textContent=t('当日警告记录（全部警告）','當日警告記錄（全部警告）');
+        dialog.querySelector('[data-warning-heading="history"]').textContent=t('当日警告记录','當日警告記錄');
         dialog.querySelector('[data-warning-close]').textContent=t('关闭','關閉');
         dialog.querySelector('[data-warning-refresh]').textContent=t('刷新','重新整理');
         const source=dialog.querySelector('[data-warning-source]');source.textContent=t('香港天文台原始记录','香港天文台原始記錄');source.href='https://www.hko.gov.hk/'+(sc()?'sc':'tc')+'/wxinfo/dailywx/wxwarntoday.htm';
@@ -38,13 +38,35 @@
                 if(dataDay!==today)paragraph(history,t('天文台尚未提供今天的记录；以下为最近一份记录。','天文台尚未提供今天的記錄；以下為最近一份記錄。'),'warning-meta');
                 const rows=[...data.history].sort((a,b)=>date(b.issueTime)-date(a.issueTime));
                 if(!rows.length)paragraph(history,t('当天没有警告记录。','當天沒有警告記錄。'));
-                for(const item of rows) {
-                    const card=document.createElement('article');card.className='warning-record';
-                    const heading=document.createElement('strong');heading.textContent=[item.type,item.name].filter(Boolean).join(' · ');card.append(heading);
-                    paragraph(card,t('发出：','發出：')+time(item.issueTime));
-                    const expired=item.action==='CANCEL' || date(item.expireTime)<=Date.now();
-                    paragraph(card,expired?t('取消：','取消：')+time(item.expireTime):t('现正生效','現正生效'));
-                    history.append(card);
+                if(rows.length) {
+                    const table=document.createElement('table');table.className='warning-history-table';
+                    table.setAttribute('aria-label',t('当日警告记录','當日警告記錄'));
+                    const head=table.createTHead().insertRow();
+                    for(const text of [t('警告信号','警告信號'),t('发出时间','發出時間'),t('取消时间／状态','取消時間／狀態')]) {
+                        const th=document.createElement('th');th.scope='col';th.textContent=text;head.append(th);
+                    }
+                    const body=table.createTBody();
+                    const icons={WCOLD:'cold',WHOT:'vhot',WMSGNL:'msn',WFROST:'frost',WFNTSA:'ntfl',WL:'landslip',WTMW:'tsunami-warn',WTM:'tsunami-warn',WFIREY:'firey',WFIRER:'firer',WRAINA:'raina',WRAINR:'rainr',WRAINB:'rainb',WTS:'ts',TC1:'tc1',TC3:'tc3',TC8NE:'tc8ne',TC8NW:'tc8nw',TC8SE:'tc8se',TC8SW:'tc8sw',TC9:'tc9',TC10:'tc10'};
+                    const addTime=(cell,value)=> {
+                        const stamp=date(value);
+                        if(!Number.isFinite(stamp)){cell.textContent=t('时间未提供','時間未提供');return;}
+                        const element=document.createElement('time');element.dateTime=new Date(stamp).toISOString();
+                        element.textContent=new Date(stamp).toLocaleTimeString(sc()?'zh-CN':'zh-HK',{timeZone:'Asia/Hong_Kong',hour:'2-digit',minute:'2-digit',hour12:false});
+                        const day=document.createElement('small');day.textContent=new Date(stamp).toLocaleDateString(sc()?'zh-CN':'zh-HK',{timeZone:'Asia/Hong_Kong',year:'numeric',month:'2-digit',day:'2-digit'});
+                        element.append(day);cell.append(element);
+                    };
+                    for(const item of rows) {
+                        const row=body.insertRow(),name=[item.type,item.name].filter(Boolean).join(' · ');
+                        const label=document.createElement('th');label.scope='row';
+                        const icon=icons[item.code] || (item.code.startsWith('WMSGNL')?'msn':null);
+                        if(icon){const image=document.createElement('img');image.src='/img/hko-warnings/'+icon+'.gif';image.width=42;image.height=42;image.alt=name;label.append(image);}
+                        label.append(document.createTextNode(name));row.append(label);
+                        addTime(row.insertCell(),item.issueTime);
+                        const state=row.insertCell(),expired=item.action==='CANCEL' || date(item.expireTime)<=Date.now();
+                        if(expired)addTime(state,item.expireTime);
+                        else {state.textContent=t('现正生效','現正生效');state.className='warning-active';}
+                    }
+                    history.append(table);
                 }
             } else paragraph(history,t('当日记录暂时无法取得，请刷新重试或查看天文台原始记录。','當日記錄暫時無法取得，請重新整理或查看天文台原始記錄。'));
         } catch {if(current===revision){details.textContent=t('警告详情暂时无法取得。','警告詳情暫時無法取得。');history.textContent=t('当日记录暂时无法取得，请刷新重试或查看下方原始记录。','當日記錄暫時無法取得，請重新整理或查看下方原始記錄。');}}
