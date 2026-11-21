@@ -1,5 +1,6 @@
 (() => {
     const dialog=document.getElementById('data-manage-dialog');
+    const tabs=document.getElementById('settings-tabs');
     let current='general';
     const texts={
         sc:{title:'设置',general:'常规',background:'背景',sync:'登录与备份',appearance:'语言与显示',content:'内容配置',engine:'当前搜索引擎',weather:'天气预设地区',rain:'降雨量监测地区',aqhi:'空气质素 AQHI 监测地区',bookmarks:'快捷访问配置',engines:'搜索引擎配置',rss:'RSS 配置',city:'CITY FEED 配置',backgroundTitle:'首页背景',random:'从 Unsplash 获取随机背景',reset:'恢复默认背景',resetAll:'恢复默认设置',undoReset:'撤销上次恢复',backgroundHint:'背景会保存在此设备，开启同步后也可随预设同步。'},
@@ -14,6 +15,7 @@
         document.getElementById('data-manage-btn').setAttribute('aria-label',labels.title);
         document.getElementById('data-manage-btn').setAttribute('title',labels.title);
         document.getElementById('data-manage-close').textContent=sc?'关闭':'關閉';
+        tabs.setAttribute('aria-label',sc?'设置分类':'設定分類');
         document.getElementById('settings-rain-region').setAttribute('aria-label',labels.rain);
         document.getElementById('settings-aqhi-region').setAttribute('aria-label',labels.aqhi);
         document.getElementById('settings-current-engine').setAttribute('aria-label',labels.engine);
@@ -22,12 +24,11 @@
     function select(tab) {
         refreshDistricts();refreshEngines();
         current=['general','background','sync'].includes(tab)?tab:'general';
-        dialog.querySelectorAll('[data-settings-panel]').forEach(panel=>{panel.hidden=panel.dataset.settingsPanel!==current;});
-        dialog.querySelectorAll('[data-settings-tab]').forEach(button=>{const active=button.dataset.settingsTab===current;button.setAttribute('variant',active?'tonal':'text');button.setAttribute('aria-pressed',String(active));});
+        if(tabs.value!==current)tabs.value=current;
         if(current==='sync') document.dispatchEvent(new Event('navi-settings-sync-open'));
     }
     window.naviOpenSettings=(tab=current)=>{select(tab);dialog.open=true;};
-    dialog.querySelectorAll('[data-settings-tab]').forEach(button=>{button.onclick=()=>select(button.dataset.settingsTab);});
+    tabs.addEventListener('change',event=>{if(event.target===tabs)select(tabs.value);});
     document.getElementById('settings-language').onclick=()=>document.getElementById('language-toggle-btn').click();
     document.getElementById('settings-theme').onclick=()=>document.getElementById('theme-btn').click();
     function shortcut(id) {

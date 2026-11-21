@@ -58,15 +58,16 @@
                     for(const item of rows) {
                         const row=body.insertRow(),name=[item.type,item.name].filter(Boolean).join(' · ');
                         const label=document.createElement('th');label.scope='row';
+                        const signal=document.createElement('div');signal.className='warning-signal';
                         const icon=icons[item.code] || (item.code.startsWith('WMSGNL')?'msn':null);
-                        if(icon){const image=document.createElement('img');image.src='/img/hko-warnings/'+icon+'.gif';image.width=42;image.height=42;image.alt=name;label.append(image);}
-                        label.append(document.createTextNode(name));row.append(label);
+                        if(icon){const image=document.createElement('img');image.src='/img/hko-warnings/'+icon+'.gif';image.width=42;image.height=42;image.alt=name;signal.append(image);}
+                        const nameLabel=document.createElement('span');nameLabel.textContent=name;signal.append(nameLabel);label.append(signal);row.append(label);
                         addTime(row.insertCell(),item.issueTime);
                         const state=row.insertCell(),expired=item.action==='CANCEL' || date(item.expireTime)<=Date.now();
                         if(expired)addTime(state,item.expireTime);
-                        else {state.textContent=t('现正生效','現正生效');state.className='warning-active';}
+                        else {const status=document.createElement('span');status.textContent=t('现正生效','現正生效');status.className='warning-active-label';state.append(status);}
                     }
-                    history.append(table);
+                    const surface=document.createElement('div');surface.className='warning-table-surface';surface.append(table);history.append(surface);
                 }
             } else paragraph(history,t('当日记录暂时无法取得，请刷新重试或查看天文台原始记录。','當日記錄暫時無法取得，請重新整理或查看天文台原始記錄。'));
         } catch {if(current===revision){details.textContent=t('警告详情暂时无法取得。','警告詳情暫時無法取得。');history.textContent=t('当日记录暂时无法取得，请刷新重试或查看下方原始记录。','當日記錄暫時無法取得，請重新整理或查看下方原始記錄。');}}

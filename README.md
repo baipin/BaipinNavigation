@@ -70,3 +70,5 @@ OAuth 品牌信息的“应用首页”必须使用 `https://123.baipon.com/`，
 设置中的“恢复默认设置”仅还原预设允许列表中的本机偏好与背景，保留登录及云端文件，并暂停本设备所有账号的自动同步。确认框可先导出备份；同一标签页可用 sessionStorage 临时快照撤销恢复，快照不进入同步。
 
 点击温度旁的天文台警告图标可打开跟随深浅主题的详情弹窗，查看当前警告内容及当天全部警告的发出／取消记录表格（包含天文台原版警告图标）。`api/weather-warnings.js` 使用固定天文台 warningInfo 和官方警告页面引用的 wxwarntoday_uc.json 数据源，支持简繁中文、部分失败提示和手动刷新，时间以 UTC+8 显示；旧记录会标明日期。接口回归检查：`node tests/weather-warnings.test.mjs`。
+
+设置分类使用 MDUI 原生 `mdui-tabs`、`mdui-tab` 和 `mdui-tab-panel`，提供 Material 选中指示条、涟漪与键盘交互；OAuth 回调继续打开登录与备份标签。警告记录表采用 Material 数据表格排版、横向行分隔、圆角容器和主题色状态标签，保留语义化表头及原版警告图标。

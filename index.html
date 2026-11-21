@@ -425,8 +425,10 @@
     </style>
     <style>
         #data-manage-dialog [hidden], #search-clear[hidden], #footer-account[hidden], #footer-avatar[hidden], #footer-account [hidden] { display:none !important; }
-        .settings-tabs,.settings-actions { display:flex; flex-wrap:wrap; gap:8px; }
-        .settings-tabs { padding:0 0 16px; border-bottom:1px solid var(--glass-border); }
+        .settings-actions { display:flex; flex-wrap:wrap; gap:8px; }
+        .settings-tabs { display:block; width:100%; min-width:0; }
+        .settings-tabs mdui-tab { min-width:0; }
+        .settings-sync-content { display:flex; flex-direction:column; gap:16px; }
         .settings-panel { padding:16px 0; min-width:0; }
         .settings-panel h3 { margin:0 0 16px; font-size:1rem; }
         .settings-panel h3:not(:first-child) { margin-top:24px; }
@@ -443,16 +445,22 @@
         .warning-dialog-content p { margin:8px 0; white-space:pre-line; }
         .warning-meta { font-size:.82rem; opacity:.72; }
         .warning-dialog-content a { color:inherit; }
-        .warning-history-table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:.9rem; }
-        .warning-history-table th,.warning-history-table td { padding:12px 8px; border:1px solid rgba(128,128,128,.3); text-align:center; vertical-align:middle; overflow-wrap:anywhere; }
-        .warning-history-table thead th { background:rgba(128,128,128,.1); font-weight:600; }
-        .warning-history-table th:first-child { width:36%; }
-        .warning-history-table tbody th { font-weight:500; }
-        .warning-history-table img { display:block; width:42px; height:42px; object-fit:contain; margin:0 auto 6px; }
+        .warning-table-surface { border:1px solid rgba(128,128,128,.3); border-radius:12px; overflow:hidden; }
+        .warning-history-table { width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:.875rem; line-height:1.5; }
+        .warning-history-table th,.warning-history-table td { padding:14px 16px; border:0; border-bottom:1px solid rgba(128,128,128,.24); text-align:right; vertical-align:middle; overflow-wrap:anywhere; }
+        .warning-history-table thead th { height:48px; box-sizing:border-box; color:rgb(var(--mdui-color-on-surface-variant)); font-size:.75rem; font-weight:500; letter-spacing:.02em; }
+        .warning-history-table th:first-child { width:36%; text-align:left; }
+        .warning-history-table tbody th { font-weight:400; }
+        .warning-history-table tbody tr { transition:background-color 150ms ease; }
+        .warning-history-table tbody tr:hover { background:rgba(128,128,128,.08); }
+        .warning-history-table tbody tr:last-child>* { border-bottom:0; }
+        .warning-signal { display:flex; align-items:center; gap:12px; }
+        .warning-history-table img { display:block; flex:none; width:40px; height:40px; object-fit:contain; }
         .warning-history-table time { display:block; font-variant-numeric:tabular-nums; }
-        .warning-history-table time small { display:block; font-size:.8em; opacity:.75; }
-        .warning-active { font-weight:600; }
-        @media(max-width:600px) { .warning-history-table { font-size:.8rem; } .warning-history-table th,.warning-history-table td { padding:10px 4px; } .warning-history-table img { width:36px; height:36px; } }
+        .warning-history-table time small { display:block; font-size:.8em; opacity:.75; margin-top:2px; }
+        .warning-active-label { display:inline-block; padding:4px 10px; border-radius:8px; font-size:.75rem; font-weight:500; background:rgb(var(--mdui-color-primary-container)); color:rgb(var(--mdui-color-on-primary-container)); }
+        @media(max-width:600px) { .warning-history-table th,.warning-history-table td { padding:12px 8px; } .warning-signal { flex-direction:column; align-items:flex-start; gap:6px; } .warning-history-table img { width:36px; height:36px; } .warning-active-label { padding:4px 6px; } }
+        @media(prefers-reduced-motion:reduce) { .warning-history-table tbody tr { transition:none; } }
         .settings-reset { margin-top:24px; padding-top:16px; border-top:1px solid var(--glass-border); }
         .settings-background-actions { display:flex; flex-direction:column; align-items:flex-start; gap:12px; }
         #search-clear { flex:none; color:inherit; }
@@ -463,7 +471,7 @@
         #footer-account img,#footer-avatar-fallback { width:32px; height:32px; border-radius:50%; object-fit:cover; flex:none; }
         #footer-avatar-fallback { display:flex; align-items:center; justify-content:center; background:rgba(128,128,128,.16); }
         #footer-last-sync { display:block; margin-top:2px; opacity:.75; }
-        @media(max-width:600px) { .settings-tabs mdui-button { min-width:0; } .settings-background-actions mdui-button { max-width:100%; } .footer-meta { gap:8px; } }
+        @media(max-width:600px) { .settings-background-actions mdui-button { max-width:100%; } .footer-meta { gap:8px; } }
     </style>
     <link rel="stylesheet" href="city-feed.css">
 </head>
@@ -730,12 +738,11 @@
 <!-- 新增：数据导出导入对话框 -->
     <mdui-dialog id="data-manage-dialog" close-on-overlay-click>
         <span slot="headline" data-settings-text="title">设置</span>
-        <div class="settings-tabs" role="group" aria-label="设置分类">
-            <mdui-button variant="tonal" data-settings-tab="general" data-settings-text="general" aria-pressed="true">常规</mdui-button>
-            <mdui-button variant="text" data-settings-tab="background" data-settings-text="background" aria-pressed="false">背景</mdui-button>
-            <mdui-button variant="text" data-settings-tab="sync" data-settings-text="sync" aria-pressed="false">登录与备份</mdui-button>
-        </div>
-        <section class="settings-panel" data-settings-panel="general">
+        <mdui-tabs id="settings-tabs" class="settings-tabs" value="general" full-width aria-label="设置分类">
+            <mdui-tab value="general" data-settings-tab="general" data-settings-text="general">常规</mdui-tab>
+            <mdui-tab value="background" data-settings-tab="background" data-settings-text="background">背景</mdui-tab>
+            <mdui-tab value="sync" data-settings-tab="sync" data-settings-text="sync">登录与备份</mdui-tab>
+        <mdui-tab-panel slot="panel" value="general" class="settings-panel" data-settings-panel="general">
             <h3 data-settings-text="appearance">语言与显示</h3>
             <div class="settings-actions">
                 <mdui-button variant="tonal" icon="translate" id="settings-language">切换语言</mdui-button>
@@ -755,16 +762,16 @@
                 <mdui-button variant="outlined" icon="dashboard_customize" id="settings-city-feed" data-settings-text="city">CITY FEED 配置</mdui-button>
             </div>
             <div class="settings-reset"><mdui-button variant="outlined" icon="restart_alt" id="settings-reset" data-settings-text="resetAll">恢复默认设置</mdui-button> <mdui-button variant="text" id="settings-reset-undo" data-settings-text="undoReset" hidden>撤销上次恢复</mdui-button></div>
-        </section>
-        <section class="settings-panel" data-settings-panel="background" hidden>
+        </mdui-tab-panel>
+        <mdui-tab-panel slot="panel" value="background" class="settings-panel" data-settings-panel="background">
             <h3 data-settings-text="backgroundTitle">首页背景</h3>
             <div class="settings-background-actions">
                 <mdui-button variant="tonal" id="random-bg-btn" icon="image" data-settings-text="random">从 Unsplash 获取随机背景</mdui-button>
                 <mdui-button variant="outlined" id="reset-bg-btn" icon="restore" data-settings-text="reset">恢复默认背景</mdui-button>
             </div>
             <p class="preset-sync-hint" data-settings-text="backgroundHint">背景会保存在此设备，开启同步后也可随预设同步。</p>
-        </section>
-        <div class="settings-panel" data-settings-panel="sync" hidden style="display:flex; flex-direction:column; gap:16px;">
+        </mdui-tab-panel>
+        <mdui-tab-panel slot="panel" value="sync" class="settings-panel" data-settings-panel="sync"><div class="settings-sync-content">
             <section id="preset-sync-panel" aria-label="多端预设同步">
                 <strong>多端预设同步</strong>
                 <div class="preset-sync-actions" role="group" aria-label="选择同步服务" style="margin-top:12px;">
@@ -799,7 +806,8 @@
                 导出与同步使用相同的预设范围，不包含登录凭证或实时数据缓存。<br>
                 导入后页面将自动刷新。
             </div>
-        </div>
+        </div></mdui-tab-panel>
+        </mdui-tabs>
         <mdui-button slot="action" variant="text" id="data-manage-close">关闭</mdui-button>
     </mdui-dialog>
 
@@ -811,7 +819,7 @@
         <mdui-button slot="action" variant="text" id="settings-reset-cancel">取消</mdui-button>
         <mdui-button slot="action" variant="filled" id="settings-reset-confirm">恢复默认设置</mdui-button>
     </mdui-dialog>
-    <script src="js/weather-warning-dialog.js?v=warning-table-v2"></script>
+    <script src="js/weather-warning-dialog.js?v=material-table-v3"></script>
     <script src="js/weather-upgrades.js?v=warning-details-v1"></script>
     <script>
         /* ==================== 原有代码完全保留 ==================== */
@@ -4008,7 +4016,7 @@ function setBackgroundToCookie(value) {
         </section>
     </footer>
     <script src="js/app-info.js?v=unified-settings-v1"></script>
-    <script src="js/settings.js?v=reset-settings-v1"></script>
+    <script src="js/settings.js?v=material-tabs-v2"></script>
     <script type="module" src="js/sync.js?v=reset-settings-v1"></script>
 </body>
 </html>
