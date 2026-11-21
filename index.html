@@ -52,22 +52,22 @@
         .logo-area { display: flex; align-items: center; gap: 12px; font-weight: 900; font-size: 1.2rem; }
         .logo-area img { height: 32px; }
         .hero-space { height:var(--hero-height); display:flex; align-items:center; justify-content:center; padding-top:var(--nav-height); }
-        .app-site-footer { width:100%; margin-top:16px; padding:48px 5% 40px; box-sizing:border-box; background:rgba(255,255,255,.65); color:var(--text-main); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-top:1px solid var(--glass-border); }
+        .app-site-footer { width:100%; margin-top:16px; padding:24px 5% 20px; box-sizing:border-box; background:rgba(255,255,255,.65); color:var(--text-main); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-top:1px solid var(--glass-border); }
         .mdui-theme-dark .app-site-footer { background:rgba(30,30,35,.65); }
         .app-overview { box-sizing:border-box; width:100%; max-width:1160px; margin:0 auto; }
         .footer-brand { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
-        .footer-brand img { width:48px; height:48px; flex:none; }
+        .footer-brand img { width:36px; height:36px; flex:none; }
         .app-overview h1 { margin:0; color:inherit; font-size:clamp(1.25rem,3vw,1.6rem); font-weight:800; }
         .app-overview p { margin:10px 0; line-height:1.8; font-size:.88rem; overflow-wrap:anywhere; }
         .app-overview .app-purpose { color:inherit; font-weight:600; }
-        .footer-description { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px 48px; }
+        .footer-description { display:block; }
         .app-overview .app-data-use { font-size:.82rem; opacity:.8; }
-        .app-overview nav { display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; margin-top:24px; padding-top:20px; border-top:1px solid var(--glass-border); font-size:.85rem; }
+        .app-overview nav { display:flex; flex-wrap:wrap; gap:10px 20px; align-items:center; margin:0; font-size:.85rem; }
         .app-overview a { color:inherit; text-underline-offset:4px; }
         .app-overview a:hover { text-decoration-thickness:2px; }
         .app-overview a:focus-visible { outline:2px solid currentColor; outline-offset:4px; }
         #main-container { scroll-margin-top:88px; }
-        @media(max-width:600px) { .app-site-footer { padding:32px 24px; } .footer-description { grid-template-columns:minmax(0,1fr); gap:0; } .footer-brand { gap:12px; } .footer-brand img { width:40px; height:40px; } }
+        @media(max-width:600px) { .app-site-footer { padding:24px; } .footer-description { grid-template-columns:minmax(0,1fr); gap:0; } .footer-brand { gap:12px; } .footer-brand img { width:40px; height:40px; } }
         .search-container {
             box-sizing: border-box;
             min-width: 0;
@@ -423,6 +423,33 @@
         @media (max-width:900px) { .city-dashboard-grid { display:block; } .city-dashboard-grid > article { margin-bottom:18px; } .city-journey-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .city-finance-card{grid-template-columns:repeat(2,minmax(0,1fr))}.city-finance-item:nth-child(2n){border-right:0} }
         @media (max-width:600px) { .city-dashboard { padding:0 12px; width:100%; } .city-metrics, .city-journey-grid, .city-boundary-list { grid-template-columns:1fr; } .city-metric { min-height:96px; } .city-rail-grid { grid-template-columns:1fr; } .city-two-col { grid-template-columns:1fr; } .city-flight-columns { grid-template-columns:1fr; } .city-flight-list { max-height:240px; } .city-card { padding:16px; } .city-finance-value { white-space:normal; font-size:1.15rem; } .city-input { min-width:0; width:100%; } .city-form .city-button { flex:1 1 40%; } .city-bus-line-list { grid-template-columns:1fr; } #city-finance,#city-ticker{padding:0 12px}.city-finance-card{grid-template-columns:1fr}.city-finance-item{border-right:0;border-bottom:1px solid rgba(255,255,255,.12)}.city-finance-item:last-child{border-bottom:0} }
     </style>
+    <style>
+        #data-manage-dialog [hidden], #search-clear[hidden], #footer-account[hidden], #footer-avatar[hidden], #footer-account [hidden] { display:none !important; }
+        .settings-tabs,.settings-actions { display:flex; flex-wrap:wrap; gap:8px; }
+        .settings-tabs { padding:0 0 16px; border-bottom:1px solid var(--glass-border); }
+        .settings-panel { padding:16px 0; min-width:0; }
+        .settings-panel h3 { margin:0 0 16px; font-size:1rem; }
+        .settings-panel h3:not(:first-child) { margin-top:24px; }
+        .settings-districts { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr)); gap:16px; margin-bottom:24px; }
+        .settings-districts label { display:flex; flex-direction:column; gap:8px; min-width:0; font-size:.9rem; }
+        .settings-districts select { box-sizing:border-box; width:100%; min-width:0; min-height:48px; padding:10px 12px; border:1px solid rgba(128,128,128,.5); border-radius:12px; background:transparent; color:inherit; font:inherit; }
+        .settings-districts select:focus-visible { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:2px; }
+        .settings-districts option { color:rgb(var(--mdui-color-on-surface,33 33 33)); background:rgb(var(--mdui-color-surface,255 255 255)); }
+        .settings-background-actions { display:flex; flex-direction:column; align-items:flex-start; gap:12px; }
+        #search-clear { flex:none; color:inherit; }
+        .search-container { min-height:56px; }
+        .header-search-host .search-container { min-height:56px; border:0; padding:0 4px 0 8px; background:rgb(var(--mdui-color-surface-container-high,238 237 244)); border-radius:28px; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+        .header-search-host .search-input { min-height:48px; box-sizing:border-box; font-size:1rem; }
+        .header-search-host #engine-dropdown { margin-right:0; }
+        .footer-bottom { display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid var(--glass-border); }
+        .footer-meta { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-left:auto; font-size:.8rem; }
+        .footer-meta img { display:block; }
+        #footer-account { display:flex; align-items:center; gap:8px; font-size:.8rem; }
+        #footer-account img,#footer-avatar-fallback { width:32px; height:32px; border-radius:50%; object-fit:cover; flex:none; }
+        #footer-avatar-fallback { display:flex; align-items:center; justify-content:center; background:rgba(128,128,128,.16); }
+        #footer-last-sync { display:block; margin-top:2px; opacity:.75; }
+        @media(max-width:600px) { .settings-tabs mdui-button { min-width:0; } .settings-background-actions mdui-button { max-width:100%; } .footer-meta { gap:8px; } }
+    </style>
     <link rel="stylesheet" href="city-feed.css">
 </head>
 <body class="mdui-theme-auto">
@@ -439,6 +466,7 @@
     <section class="hero-space">
         <div class="hero-search-slot">
         <div class="search-container">
+            <mdui-button-icon id="header-search-close" icon="arrow_back" aria-label="关闭顶栏搜索" title="关闭搜索"></mdui-button-icon>
             <div id="engine-dropdown">
                 <button type="button" class="engine-trigger" id="engine-trigger" aria-label="切换搜索引擎" aria-haspopup="menu" aria-expanded="false" aria-controls="engine-menu"><img id="cur-engine-img" class="engine-favicon" src="https://www.google.com/favicon.ico" alt="搜索引擎"></button>
                 <mdui-menu id="engine-menu" hidden>
@@ -455,8 +483,8 @@
                     <mdui-menu-item id="manage-engine-btn"><mdui-icon name="settings" slot="icon"></mdui-icon>管理自定义搜索引擎</mdui-menu-item>
                 </mdui-menu>
             </div>
-            <input type="text" class="search-input" id="search-input" placeholder="键入内容并搜索..." autocomplete="off">
-            <mdui-button-icon id="header-search-close" icon="close" aria-label="关闭顶栏搜索" title="关闭搜索"></mdui-button-icon>
+            <input type="text" class="search-input" id="search-input" aria-label="搜索" placeholder="键入内容并搜索..." autocomplete="off">
+            <mdui-button-icon id="search-clear" icon="close" aria-label="清除搜索内容" title="清除搜索内容" hidden></mdui-button-icon>
             <div id="suggestions" class="suggestions-dropdown"></div>
         </div>
         </div>
@@ -685,29 +713,50 @@
 </mdui-dialog>
 
     <!-- 新增：首页背景设置对话框 -->
-    <mdui-dialog id="background-settings-dialog" close-on-overlay-click>
-        <span slot="headline">首页背景设置</span>
-        <div style="padding: 20px 0; display: flex; flex-direction: column; gap: 16px;">
-            <mdui-button variant="tonal" id="random-bg-btn" icon="image">从 Unsplash 获取随机背景</mdui-button>
-            <mdui-button variant="tonal" id="reset-bg-btn" icon="restore">恢复默认背景</mdui-button>
-            
-            <div style="margin-top: 12px; font-size: 0.9rem; opacity: 0.7;">
-                当前背景将保存到浏览器 Cookies 中，下次打开页面自动应用。
-            </div>
-        </div>
-        <mdui-button slot="action" variant="text" id="bg-settings-close">关闭</mdui-button>
-    </mdui-dialog>
-
-    <!-- 新增：数据导出导入对话框 -->
+<!-- 新增：数据导出导入对话框 -->
     <mdui-dialog id="data-manage-dialog" close-on-overlay-click>
-        <span slot="headline">预设同步与备份</span>
-        <div style="padding: 20px 0; display: flex; flex-direction: column; gap: 16px;">
+        <span slot="headline" data-settings-text="title">设置</span>
+        <div class="settings-tabs" role="group" aria-label="设置分类">
+            <mdui-button variant="tonal" data-settings-tab="general" data-settings-text="general" aria-pressed="true">常规</mdui-button>
+            <mdui-button variant="text" data-settings-tab="background" data-settings-text="background" aria-pressed="false">背景</mdui-button>
+            <mdui-button variant="text" data-settings-tab="sync" data-settings-text="sync" aria-pressed="false">登录与备份</mdui-button>
+        </div>
+        <section class="settings-panel" data-settings-panel="general">
+            <h3 data-settings-text="appearance">语言与显示</h3>
+            <div class="settings-actions">
+                <mdui-button variant="tonal" icon="translate" id="settings-language">切换语言</mdui-button>
+                <mdui-button variant="tonal" icon="contrast" id="settings-theme">切换深浅色模式</mdui-button>
+            </div>
+            <div class="settings-districts" style="margin-top:16px;"><label><span data-settings-text="engine">当前搜索引擎</span><select id="settings-current-engine" aria-label="当前搜索引擎"></select></label></div>
+            <h3 data-settings-text="weather">天气预设地区</h3>
+            <div class="settings-districts">
+                <label><span data-settings-text="rain">降雨量监测地区</span><select id="settings-rain-region" aria-label="降雨量监测地区"></select></label>
+                <label><span data-settings-text="aqhi">空气质素 AQHI 监测地区</span><select id="settings-aqhi-region" aria-label="空气质素 AQHI 监测地区"></select></label>
+            </div>
+            <h3 data-settings-text="content">内容配置</h3>
+            <div class="settings-actions">
+                <mdui-button variant="outlined" icon="edit_note" id="settings-bookmarks" data-settings-text="bookmarks">快捷访问配置</mdui-button>
+                <mdui-button variant="outlined" icon="manage_search" id="settings-engines" data-settings-text="engines">搜索引擎配置</mdui-button>
+                <mdui-button variant="outlined" icon="rss_feed" id="settings-rss" data-settings-text="rss">RSS 配置</mdui-button>
+                <mdui-button variant="outlined" icon="dashboard_customize" id="settings-city-feed" data-settings-text="city">CITY FEED 配置</mdui-button>
+            </div>
+        </section>
+        <section class="settings-panel" data-settings-panel="background" hidden>
+            <h3 data-settings-text="backgroundTitle">首页背景</h3>
+            <div class="settings-background-actions">
+                <mdui-button variant="tonal" id="random-bg-btn" icon="image" data-settings-text="random">从 Unsplash 获取随机背景</mdui-button>
+                <mdui-button variant="outlined" id="reset-bg-btn" icon="restore" data-settings-text="reset">恢复默认背景</mdui-button>
+            </div>
+            <p class="preset-sync-hint" data-settings-text="backgroundHint">背景会保存在此设备，开启同步后也可随预设同步。</p>
+        </section>
+        <div class="settings-panel" data-settings-panel="sync" hidden style="display:flex; flex-direction:column; gap:16px;">
             <section id="preset-sync-panel" aria-label="多端预设同步">
                 <strong>多端预设同步</strong>
                 <div class="preset-sync-actions" role="group" aria-label="选择同步服务" style="margin-top:12px;">
-                    <mdui-button variant="tonal" data-sync-provider="google" aria-pressed="true">Google Drive</mdui-button>
-                    <mdui-button variant="outlined" data-sync-provider="github" aria-pressed="false">GitHub Gist</mdui-button>
+                    <mdui-button variant="tonal" data-sync-provider="google" aria-pressed="true">Google 登录</mdui-button>
+                    <mdui-button variant="outlined" data-sync-provider="github" aria-pressed="false">GitHub 登录</mdui-button>
                 </div>
+                <div data-sync-details hidden>
                 <p data-sync-account>使用同一 Google 账号同步多个设备</p>
                 <p class="preset-sync-hint" data-sync-storage>预设保存在你的 Google Drive 应用专用空间。</p>
                 <p class="preset-sync-hint" data-sync-github-warning hidden>Secret Gist 不是真正私有存储，知道链接的人可以读取预设。GitHub 的 gist 权限允许访问账号下的 Gist；本站仅定位并读写标记为本站预设的 Secret Gist，不申请仓库或私人邮箱权限。</p>
@@ -724,6 +773,7 @@
                     <mdui-button variant="outlined" icon="cloud_upload" data-sync-use-local>用本机替换云端</mdui-button>
                 </div>
                 <p class="preset-sync-hint">首次同步或两端均有修改时，请选择保留哪一端。自动同步在编辑时暂停；退出登录不会删除预设。</p>
+                </div>
             </section>
             <mdui-divider></mdui-divider>
             <mdui-button variant="tonal" id="export-data-btn" icon="download">导出预设（JSON）</mdui-button>
@@ -773,7 +823,7 @@
             brave: 'https://search.brave.com/search?q=',
             github: 'https://github.com/search?q='
         };
-        Object.assign(engines, customEngines);
+        Object.entries(customEngines).forEach(([key,entry])=> {engines[key]=typeof entry==='string'?entry:entry.url;});
 
         let curEng = localStorage.getItem('last_engine') || 'google';
 
@@ -839,6 +889,15 @@
 
         const engineMenu = document.getElementById('engine-menu');
         const engineImg = document.getElementById('cur-engine-img');
+        window.naviSetSearchEngine = (key,focus=true) => {
+            const item=Array.from(engineMenu.querySelectorAll('mdui-menu-item')).find(item=>item.value===key);
+            if(!item || !engines[key])return false;
+            curEng=key;localStorage.setItem('last_engine',curEng);
+            const icon=item.querySelector('img');if(icon)engineImg.src=icon.src;
+            setEngineMenuOpen(false);suggestionsContainer.style.display='none';
+            if(focus)searchInput.focus();
+            document.dispatchEvent(new Event('navi-search-engine-change'));return true;
+        };
         engineMenu.onclick = (e) => {
             const item = e.target.closest('mdui-menu-item');
             if (!item) return;
@@ -851,12 +910,7 @@
                 showManageEngineDialog();
                 return;
             }
-            curEng = item.value;
-            localStorage.setItem('last_engine', curEng);
-            const iconSrc = item.querySelector('img').src;
-            engineImg.src = iconSrc;
-            suggestionsContainer.style.display = 'none';
-            searchInput.focus();
+            window.naviSetSearchEngine(item.value);
         };
 
         document.getElementById('btn-get-engine-icon').onclick = () => {
@@ -1006,6 +1060,13 @@
         const suggestionsContainer = document.getElementById('suggestions');
         let debounceTimer = null;
         let selectedIndex = -1;
+        let suggestionRevision = 0;
+        const searchClear = document.getElementById('search-clear');
+        const updateSearchClear = () => { searchClear.hidden = searchInput.value.length === 0; };
+        searchClear.onclick = () => {
+            searchInput.value = ''; searchInput.dispatchEvent(new Event('input',{bubbles:true}));
+            suggestionsContainer.replaceChildren(); selectedIndex = -1; searchInput.focus();
+        };
 
         // Keep one search control so the query, engine and suggestions survive docking.
         const appBar = document.querySelector('.app-bar');
@@ -1030,27 +1091,43 @@
                 event.preventDefault(); setEngineMenuOpen(true); engineMenu.querySelector('mdui-menu-item')?.focus();
             }
         });
-        function closeHeaderSearch() {
-            appBar.classList.remove('search-open');
-            mobileSearchToggle.setAttribute('aria-expanded', 'false');
+        let searchCloseAnimation = null;
+        function closeHeaderSearch(animate=true,returnFocus=false) {
             setEngineMenuOpen(false);
             suggestionsContainer.style.display = 'none';
+            if (searchCloseAnimation) { searchCloseAnimation.cancel(); searchCloseAnimation=null; }
+            const finish = () => {
+                appBar.classList.remove('search-open','search-closing');
+                mobileSearchToggle.setAttribute('aria-expanded','false');
+                if (returnFocus) mobileSearchToggle.focus();
+            };
+            if (animate && mobileSearchMedia.matches && appBar.classList.contains('search-open') && !matchMedia('(prefers-reduced-motion:reduce)').matches) {
+                appBar.classList.add('search-closing'); searchInput.blur();
+                const animation=searchBox.animate([
+                    {clipPath:'inset(0 0 0 0 round 28px)',opacity:1},
+                    {clipPath:'inset(0 0 0 calc(100% - 48px) round 28px)',opacity:0}
+                ],{duration:200,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
+                searchCloseAnimation=animation;
+                animation.finished.then(()=> { if(searchCloseAnimation===animation) { searchCloseAnimation=null; finish(); animation.cancel(); } }).catch(()=>{});
+            } else finish();
         }
         function placeSearch() {
-            closeHeaderSearch();
+            closeHeaderSearch(false);
             const dock = searchDocked;
             appBar.classList.toggle('search-docked', dock);
             (dock ? headerSearchHost : heroSearchSlot).appendChild(searchBox);
         }
         mobileSearchToggle.onclick = () => {
+            if(searchCloseAnimation) {searchCloseAnimation.cancel();searchCloseAnimation=null;}
+            appBar.classList.remove('search-closing');
             appBar.classList.add('search-open');
             mobileSearchToggle.setAttribute('aria-expanded', 'true');
             searchInput.focus();
         };
-        document.getElementById('header-search-close').onclick = () => { closeHeaderSearch(); mobileSearchToggle.focus(); };
+        document.getElementById('header-search-close').onclick = () => closeHeaderSearch(true,true);
         searchInput.addEventListener('keydown', event => {
             if (event.key === 'Escape' && mobileSearchMedia.matches && appBar.classList.contains('search-open')) {
-                closeHeaderSearch(); mobileSearchToggle.focus();
+                closeHeaderSearch(true,true);
             }
         });
         new IntersectionObserver(([entry]) => {
@@ -1067,6 +1144,8 @@
         };
 
         function fetchSuggestions(query) {
+            const revision=++suggestionRevision;
+            clearTimeout(debounceTimer);
             if (!query || query.trim().length < 1) {
                 suggestionsContainer.style.display = 'none';
                 return;
@@ -1081,7 +1160,7 @@
                 script.id = 'sug-script';
                 window.sugCallback = (data) => {
                     const list = config.parse(data) || [];
-                    renderSuggestions(list);
+                    if(revision===suggestionRevision && searchInput.value.trim()===query) renderSuggestions(list);
                     delete window.sugCallback;
                     script.remove();
                 };
@@ -1098,7 +1177,7 @@
                 div.className = 'suggestion-item';
                 div.textContent = text;
                 div.onclick = () => {
-                    searchInput.value = text;
+                    searchInput.value = text; updateSearchClear();
                     suggestionsContainer.style.display = 'none';
                     performSearch(text);
                 };
@@ -1117,7 +1196,8 @@
             window.open(finalUrl, '_blank');
         }
 
-        searchInput.addEventListener('input', () => fetchSuggestions(searchInput.value.trim()));
+        searchInput.addEventListener('input', () => { updateSearchClear(); fetchSuggestions(searchInput.value.trim()); });
+        updateSearchClear();
         searchInput.addEventListener('keydown', (e) => {
             const items = suggestionsContainer.querySelectorAll('.suggestion-item');
             const isVisible = suggestionsContainer.style.display === 'block';
@@ -1136,7 +1216,7 @@
                 e.preventDefault();
                 if (isVisible && selectedIndex >= 0 && items[selectedIndex]) {
                     const text = items[selectedIndex].textContent;
-                    searchInput.value = text;
+                    searchInput.value = text; updateSearchClear();
                     suggestionsContainer.style.display = 'none';
                     performSearch(text);
                 } else if (searchInput.value.trim()) {
@@ -1595,38 +1675,16 @@ function setBackgroundToCookie(value) {
         // 在 header 中动态添加设置按钮（不修改原有 HTML 结构）
         function addSettingsButtons() {
             const header = document.querySelector('.app-bar');
-            const flexGrow = header.querySelector('div[style*="flex-grow"]');
-            
-            // 创建背景设置按钮
-            const bgBtn = document.createElement('mdui-button-icon');
-            bgBtn.id = 'bg-settings-btn';
-            bgBtn.setAttribute('icon', 'wallpaper');
-            bgBtn.style.color = 'inherit';
-            bgBtn.style.marginRight = '8px';
-            
-            // 创建数据管理按钮
-            const dataBtn = document.createElement('mdui-button-icon');
-            dataBtn.id = 'data-manage-btn';
-            dataBtn.setAttribute('icon', 'settings_backup_restore');
-            dataBtn.style.color = 'inherit';
-            
-            // 插入到 theme-btn 之前
-            const themeBtn = document.getElementById('theme-btn');
-            if (themeBtn) {
-                header.insertBefore(dataBtn, themeBtn);
-                header.insertBefore(bgBtn, dataBtn);
-            } else {
-                header.appendChild(bgBtn);
-                header.appendChild(dataBtn);
-            }
-
-            // 绑定事件
-            bgBtn.onclick = () => {
-                document.getElementById('background-settings-dialog').open = true;
-            };
-
-            dataBtn.onclick = () => {
-                document.getElementById('data-manage-dialog').open = true;
+            const button = document.createElement('mdui-button-icon');
+            button.id = 'data-manage-btn';
+            button.setAttribute('icon','settings');
+            button.setAttribute('aria-label','设置');
+            button.setAttribute('title','设置');
+            button.style.color = 'inherit';
+            header.insertBefore(button,document.getElementById('theme-btn'));
+            button.onclick = () => {
+                if (window.naviOpenSettings) window.naviOpenSettings();
+                else document.getElementById('data-manage-dialog').open = true;
             };
         }
 
@@ -1662,10 +1720,6 @@ function setBackgroundToCookie(value) {
 });
         addSettingsButtons();            // 添加设置按钮到顶部栏
 
-        // 背景设置对话框关闭按钮
-        document.getElementById('bg-settings-close').onclick = () => {
-            document.getElementById('background-settings-dialog').open = false;
-        };
 
         // 数据管理对话框关闭按钮
         document.getElementById('data-manage-close').onclick = () => {
@@ -3913,14 +3967,23 @@ function setBackgroundToCookie(value) {
                 <p data-app-info="features">管理快捷书签、切换搜索引擎、订阅 RSS 新闻，查看香港天气、交通及市场资讯，并自定义首页布局与偏好；支持通过 Google Drive 或 GitHub Secret Gist 在设备间同步个人预设。</p>
                 <p data-app-info="access">无需登录即可使用导航、搜索、资讯和本机设置。</p>
             </div>
+            <div class="footer-bottom">
             <nav aria-label="应用信息与政策">
                 <a href="/privacy.html" data-app-policy="privacy" data-app-info="privacy">隐私政策</a>
                 <a href="/terms.html" data-app-policy="terms" data-app-info="terms">服务条款</a>
                 <a href="https://www.baipon.com" target="_blank" rel="noopener noreferrer" data-app-info="projects">其他项目</a>
             </nav>
+            <div id="footer-account" hidden>
+                <img id="footer-avatar" alt="用户头像" width="32" height="32" referrerpolicy="no-referrer" hidden>
+                <span id="footer-avatar-fallback" aria-hidden="true"></span>
+                <span><span id="footer-account-name"></span><small id="footer-last-sync"></small></span>
+            </div>
+            <div class="footer-meta"><span>© <span id="footer-year">2026</span> <span data-app-info="name">百品导航</span></span><a href="https://www.w3.org/WAI/WCAG2AA-Conformance" target="_blank" rel="noopener noreferrer" title="查看 WCAG 2.0 AA 标准"><img src="/img/wcag2AA.gif" width="88" height="31" alt="WCAG 2.0 AA 无障碍标准"></a></div>
+            </div>
         </section>
     </footer>
-    <script src="js/app-info.js?v=github-sync-v1"></script>
-    <script type="module" src="js/sync.js?v=github-sync-v1"></script>
+    <script src="js/app-info.js?v=unified-settings-v1"></script>
+    <script src="js/settings.js?v=unified-settings-v1"></script>
+    <script type="module" src="js/sync.js?v=unified-settings-v1"></script>
 </body>
 </html>

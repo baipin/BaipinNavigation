@@ -10,9 +10,10 @@ const auto = panel.querySelector('[data-sync-auto]');
 const choices = panel.querySelector('[data-sync-conflict]');
 const callbackProvider = new URL(location.href).searchParams.get('provider');
 let provider = (callbackProvider || localStorage.getItem('navi_sync_provider')) === 'github' ? 'github' : 'google';
-let account = null, busy = false, pending = null, configured = false;
+let account = null, busy = false, pending = null, configured = false, detailsRequested = false, authenticating = false;
 let statusMessage = '';
 const traditional = new Map([
+    ['设置','設定'],['GitHub 登录','GitHub 登入'],['Google 登录','Google 登入'],
     ['多端预设同步','多端預設同步'],['使用同一 GitHub 账号同步多个设备','使用同一 GitHub 帳戶同步多個裝置'],
     ['使用 GitHub 登录','使用 GitHub 登入'],['预设保存在你的 Google Drive 应用专用空间。','預設儲存在你的 Google Drive 應用專用空間。'],
     ['预设保存在你的 GitHub Secret Gist。','預設儲存在你的 GitHub Secret Gist。'],
@@ -71,6 +72,7 @@ function applyLanguage() {
     for (const [element,text] of staticLabels) element.textContent = translate(text);
     status.textContent = translate(statusMessage);
     updateProviderText();
+    renderFooterAccount();
     for (const link of document.querySelectorAll('[data-site-legal]')) {
         link.textContent = link.dataset.siteLegal === 'privacy' ? (simplified()?'隐私政策':'隱私政策') : (simplified()?'服务条款':'服務條款');
         link.href = '/'+link.dataset.siteLegal+'.html?lang='+(simplified()?'sc':'tc');
@@ -121,25 +123,50 @@ function updateProviderText() {
     panel.querySelector('[data-sync-github-warning]').hidden = provider !== 'github';
     for (const button of panel.querySelectorAll('[data-sync-provider]')) {
         const active = button.dataset.syncProvider === provider;
-        button.setAttribute('aria-pressed',String(active));button.setAttribute('variant',active?'tonal':'outlined');button.disabled=busy;
+        button.textContent=translate((button.dataset.syncProvider==='github'?'GitHub':'Google')+' 登录');
+        button.setAttribute('aria-pressed',String(active && (!!account || detailsRequested)));button.setAttribute('variant',active && (!!account || detailsRequested)?'tonal':'outlined');button.disabled=busy || authenticating;
     }
 }
 function updateControls() {
     updateProviderText();
-    login.disabled = busy || !configured;
+    panel.querySelector('[data-sync-details]').hidden = !account && !detailsRequested;
+    login.disabled = busy || authenticating || !configured;
     login.hidden = !!account;
     logout.hidden = !account;
     syncButton.disabled = busy || !account;
     auto.disabled = busy || !account;
     logout.disabled = busy;
     document.getElementById('import-data-btn').disabled = busy;
+    renderFooterAccount();
     for (const button of choices.querySelectorAll('mdui-button')) button.disabled = busy;
 }
 function show(message) { statusMessage = message; status.textContent = translate(message); }
 function savedState() { try { return JSON.parse(localStorage.getItem(stateKey())) || {}; } catch { return {}; } }
 function remember(baseHash,updatedAt) {
-    localStorage.setItem(stateKey(),JSON.stringify({baseHash,updatedAt}));
+    localStorage.setItem(stateKey(),JSON.stringify({baseHash,updatedAt,syncedAt:new Date().toISOString()}));
+    renderFooterAccount();
     show('已同步 · '+new Date(updatedAt).toLocaleString());
+}
+function renderFooterAccount() {
+    const container=document.getElementById('footer-account');
+    if(!container)return;
+    container.hidden=!account;
+    if(!account)return;
+    const sc=simplified(),name=account.name || account.login || account.email;
+    document.getElementById('footer-account-name').textContent=(provider==='github'?'GitHub':'Google')+' · '+name;
+    const avatar=document.getElementById('footer-avatar'),fallback=document.getElementById('footer-avatar-fallback');
+    fallback.textContent=Array.from(name || '?')[0].toUpperCase();
+    let avatarUrl=null;
+    try {const url=new URL(account.avatar);if(url.protocol==='https:' && (provider==='github'?url.hostname==='avatars.githubusercontent.com':url.hostname.endsWith('.googleusercontent.com')))avatarUrl=url.href;}catch{}
+    if(avatarUrl) {
+        avatar.onerror=()=>{avatar.hidden=true;fallback.hidden=false;};
+        if(avatar.getAttribute('src')!==avatarUrl)avatar.src=avatarUrl;
+        avatar.alt=name+(sc?'的头像':'的頭像');avatar.hidden=false;fallback.hidden=true;
+    } else {avatar.hidden=true;avatar.removeAttribute('src');fallback.hidden=false;}
+    const state=savedState(),date=state.syncedAt || state.updatedAt;
+    const label=document.getElementById('footer-last-sync');
+    label.textContent=date && Number.isFinite(Date.parse(date))?(sc?'上次同步：':'上次同步：')+new Date(date).toLocaleString(sc?'zh-CN':'zh-HK',{timeZone:'Asia/Hong_Kong',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}):(sc?'尚未同步':'尚未同步');
+    label.title=date?'UTC+8 · '+date:'';
 }
 function showConflict(cloud) {
     pending = cloud;
@@ -201,6 +228,7 @@ async function checkLogin() {
         if (selectedProvider !== provider) return;
         configured = result.configured;
         account = result.authenticated ? result.user : null;
+        if(account)detailsRequested=true;
         updateProviderText();
         login.disabled = !configured;
         auto.checked = !!account && localStorage.getItem(autoKey()) === '1';
@@ -208,13 +236,23 @@ async function checkLogin() {
         if (!pending) show(!result.configured ? (provider === 'github' ? '服务端尚未配置 GITHUB_CLIENT_ID 和 GITHUB_KEY' : '服务端尚未配置 GOOGLE_KEY') : account ? previous.updatedAt ? '上次同步：'+new Date(previous.updatedAt).toLocaleString() : '已登录。点击“立即同步”创建或读取云端预设。' : '尚未登录；本机设置仍可正常使用。');
     } catch (error) { if (selectedProvider !== provider) return; show(error.message); }
     updateControls();
+    return {authenticated:!!account,configured};
 }
-for (const button of panel.querySelectorAll('[data-sync-provider]')) button.onclick = () => {
-    if (busy || button.dataset.syncProvider === provider) return;
-    provider = button.dataset.syncProvider; localStorage.setItem('navi_sync_provider',provider);
-    account = null; configured = false; pending = null; auto.checked = false; choices.hidden = true;
+for (const button of panel.querySelectorAll('[data-sync-provider]')) button.onclick = async () => {
+    if(busy || authenticating)return;
+    const selected=button.dataset.syncProvider;
+    if(selected===provider && account) {detailsRequested=true;updateControls();return;}
+    authenticating=true;
+    provider=selected;localStorage.setItem('navi_sync_provider',provider);
+    account=null;configured=false;pending=null;auto.checked=false;choices.hidden=true;detailsRequested=true;
     document.getElementById('data-manage-btn')?.classList.remove('sync-attention');
-    applyLanguage(); updateControls(); show('正在检查登录状态…'); checkLogin();
+    applyLanguage();updateControls();show('正在检查登录状态…');
+    try {
+        const state=await checkLogin();
+        if(state?.configured && !state.authenticated) {
+            location.href=(provider==='github'?'/api/github':'/api/sync')+'?action=login';
+        }
+    } finally {authenticating=false;updateControls();}
 };
 login.onclick = () => { localStorage.setItem('navi_sync_provider',provider); location.href = (provider === 'github' ? '/api/github' : '/api/sync')+'?action=login'; };
 logout.onclick = async () => {
@@ -223,7 +261,7 @@ logout.onclick = async () => {
     try {
         await request('logout',{});
         if (account) localStorage.removeItem(autoKey());
-        account = null; auto.checked = false; pending = null; choices.hidden = true;
+        account = null; auto.checked = false; pending = null; choices.hidden = true; detailsRequested=false;
         updateProviderText();
         document.getElementById('data-manage-btn')?.classList.remove('sync-attention');
         show('已退出此设备的登录，本机与云端预设均保留。');
@@ -257,12 +295,14 @@ if (result) {
     const messages = {connected:'Google 登录成功。点击“立即同步”选择云端或本机预设。',cancelled:'已取消 Google 授权，本机预设不受影响。','state-error':'登录验证已过期，请从本站重新登录。','login-error':'Google 登录失败，请检查回调地址、Drive API 及 OAuth 配置。','permission-error':'请允许本站访问 Google Drive 应用预设空间后重新登录。'};
     if (provider === 'github') Object.assign(messages,{connected:'GitHub 登录成功。点击“立即同步”选择云端或本机预设。',cancelled:'已取消 GitHub 授权，本机预设不受影响。','login-error':'GitHub 登录失败，请检查回调地址及 OAuth App 配置。','permission-error':'请允许本站的 GitHub gist 权限后重新登录。'});
     const url = new URL(location.href); url.searchParams.delete('sync'); url.searchParams.delete('provider'); history.replaceState(null,'',url);
-    dialog.open = true;
+    detailsRequested=true;
+    if(window.naviOpenSettings)window.naviOpenSettings('sync');else dialog.open=true;
     checkLogin().then(()=>show(messages[result] || '请重新登录同步'));
 } else {
     checkLogin().then(()=> { if (auto.checked) sync(true); });
 }
 document.getElementById('data-manage-btn')?.addEventListener('click',checkLogin);
+document.addEventListener('navi-settings-sync-open',checkLogin);
 setInterval(()=> { if (auto.checked) sync(true); },30000);
 document.addEventListener('visibilitychange',()=> { if (auto.checked && document.visibilityState === 'visible') sync(true); });
 applyLanguage();

@@ -11,6 +11,9 @@ class SyncError extends Error {
     constructor(status,message) { super(message); this.status = status; }
 }
 const config = () => ({client:process.env.GOOGLE_CLIENT_ID || CLIENT_ID,redirect:process.env.GOOGLE_REDIRECT_URI || REDIRECT});
+function avatarUrl(value) {
+    try {const url=new URL(value);return url.protocol==='https:' && url.hostname.endsWith('.googleusercontent.com') && url.href.length<1024?url.href:null;}catch{return null;}
+}
 function seal(data) {
     const iv = randomBytes(12), key = createHash('sha256').update(process.env.GOOGLE_KEY).digest();
     const cipher = createCipheriv('aes-256-gcm',key,iv);
@@ -120,7 +123,7 @@ export default async function handler(req,res) {
             const response = await google('https://openidconnect.googleapis.com/v1/userinfo',{headers:{Authorization:`Bearer ${result.access_token}`}});
             if (!response.ok) return redirect(res,'/?sync=login-error');
             const info = await response.json();
-            const value = seal({user:{id:info.sub,name:info.name || info.email,email:info.email},accessToken:result.access_token,refreshToken:result.refresh_token,accessExpires:Date.now()+Number(result.expires_in || 3600)*1000,expires:Date.now()+30*86400000});
+            const value = seal({user:{id:info.sub,name:info.name || info.email,email:info.email,avatar:avatarUrl(info.picture)},accessToken:result.access_token,refreshToken:result.refresh_token,accessExpires:Date.now()+Number(result.expires_in || 3600)*1000,expires:Date.now()+30*86400000});
             if (value.length > 3800) return redirect(res,'/?sync=login-error');
             cookie(res,SESSION,value,30*86400);
             return redirect(res,'/?sync=connected');
@@ -133,7 +136,14 @@ export default async function handler(req,res) {
             if (action === 'status' && error.status === 401) { cookie(res,SESSION,'',0); return res.status(200).json({configured:true,authenticated:false,redirectUri:settings.redirect}); }
             throw error;
         }
-        if (action === 'status') return res.status(200).json({configured:true,authenticated:true,user:data.user,redirectUri:settings.redirect});
+        if (action === 'status') {
+            if(!Object.prototype.hasOwnProperty.call(data.user,'avatar')) {
+                data.user.avatar=null;
+                try {const response=await google('https://openidconnect.googleapis.com/v1/userinfo',{headers:{Authorization:`Bearer ${data.accessToken}`}});if(response.ok)data.user.avatar=avatarUrl((await response.json()).picture);}catch{}
+                const value=seal(data);if(value.length<=3800)cookie(res,SESSION,value,Math.max(0,Math.floor((data.expires-Date.now())/1000)));
+            }
+            return res.status(200).json({configured:true,authenticated:true,user:data.user,redirectUri:settings.redirect});
+        }
         if (action === 'pull') {
             const cloud = await readCloud(data);
             delete cloud.id; delete cloud.etag;

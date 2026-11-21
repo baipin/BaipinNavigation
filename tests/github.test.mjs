@@ -21,7 +21,7 @@ globalThis.fetch=async(url,options={})=>{
     }
     assert.ok(url.startsWith('https://api.github.com/'));
     assert.equal(options.headers.Authorization,'Bearer fake-github-access');
-    if(url.endsWith('/user')) return json({id:7,login:'test-user',name:'测试用户',email:'not-stored@example.test'});
+    if(url.endsWith('/user')) return json({id:7,login:'test-user',name:'测试用户',email:'not-stored@example.test',avatar_url:'https://avatars.githubusercontent.com/u/7?v=4'});
     if(url.includes('/gists?')) return json(cloud?[gist()]:[]);
     if(options.method==='POST' || options.method==='PATCH') {
         if(reject) return new Response('',{status:412});
@@ -57,7 +57,7 @@ try {
     scopes='gist';result=await call('callback',{cookie:auth.cookie,params:'&code=two&state='+auth.state});assert.match(result.headers.Location,/connected&provider=github/);
     const header=result.headers['Set-Cookie'].find(item=>item.startsWith('__Host-navi_github='));assert.match(header,/HttpOnly; Secure; SameSite=Lax/);assert.ok(!header.includes('fake-github-access'));
     let cookie=header.split(';')[0];
-    result=await call('status',{cookie});assert.equal(result.body.user.login,'test-user');assert.ok(!('email' in result.body.user));assert.ok(!JSON.stringify(result.body).includes('fake-github-access'));
+    result=await call('status',{cookie});assert.equal(result.body.user.login,'test-user');assert.equal(result.body.user.avatar,'https://avatars.githubusercontent.com/u/7?v=4');assert.ok(!('email' in result.body.user));assert.ok(!JSON.stringify(result.body).includes('fake-github-access'));
     result=await call('push',{method:'POST',cookie,body:{preset,revision:null},requestOrigin:'https://evil.example'});assert.equal(result.statusCode,403);
     result=await call('push',{method:'POST',cookie,body:{preset,revision:null}});assert.equal(result.statusCode,200);const revision=result.body.revision;
     result=await call('pull',{cookie});assert.deepEqual(result.body.preset,preset);assert.equal(result.body.storageUrl,'https://gist.github.com/abc123');assert.ok(!('etag' in result.body));

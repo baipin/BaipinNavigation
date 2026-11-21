@@ -16,7 +16,7 @@ globalThis.fetch=async (url,options={})=> {
         if (new URLSearchParams(options.body).get('grant_type')==='refresh_token') refreshes++;
         return json({access_token:'test-access',refresh_token:'test-refresh',expires_in:3600,scope:'openid email profile https://www.googleapis.com/auth/drive.appdata'});
     }
-    if (url.includes('userinfo')) return json({sub:'account-test',name:'测试账号',email:'test@example.test'});
+    if (url.includes('userinfo')) return json({sub:'account-test',name:'测试账号',email:'test@example.test',picture:'https://lh3.googleusercontent.com/test-avatar'});
     if (url.includes('/upload/drive/v3/files')) {
         if (rejectWrite) return new Response('',{status:412});
         if (options.method==='PATCH') {
@@ -59,7 +59,7 @@ try {
     assert.match(sessionHeader,/HttpOnly; Secure; SameSite=Lax/);
     assert.ok(!sessionHeader.includes('test-refresh')); assert.ok(!sessionHeader.includes('test-access'));
     let cookie=sessionHeader.split(';')[0];
-    result=await call('status',{cookie}); assert.equal(result.body.user.id,'account-test');
+    result=await call('status',{cookie}); assert.equal(result.body.user.id,'account-test');assert.equal(result.body.user.avatar,'https://lh3.googleusercontent.com/test-avatar');
     assert.ok(!JSON.stringify(result.body).includes('test-access'));
     result=await call('push',{cookie,method:'POST',body:{preset,revision:null},requestOrigin:'https://evil.example'}); assert.equal(result.statusCode,403);
     result=await call('push',{cookie,method:'POST',body:{preset,revision:null}}); assert.equal(result.statusCode,200);

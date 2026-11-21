@@ -57,3 +57,12 @@ OAuth 品牌信息的“应用首页”必须使用 `https://123.baipon.com/`，
 退出当前服务不删除云端数据。删除 Gist 前，先关闭各设备的 GitHub 自动同步并退出，再在 gist.github.com 删除本站对应的预设 Gist。撤销应用授权使用 GitHub Settings → Applications → Authorized OAuth Apps。更完整的数据处理与使用范围见双语隐私政策和服务条款。
 
 验证：`node tests/github.test.mjs` 和 `node tests/sync.test.mjs`。这些测试使用模拟服务，不构成真实 GitHub 授权验证；正式登录需完成 OAuth App 和 Vercel 配置。
+
+
+## 统一设置与页脚
+
+顶栏“设置”合并背景与同步入口，提供常规、背景、登录与备份三个分类。常规包含语言和主题切换、降雨量与 AQHI 预设地区，以及书签、搜索引擎、RSS 与 CITY FEED 的现有配置入口；天气地区直接复用页面原控件，仍使用原有导入导出和同步键。页脚语言切换继续保留。
+
+登录页先展示 GitHub 登录和 Google 登录两个按钮；登录后才显示账号与同步详细设置。已有会话会直接展示详情。移动端顶栏搜索提供 300 ms 展开和 200 ms 收起的 Material 缓动，尊重减少动态效果设置；独立与顶栏共用输入框和清除按钮。清空输入会取消尚未触发的联想请求，并忽略过期结果。
+
+紧凑页脚为单栏，显示香港时区的当前年份；登录后按当前服务显示头像（失败时显示文字占位）和本设备上次成功同步时间。头像 URL 仅放在原加密会话 Cookie，不加入预设或 JSON 备份。W3C WCAG 2.0 AA 图标来源为 https://www.w3.org/WAI/wcag2AA.gif （官方返回 PNG，已转换成真正的本地 GIF：`img/wcag2AA.gif`），链接至标准说明，仅作为标准链接，不宣称本站经过合规认证或完整无障碍审计。

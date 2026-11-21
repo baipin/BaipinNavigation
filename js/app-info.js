@@ -11,6 +11,7 @@ function renderOverview() {
     overview.querySelectorAll('[data-app-info]').forEach(element=> { element.textContent = text[element.dataset.appInfo]; });
     overview.querySelectorAll('[data-app-policy]').forEach(link=> { link.href = '/'+link.dataset.appPolicy+'.html?lang='+language; });
 }
+document.getElementById('footer-year').textContent=new Intl.DateTimeFormat('en',{year:'numeric',timeZone:'Asia/Hong_Kong'}).format(new Date());
 renderOverview();
 new MutationObserver(renderOverview).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
 

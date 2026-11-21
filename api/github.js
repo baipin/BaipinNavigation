@@ -6,6 +6,7 @@ const API='https://api.github.com', FILE='baipin-navigation-presets-v1.json';
 const DESCRIPTION='Baipin Navigation preset sync (v1)';
 const settings=()=>({client:process.env.GITHUB_CLIENT_ID,secret:process.env.GITHUB_KEY,redirect:process.env.GITHUB_REDIRECT_URI || 'https://123.baipon.com/api/github?action=callback'});
 class AuthError extends Error { constructor(status,message) {super(message);this.status=status;} }
+function avatarUrl(value) {try {const url=new URL(value);return url.protocol==='https:' && url.hostname==='avatars.githubusercontent.com' && url.href.length<1024?url.href:null;}catch{return null;}}
 function seal(value) {
     const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',createHash('sha256').update(settings().secret).digest(),iv);
     return Buffer.concat([iv,cipher.update(JSON.stringify(value)),cipher.final(),cipher.getAuthTag()]).toString('base64url');
@@ -113,7 +114,7 @@ export default async function handler(req,res) {
             if(!String(token.scope || '').split(/[ ,]+/).includes('gist')) return redirect(res,'permission-error');
             const info=await (await api(token.access_token,'/user')).json();
             if(!Number.isSafeInteger(info.id) || !/^[a-z0-9-]{1,39}$/i.test(info.login)) return redirect(res,'login-error');
-            const value=seal({user:{id:String(info.id),login:info.login,name:String(info.name || info.login).slice(0,120)},accessToken:token.access_token,refreshToken:token.refresh_token || null,accessExpires:token.expires_in?Date.now()+Number(token.expires_in)*1000:null,expires:Date.now()+30*86400000});
+            const value=seal({user:{id:String(info.id),login:info.login,name:String(info.name || info.login).slice(0,120),avatar:avatarUrl(info.avatar_url)},accessToken:token.access_token,refreshToken:token.refresh_token || null,accessExpires:token.expires_in?Date.now()+Number(token.expires_in)*1000:null,expires:Date.now()+30*86400000});
             if(value.length>3800) return redirect(res,'login-error');
             setCookie(res,SESSION,value,30*86400);return redirect(res,'connected');
         }
@@ -123,7 +124,14 @@ export default async function handler(req,res) {
             if(action==='status' && error.status===401) {setCookie(res,SESSION,'',0);return res.status(200).json({configured:true,authenticated:false,provider:'github',redirectUri:config.redirect});}
             throw error;
         }
-        if(action==='status') return res.status(200).json({configured:true,authenticated:true,provider:'github',user:data.user,redirectUri:config.redirect});
+        if(action==='status') {
+            if(!Object.prototype.hasOwnProperty.call(data.user,'avatar')) {
+                data.user.avatar=null;
+                try {const info=await (await api(data.accessToken,'/user')).json();data.user.avatar=avatarUrl(info.avatar_url);}catch{}
+                const value=seal(data);if(value.length<=3800)setCookie(res,SESSION,value,Math.max(0,Math.floor((data.expires-Date.now())/1000)));
+            }
+            return res.status(200).json({configured:true,authenticated:true,provider:'github',user:data.user,redirectUri:config.redirect});
+        }
         if(action==='pull') {const cloud=await readCloud(data);delete cloud.id;delete cloud.etag;return res.status(200).json(cloud);}
         if(!String(req.headers['content-type'] || '').startsWith('application/json')) throw new AuthError(415,'请使用 JSON 请求');
         const raw=typeof req.body==='string'?req.body:JSON.stringify(req.body || {});
