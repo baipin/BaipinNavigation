@@ -37,6 +37,8 @@ export async function startWebcastVideo(id,{signal,onError}={}) {
             fail=reason=>{if(finished)return;finished=true;destroy();reject(reason);};
             loaded=()=>{
                 if(finished || !video.videoWidth || video.readyState<2)return;
+                // A live playlist may begin at a non-zero media timestamp.
+                if(video.buffered.length && video.currentTime<video.buffered.start(0))video.currentTime=video.buffered.start(0)+.05;
                 const present=()=>{if(dead || finished)return;finished=true;clearTimeout(timeout);video.removeEventListener('loadeddata',loaded);resolve({video,destroy});};
                 if(video.requestVideoFrameCallback){if(frameId===null)frameId=video.requestVideoFrameCallback(present);}
                 else if(video.currentTime>0)present();
@@ -47,7 +49,7 @@ export async function startWebcastVideo(id,{signal,onError}={}) {
             video.addEventListener('loadeddata',loaded);document.body.append(video);
             const url='/api/webcast?area='+id;
             if(Hls) {
-                hls=new Hls({backBufferLength:0,maxBufferLength:2,maxMaxBufferLength:4,liveSyncDurationCount:3,lowLatencyMode:false,manifestLoadingTimeOut:15000,levelLoadingTimeOut:15000,fragLoadingTimeOut:25000,manifestLoadingMaxRetry:2,levelLoadingMaxRetry:2,fragLoadingMaxRetry:3});
+                hls=new Hls({backBufferLength:0,maxBufferLength:12,maxMaxBufferLength:20,liveSyncDurationCount:3,lowLatencyMode:false,manifestLoadingTimeOut:15000,levelLoadingTimeOut:15000,fragLoadingTimeOut:25000,manifestLoadingMaxRetry:2,levelLoadingMaxRetry:2,fragLoadingMaxRetry:3});
                 hls.on(Hls.Events.ERROR,(_,data)=>{if(data.fatal){console.warn('Traffic webcast failed',{type:data.type,details:data.details,status:data.response?.code || 0});error(new Error('Webcast '+data.details));}});
                 hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(error));
                 hls.loadSource(url);hls.attachMedia(video);

@@ -1,4 +1,4 @@
-import {startWebcastVideo,getWebcastFrame,webcastFrameBlob} from './traffic-webcast.js?v=live-first-frame-v5';
+import {startWebcastVideo,getWebcastFrame,webcastFrameBlob} from './traffic-webcast.js?v=live-buffer-v6';
 import {CAMERA_BACKGROUND_KEY,parseCameraPreference,cameraImageUrl,cameraRefreshInterval} from './camera-background-model.js';
 
 const sourcePicker=document.getElementById('background-camera-source');
