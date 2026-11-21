@@ -128,21 +128,12 @@
             background: rgba(255, 255, 255, 0.12);
         }
 
-        .sort-btn {
-            position: absolute; right: 12px; font-size: 20px;
-            color: var(--text-main); opacity: 0.7; cursor: pointer; z-index: 10;
-            width: 24px; text-align: center;
-        }
-        .sort-up { top: 12px; }
-        .sort-down { top: 38px; }
-        .sort-btn:hover { opacity: 1; transform: scale(1.1); }
-        .edit-active .link-item { padding-right: 58px; }
-        .edit-active .link-item::after { 
-            content: "edit"; font-family: 'Material Icons'; 
-            position: absolute; top: 8px; right: 38px; 
-            font-size: 10px; background: #0081ff; color: white; 
-            border-radius: 50%; padding: 4px; 
-        }
+        .quick-access-actions { display:flex; align-items:center; gap:4px; }
+        .quick-access-actions mdui-button-icon { color:inherit; flex:none; }
+        .bookmark-actions { display:flex; justify-content:center; gap:2px; margin-top:12px; }
+        .bookmark-actions mdui-button-icon { width:32px; height:32px; color:inherit; --mdui-comp-button-icon-size:32px; }
+        .edit-active .link-item { padding:16px 6px 10px; cursor:pointer; }
+        .edit-active .link-item > span { max-width:100%; overflow-wrap:anywhere; text-align:center; }
 
         .content-layout { width:100%; max-width:1240px; min-width:0; box-sizing:border-box; margin:0 auto 80px; display:grid; grid-template-columns:minmax(0,1fr) 360px; align-items:stretch; gap:32px; padding:0 20px; }
         .card-glass { border-radius: 28px; background: var(--glass-bg); backdrop-filter: blur(20px); padding: 32px; border: 1px solid var(--glass-border); color: var(--text-main); }
@@ -397,7 +388,6 @@
         </div>
         <div style="flex-grow: 1"></div>
         <mdui-button-icon id="theme-btn" icon="light_mode" style="color: inherit;"></mdui-button-icon>
-        <mdui-button-icon id="edit-btn" icon="edit_note" style="color: inherit;"></mdui-button-icon>
     </header>
     <section class="hero-space">
         <div class="search-container">
@@ -493,7 +483,10 @@
         <main class="card-glass" id="main-container">
             <div style="display:flex; align-items:center; justify-content:space-between;">
                 <div style="font-size: 1.3rem; font-weight: 900;">快捷访问</div>
-                <mdui-button-icon id="add-btn" icon="add" style="display:none; color: inherit;"></mdui-button-icon>
+                <div class="quick-access-actions">
+                    <mdui-button-icon id="add-btn" icon="add" aria-label="添加快捷访问" title="添加快捷访问" style="display:none;"></mdui-button-icon>
+                    <mdui-button-icon id="edit-btn" icon="edit" aria-label="编辑快捷访问" title="编辑快捷访问" aria-pressed="false"></mdui-button-icon>
+                </div>
             </div>
             <div class="links-grid" id="links-wrapper"></div>
         </main>
@@ -725,33 +718,41 @@
             const wrapper = document.getElementById('links-wrapper');
             wrapper.innerHTML = '';
             bookmarks.forEach((item, i) => {
-                const el = document.createElement('a');
+                const el = document.createElement(isEdit ? 'div' : 'a');
                 el.className = 'link-item';
-                el.href = isEdit ? 'javascript:void(0)' : item.url;
-                if(!isEdit) el.target = "_blank";
+                if(!isEdit) { el.href = item.url; el.target = '_blank'; }
                 const isImg = item.icon.includes('http') || item.icon.includes('.');
                 const iconHtml = isImg ? `<img src="${item.icon}">` : `<mdui-icon name="${item.icon}"></mdui-icon>`;
                 el.innerHTML = `${iconHtml}<span>${item.name}</span>`;
 
                 if (isEdit) {
-                    const up = document.createElement('span');
-                    up.className = 'sort-btn sort-up';
-                    up.innerHTML = '↑';
-                    up.onclick = (e) => { e.stopImmediatePropagation(); moveBookmark(i, -1); };
-
-                    const down = document.createElement('span');
-                    down.className = 'sort-btn sort-down';
-                    down.innerHTML = '↓';
-                    down.onclick = (e) => { e.stopImmediatePropagation(); moveBookmark(i, 1); };
-
-                    el.appendChild(up);
-                    el.appendChild(down);
+                    const actions = document.createElement('div');
+                    actions.className = 'bookmark-actions';
+                    for (const [icon, label, action, disabled] of [
+                        ['edit', '编辑书签', () => openDialog(i), false],
+                        ['arrow_upward', '向前移动', () => moveBookmark(i, -1), i === 0],
+                        ['arrow_downward', '向后移动', () => moveBookmark(i, 1), i === bookmarks.length - 1]
+                    ]) {
+                        const button = document.createElement('mdui-button-icon');
+                        button.setAttribute('icon', icon);
+                        button.setAttribute('aria-label', `${label}：${item.name}`);
+                        button.setAttribute('title', label);
+                        button.disabled = disabled;
+                        button.onclick = event => { event.stopPropagation(); action(); };
+                        actions.appendChild(button);
+                    }
+                    el.appendChild(actions);
                     el.onclick = () => openDialog(i);
                 }
                 wrapper.appendChild(el);
             });
             document.getElementById('main-container').classList.toggle('edit-active', isEdit);
             document.getElementById('add-btn').style.display = isEdit ? 'inline-block' : 'none';
+            const editButton = document.getElementById('edit-btn');
+            editButton.setAttribute('icon', isEdit ? 'check' : 'edit');
+            editButton.setAttribute('aria-label', isEdit ? '完成编辑' : '编辑快捷访问');
+            editButton.setAttribute('title', isEdit ? '完成编辑' : '编辑快捷访问');
+            editButton.setAttribute('aria-pressed', String(isEdit));
         }
 
         function moveBookmark(index, direction) {
