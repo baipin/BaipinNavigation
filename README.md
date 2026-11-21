@@ -35,3 +35,25 @@ A pure Navigation 一个简单纯粹的导航页面，包含RSS订阅、自定�
 OAuth 品牌信息的“应用首页”必须使用 `https://123.baipon.com/`，不要填写 `/api/sync?action=login`、Google 授权地址或回调地址。首页的应用介绍、功能、Google 数据用途及政策链接均以静态 HTML 公开呈现，不依赖登录或同步接口。隐私政策使用 `https://123.baipon.com/privacy.html`，服务条款使用 `https://123.baipon.com/terms.html`；品牌名称和徽标应与首页的百品导航（Baipin Navigation）一致，并在 Google 控制台完成域名所有权验证。
 
 隐私政策列明 Google 账号标识、姓名、邮箱、Drive 应用专用文件、OAuth 令牌的访问用途、处理及共享对象、安全措施、保留期限和删除流程，并明确 Limited Use、禁止通用 AI 模型训练和 AI NCII 用途。维护者应在实际数据处理方式改变前同步更新披露。提交审核时请使用不带登录参数的根域名首页；网页更新本身不代表 Google 已批准应用，控制台配置和重新提交仍需由项目所有者完成。
+
+
+## GitHub 登录与 Secret Gist 同步
+
+数据管理中可选择 Google Drive 或 GitHub Gist。两个服务的会话、账号基线与自动同步开关分开，不会按同名或邮箱自动合并；只有用户主动同步时，本机预设才上传到当前服务。JSON 导入导出仍使用同一白名单，不包含任何服务的会话或令牌。
+
+请创建 **GitHub OAuth App**（Settings → Developer settings → OAuth Apps → New OAuth App），不要创建需要 Webhook、Private Key 和安装权限的 GitHub App：
+
+- Application name：百品导航；Homepage URL：`https://123.baipon.com/`。
+- Description：个人导航与香港资讯首页，支持 Secret Gist 预设同步。
+- Authorization callback URL：`https://123.baipon.com/api/github?action=callback`。
+- Enable Device Flow：关闭；OAuth App 不需要配置 Webhook URL、Webhook Secret 或 Private Key。
+- 将 Client ID 写入 Vercel 环境变量 `GITHUB_CLIENT_ID`，Client Secret 写入 `GITHUB_KEY`，然后重新部署。密钥仅在服务端使用。
+- 如更换域名，可配置 `GITHUB_REDIRECT_URI` 为完整回调 URL，同时更新 GitHub OAuth App。不要将客户端密钥放进任何前端环境变量、仓库或聊天记录。
+
+本站登录请求仅携带 `gist` 范围，使用 state 与 PKCE。GitHub 的 `gist` OAuth 范围可以访问账号的 Gist，无法约束到一个应用文件；本站读取列表元数据来定位自有、非公开且带本站标记的 Gist，只读写 `baipin-navigation-presets-v1.json`，不申请仓库或私人邮箱权限。登录身份仅保留公开 ID、用户名和显示名称。支持提供商返回的过期令牌和刷新令牌；同步会话最长 30 天，独立 Cookie 使用 AES-GCM 加密、HttpOnly、Secure 和 SameSite=Lax。
+
+**Secret Gist 不是私有存储**，知道链接的人可能读取未加密 JSON。界面会在登录前显示此限制；请勿同步敏感信息。Gist 更新前检查版本，遇到明确版本或条件请求冲突会要求重试；GitHub Gist 不是事务数据库，同时写入仍可能产生竞争，可通过 Gist 修订历史核对。首次同步或两端均修改时仍会要求用户选择保留版本。
+
+退出当前服务不删除云端数据。删除 Gist 前，先关闭各设备的 GitHub 自动同步并退出，再在 gist.github.com 删除本站对应的预设 Gist。撤销应用授权使用 GitHub Settings → Applications → Authorized OAuth Apps。更完整的数据处理与使用范围见双语隐私政策和服务条款。
+
+验证：`node tests/github.test.mjs` 和 `node tests/sync.test.mjs`。这些测试使用模拟服务，不构成真实 GitHub 授权验证；正式登录需完成 OAuth App 和 Vercel 配置。

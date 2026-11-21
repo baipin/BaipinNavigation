@@ -8,9 +8,25 @@ const logout = panel.querySelector('[data-sync-logout]');
 const syncButton = panel.querySelector('[data-sync-now]');
 const auto = panel.querySelector('[data-sync-auto]');
 const choices = panel.querySelector('[data-sync-conflict]');
-let account = null, busy = false, pending = null;
+const callbackProvider = new URL(location.href).searchParams.get('provider');
+let provider = (callbackProvider || localStorage.getItem('navi_sync_provider')) === 'github' ? 'github' : 'google';
+let account = null, busy = false, pending = null, configured = false;
 let statusMessage = '';
 const traditional = new Map([
+    ['多端预设同步','多端預設同步'],['使用同一 GitHub 账号同步多个设备','使用同一 GitHub 帳戶同步多個裝置'],
+    ['使用 GitHub 登录','使用 GitHub 登入'],['预设保存在你的 Google Drive 应用专用空间。','預設儲存在你的 Google Drive 應用專用空間。'],
+    ['预设保存在你的 GitHub Secret Gist。','預設儲存在你的 GitHub Secret Gist。'],
+    ['Secret Gist 不是真正私有存储，知道链接的人可以读取预设。GitHub 的 gist 权限允许访问账号下的 Gist；本站仅定位并读写标记为本站预设的 Secret Gist，不申请仓库或私人邮箱权限。','Secret Gist 不是真正私有儲存，知道連結的人可以讀取預設。GitHub 的 gist 權限允許存取帳戶下的 Gist；本站僅定位並讀寫標記為本站預設的 Secret Gist，不申請儲存庫或私人電郵權限。'],
+    ['同步包括书签、搜索引擎、RSS、CITY FEED 自选股票与显示配置、语言、天气地区、主题和背景。两个服务独立保存预设，切换服务不会自动复制或合并账号。','同步包括書籤、搜尋引擎、RSS、CITY FEED 自選股票與顯示設定、語言、天氣地區、主題和背景。兩個服務獨立儲存預設，切換服務不會自動複製或合併帳戶。'],
+    ['服务端尚未配置 GITHUB_CLIENT_ID 和 GITHUB_KEY','伺服器尚未設定 GITHUB_CLIENT_ID 和 GITHUB_KEY'],
+    ['GitHub 登录成功。点击“立即同步”选择云端或本机预设。','GitHub 登入成功。點擊「立即同步」選擇雲端或本機預設。'],
+    ['已取消 GitHub 授权，本机预设不受影响。','已取消 GitHub 授權，本機預設不受影響。'],
+    ['GitHub 登录失败，请检查回调地址及 OAuth App 配置。','GitHub 登入失敗，請檢查回呼網址及 OAuth App 設定。'],
+    ['请允许本站的 GitHub gist 权限后重新登录。','請允許本站的 GitHub gist 權限後重新登入。'],
+    ['请先使用 GitHub 登录','請先使用 GitHub 登入'],['GitHub 授权已失效，请重新登录','GitHub 授權已失效，請重新登入'],
+    ['GitHub Gist 暂时不可用，请稍后重试','GitHub Gist 暫時無法使用，請稍後重試'],
+    ['GitHub 同步暂时不可用，请稍后重试','GitHub 同步暫時無法使用，請稍後重試'],
+    ['GitHub 权限不足或请求过于频繁，请稍后重试或重新授权 gist','GitHub 權限不足或請求過於頻繁，請稍後重試或重新授權 gist'],
     ['预设同步与备份','預設同步與備份'],['Google 多端同步','Google 多端同步'],
     ['使用同一 Google 账号同步多个设备','使用同一 Google 帳戶同步多個裝置'],
     ['使用 Google 登录','使用 Google 登入'],['立即同步','立即同步'],['退出登录','登出'],
@@ -43,25 +59,26 @@ const traditional = new Map([
     ['Google Drive 暂时不可用，请稍后重试','Google Drive 暫時無法使用，請稍後重試'],
     ['无法访问应用预设空间，请启用 Google Drive API 并重新授权','無法存取應用預設空間，請啟用 Google Drive API 並重新授權']
 ]);
+const traditionalPairs = [...traditional].sort((a,b)=>b[0].length-a[0].length);
 const simplified = () => document.documentElement.lang === 'zh-CN';
 function translate(text) {
     if (simplified()) return text;
-    for (const [source,target] of traditional) text = text.split(source).join(target);
+    for (const [source,target] of traditionalPairs) text = text.split(source).join(target);
     return text;
 }
 const staticLabels = [...dialog.querySelectorAll('[slot="headline"],#preset-sync-panel strong,#preset-sync-panel .preset-sync-hint:not(:has(a)),#preset-sync-panel mdui-button,#preset-sync-panel mdui-checkbox,#export-data-btn,#import-data-btn')].map(element=>[element,element.textContent.trim()]);
 function applyLanguage() {
     for (const [element,text] of staticLabels) element.textContent = translate(text);
     status.textContent = translate(statusMessage);
-    panel.querySelector('[data-sync-account]').textContent = account ? account.email : translate('使用同一 Google 账号同步多个设备');
+    updateProviderText();
     for (const link of document.querySelectorAll('[data-site-legal]')) {
         link.textContent = link.dataset.siteLegal === 'privacy' ? (simplified()?'隐私政策':'隱私政策') : (simplified()?'服务条款':'服務條款');
         link.href = '/'+link.dataset.siteLegal+'.html?lang='+(simplified()?'sc':'tc');
     }
 }
 new MutationObserver(applyLanguage).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
-const stateKey = () => 'navi_sync_state:'+account.id;
-const autoKey = () => 'navi_sync_auto:'+account.id;
+const stateKey = () => 'navi_sync_state:'+(provider === 'github' ? 'github:' : '')+account.id;
+const autoKey = () => 'navi_sync_auto:'+(provider === 'github' ? 'github:' : '')+account.id;
 const editing = () => document.visibilityState !== 'visible' || document.querySelector('.edit-active, mdui-dialog[open]') || document.activeElement?.matches('input,textarea,mdui-text-field');
 function snapshot() {
     const values = {};
@@ -86,17 +103,30 @@ function applyPreset(input) {
     try { write(preset); } catch (error) { write(before); throw error; }
 }
 const hash = async preset => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(preset))))).map(byte=>byte.toString(16).padStart(2,'0')).join('');
-async function request(action,body) {
-    const response = await fetch('/api/sync?action='+action,{credentials:'same-origin',cache:'no-store',...(body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{})});
+async function request(action,body,selectedProvider=provider) {
+    const response = await fetch((selectedProvider === 'github' ? '/api/github' : '/api/sync')+'?action='+action,{credentials:'same-origin',cache:'no-store',...(body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{})});
     let data;
     try { data = await response.json(); } catch { throw new Error('同步服务暂时不可用，请稍后重试'); }
     if (!response.ok) {
-        if (response.status === 401) { account = null; updateControls(); }
+        if (response.status === 401 && selectedProvider === provider) { account = null; updateControls(); }
         throw new Error(data.error || '同步失败，请稍后重试');
     }
     return data;
 }
+function updateProviderText() {
+    const name = provider === 'github' ? 'GitHub' : 'Google';
+    panel.querySelector('[data-sync-account]').textContent = account ? name+' · '+(provider === 'github' ? '@'+account.login : account.email) : translate('使用同一 '+name+' 账号同步多个设备');
+    login.textContent = translate('使用 '+name+' 登录');
+    panel.querySelector('[data-sync-storage]').textContent = translate(provider === 'github' ? '预设保存在你的 GitHub Secret Gist。' : '预设保存在你的 Google Drive 应用专用空间。');
+    panel.querySelector('[data-sync-github-warning]').hidden = provider !== 'github';
+    for (const button of panel.querySelectorAll('[data-sync-provider]')) {
+        const active = button.dataset.syncProvider === provider;
+        button.setAttribute('aria-pressed',String(active));button.setAttribute('variant',active?'tonal':'outlined');button.disabled=busy;
+    }
+}
 function updateControls() {
+    updateProviderText();
+    login.disabled = busy || !configured;
     login.hidden = !!account;
     logout.hidden = !account;
     syncButton.disabled = busy || !account;
@@ -165,18 +195,28 @@ async function resolveConflict(useCloud) {
     finally { busy = false; updateControls(); }
 }
 async function checkLogin() {
+    const selectedProvider = provider;
     try {
-        const result = await request('status');
+        const result = await request('status',undefined,selectedProvider);
+        if (selectedProvider !== provider) return;
+        configured = result.configured;
         account = result.authenticated ? result.user : null;
-        panel.querySelector('[data-sync-account]').textContent = account ? account.email : translate('使用同一 Google 账号同步多个设备');
-        login.disabled = !result.configured;
+        updateProviderText();
+        login.disabled = !configured;
         auto.checked = !!account && localStorage.getItem(autoKey()) === '1';
         const previous = account ? savedState() : {};
-        if (!pending) show(!result.configured ? '服务端尚未配置 GOOGLE_KEY' : account ? previous.updatedAt ? '上次同步：'+new Date(previous.updatedAt).toLocaleString() : '已登录。点击“立即同步”创建或读取云端预设。' : '尚未登录；本机设置仍可正常使用。');
-    } catch (error) { show(error.message); }
+        if (!pending) show(!result.configured ? (provider === 'github' ? '服务端尚未配置 GITHUB_CLIENT_ID 和 GITHUB_KEY' : '服务端尚未配置 GOOGLE_KEY') : account ? previous.updatedAt ? '上次同步：'+new Date(previous.updatedAt).toLocaleString() : '已登录。点击“立即同步”创建或读取云端预设。' : '尚未登录；本机设置仍可正常使用。');
+    } catch (error) { if (selectedProvider !== provider) return; show(error.message); }
     updateControls();
 }
-login.onclick = () => { location.href = '/api/sync?action=login'; };
+for (const button of panel.querySelectorAll('[data-sync-provider]')) button.onclick = () => {
+    if (busy || button.dataset.syncProvider === provider) return;
+    provider = button.dataset.syncProvider; localStorage.setItem('navi_sync_provider',provider);
+    account = null; configured = false; pending = null; auto.checked = false; choices.hidden = true;
+    document.getElementById('data-manage-btn')?.classList.remove('sync-attention');
+    applyLanguage(); updateControls(); show('正在检查登录状态…'); checkLogin();
+};
+login.onclick = () => { localStorage.setItem('navi_sync_provider',provider); location.href = (provider === 'github' ? '/api/github' : '/api/sync')+'?action=login'; };
 logout.onclick = async () => {
     if (busy) return;
     busy = true; updateControls();
@@ -184,7 +224,7 @@ logout.onclick = async () => {
         await request('logout',{});
         if (account) localStorage.removeItem(autoKey());
         account = null; auto.checked = false; pending = null; choices.hidden = true;
-        panel.querySelector('[data-sync-account]').textContent = translate('使用同一 Google 账号同步多个设备');
+        updateProviderText();
         document.getElementById('data-manage-btn')?.classList.remove('sync-attention');
         show('已退出此设备的登录，本机与云端预设均保留。');
     } catch (error) { show(error.message); }
@@ -213,8 +253,10 @@ document.getElementById('import-file-input').onchange = async event => {
 };
 const result = new URL(location.href).searchParams.get('sync');
 if (result) {
+    localStorage.setItem('navi_sync_provider',provider);
     const messages = {connected:'Google 登录成功。点击“立即同步”选择云端或本机预设。',cancelled:'已取消 Google 授权，本机预设不受影响。','state-error':'登录验证已过期，请从本站重新登录。','login-error':'Google 登录失败，请检查回调地址、Drive API 及 OAuth 配置。','permission-error':'请允许本站访问 Google Drive 应用预设空间后重新登录。'};
-    const url = new URL(location.href); url.searchParams.delete('sync'); history.replaceState(null,'',url);
+    if (provider === 'github') Object.assign(messages,{connected:'GitHub 登录成功。点击“立即同步”选择云端或本机预设。',cancelled:'已取消 GitHub 授权，本机预设不受影响。','login-error':'GitHub 登录失败，请检查回调地址及 OAuth App 配置。','permission-error':'请允许本站的 GitHub gist 权限后重新登录。'});
+    const url = new URL(location.href); url.searchParams.delete('sync'); url.searchParams.delete('provider'); history.replaceState(null,'',url);
     dialog.open = true;
     checkLogin().then(()=>show(messages[result] || '请重新登录同步'));
 } else {
