@@ -72,11 +72,11 @@
         #engine-dropdown { position:relative; display:flex; flex:none; margin-right:8px; }
         .engine-trigger { border:0; padding:4px; background:transparent; border-radius:50%; cursor:pointer; color:inherit; }
         .engine-trigger:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
-        #engine-menu { position:absolute; top:calc(100% + 16px); left:0; min-width:220px; max-width:calc(100vw - 48px); max-height:min(65vh,440px); overflow-y:auto; z-index:1700; }
+        #engine-menu { position:absolute; top:calc(100% + 16px); left:0; min-width:220px; max-width:calc(100vw - 48px); max-height:none; overflow:visible; z-index:1700; }
         #engine-menu[hidden] { display:none; }
-        .header-search-host { display:none; min-width:0; flex:1; max-width:650px; margin:0 auto 0 24px; }
+        .header-search-host { display:none; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(650px,calc(100% - 360px)); min-width:0; margin:0; }
         .app-bar.search-docked .header-search-host { display:flex; }
-        .app-bar.search-docked .app-bar-spacer { display:none; }
+        .app-bar.search-docked .app-bar-spacer { display:block; }
         .header-search-host .search-container { width:100%; padding:0 12px; box-shadow:none; backdrop-filter:none; }
         .header-search-host .search-input { padding:10px 8px; font-size:1rem; }
         #header-search-toggle, #header-search-close { display:none; color:inherit; flex:none; }
@@ -85,9 +85,18 @@
             .app-bar.search-docked .app-bar-spacer { display:block; }
             .app-bar.search-docked #header-search-toggle { display:inline-flex; }
             .app-bar.search-open > :not(.header-search-host) { display:none !important; }
-            .app-bar.search-open .header-search-host { display:flex; margin:0; max-width:none; }
+            .app-bar.search-open .header-search-host { display:flex; left:5%; right:5%; width:auto; transform:translateY(-50%); }
+            .app-bar.search-open .header-search-host .search-container { animation:materialSearchExpand 300ms cubic-bezier(.2,0,0,1); transform-origin:right center; }
+            @keyframes materialSearchExpand {
+                from { opacity:0; clip-path:inset(0 0 0 calc(100% - 48px) round 28px); }
+                to { opacity:1; clip-path:inset(0 0 0 0 round 28px); }
+            }
             .app-bar.search-open #header-search-close { display:inline-flex; }
             .header-search-host .search-container { padding-right:2px; }
+        }
+
+        @media(prefers-reduced-motion:reduce) {
+            .app-bar.search-open .header-search-host .search-container { animation:none; }
         }
 
         .engine-favicon {
@@ -121,7 +130,7 @@
             background: var(--glass-bg); backdrop-filter: blur(25px);
             border: 1px solid var(--glass-border); border-radius: 20px;
             margin-top: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            max-height: 320px; overflow-y: auto; z-index: 1600; display: none;
+            max-height:none; overflow:visible; z-index:1600; display:none;
         }
         .suggestion-item {
             padding: 12px 20px; font-size: 1.05rem; cursor: pointer; transition: all 0.2s;
@@ -1030,7 +1039,7 @@
         function renderSuggestions(list) {
             suggestionsContainer.innerHTML = '';
             if (list.length === 0) { suggestionsContainer.style.display = 'none'; return; }
-            list.slice(0, 10).forEach((text) => {
+            list.forEach((text) => {
                 const div = document.createElement('div');
                 div.className = 'suggestion-item';
                 div.textContent = text;
