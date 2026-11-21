@@ -143,8 +143,10 @@
             background: rgba(255, 255, 255, 0.12);
         }
 
-        .site-legal-links { display:flex; flex-wrap:wrap; justify-content:center; gap:24px; margin:0 20px 32px; font-size:.85rem; }
-        .site-legal-links a { color:inherit; padding:10px 16px; background:var(--glass-bg); border-radius:20px; text-underline-offset:3px; }
+        .site-legal-links { display:inline-flex; flex-wrap:wrap; justify-content:center; gap:18px; margin:0; font-size:.85rem; }
+        .site-legal-links a { color:inherit; padding:8px 0; text-underline-offset:3px; }
+        #photo-credit { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:12px; }
+        @media(max-width:600px) { #photo-credit .site-legal-links { flex-basis:100%; } }
         #preset-sync-panel a { color:inherit; text-underline-offset:3px; }
         #preset-sync-panel { min-width:0; max-width:520px; }
         #preset-sync-panel [hidden] { display:none !important; }
@@ -590,6 +592,10 @@
     ">
          <span id="photo-attribution">浙江丽水云和梯田 / 站长拍摄</span>
          <mdui-button-icon id="language-toggle-btn" class="city-language-btn" icon="translate" title="切换简繁中文" aria-label="切换简繁中文"></mdui-button-icon>
+    <nav class="site-legal-links" aria-label="政策与条款">
+        <a href="/privacy.html" data-site-legal="privacy">隐私政策</a>
+        <a href="/terms.html" data-site-legal="terms">服务条款</a>
+    </nav>
     </div>
 </div>
     </div>
@@ -701,7 +707,6 @@
                     <mdui-button variant="outlined" icon="cloud_upload" data-sync-use-local>用本机替换云端</mdui-button>
                 </div>
                 <p class="preset-sync-hint">首次同步或两端均有修改时，请选择保留哪一端。自动同步在编辑时暂停；退出登录不会删除预设。</p>
-                <p class="preset-sync-hint"><a href="/privacy.html" data-site-legal="privacy">隐私政策</a> · <a href="/terms.html" data-site-legal="terms">服务条款</a></p>
             </section>
             <mdui-divider></mdui-divider>
             <mdui-button variant="tonal" id="export-data-btn" icon="download">导出预设（JSON）</mdui-button>
@@ -3883,10 +3888,6 @@ function setBackgroundToCookie(value) {
     </script>
     <script src="js/city-feed.js"></script>
     <script src="js/layout.js"></script>
-    <footer class="site-legal-links" aria-label="政策与条款">
-        <a href="/privacy.html" data-site-legal="privacy">隐私政策</a>
-        <a href="/terms.html" data-site-legal="terms">服务条款</a>
-    </footer>
     <script type="module" src="js/sync.js"></script>
 </body>
 </html>
