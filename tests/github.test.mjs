@@ -8,7 +8,7 @@ process.env.GITHUB_CLIENT_ID='local-test-client';process.env.GITHUB_KEY='local-t
 const origin='https://123.baipon.com';
 let now=oldNow(),cloud=null,version=0,reject=false,scopes='gist',tokenCalls=0,refreshes=0,expectedChallenge='';
 Date.now=()=>now;
-const preset=sanitizePreset({localStorage:{navi_city_stocks:JSON.stringify({ids:['aapl'],symbols:['MSFT']}),navi_city_feed:JSON.stringify({rss:['a'],speed:72})},cookies:{}});
+const preset=sanitizePreset({localStorage:{navi_city_stocks:JSON.stringify({ids:['aapl'],symbols:['MSFT']}),navi_city_feed:JSON.stringify({rss:['a'],speed:72}),navi_camera_background:JSON.stringify({source:'traffic',id:'H429F',refresh:false})},cookies:{}});
 const json=(data,headers={})=>new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json',...headers}});
 const gist=()=>({id:'abc123',public:false,owner:{id:7},description:'Baipin Navigation preset sync (v1)',files:{'baipin-navigation-presets-v1.json':{content:JSON.stringify(cloud),truncated:false}}});
 globalThis.fetch=async(url,options={})=>{

@@ -7,7 +7,7 @@ process.env.GOOGLE_KEY = 'local-test-only-not-a-production-secret';
 const origin='https://123.baipon.com';
 let now=originalTime(), cloud=null, generation=0, rejectWrite=false, refreshes=0, tokenCalls=0;
 Date.now=()=>now;
-const preset=sanitizePreset({localStorage:{bp_v7:JSON.stringify([{name:'测试',url:'https://example.com',icon:'link'}]),navi_city_stocks:JSON.stringify({ids:['aapl'],symbols:['MSFT']}),navi_city_feed:JSON.stringify({speed:72,rss:['source']}),navi_language:'tc',hko_rain_area:'沙田',navi_aqhi_station:'Sha Tin'},cookies:{homepage_bg:'https://example.com/photo.jpg',unrelated:'private'}});
+const preset=sanitizePreset({localStorage:{bp_v7:JSON.stringify([{name:'测试',url:'https://example.com',icon:'link'}]),navi_city_stocks:JSON.stringify({ids:['aapl'],symbols:['MSFT']}),navi_city_feed:JSON.stringify({speed:72,rss:['source']}),navi_language:'tc',hko_rain_area:'沙田',navi_aqhi_station:'Sha Tin',navi_camera_background:JSON.stringify({source:'hko',id:'HKO',refresh:true})},cookies:{homepage_bg:'https://example.com/photo.jpg',unrelated:'private'}});
 const json=data=>new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json'}});
 globalThis.fetch=async (url,options={})=> {
     url=String(url);

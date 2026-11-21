@@ -72,3 +72,7 @@ OAuth 品牌信息的“应用首页”必须使用 `https://123.baipon.com/`，
 点击温度旁的天文台警告图标可打开跟随深浅主题的详情弹窗，查看当前警告内容及当天全部警告的发出／取消记录表格（包含天文台原版警告图标）。`api/weather-warnings.js` 使用固定天文台 warningInfo 和官方警告页面引用的 wxwarntoday_uc.json 数据源，支持简繁中文、部分失败提示和手动刷新，时间以 UTC+8 显示；旧记录会标明日期。接口回归检查：`node tests/weather-warnings.test.mjs`。
 
 设置分类使用 MDUI 原生 `mdui-tabs`、`mdui-tab` 和 `mdui-tab-panel`，提供 Material 选中指示条、涟漪与键盘交互；OAuth 回调继续打开登录与备份标签。警告记录表采用 Material 数据表格排版、横向行分隔、圆角容器和主题色状态标签，保留语义化表头及原版警告图标。
+
+背景设置增加天文台天气摄影机和运输署交通快拍：可搜索地点并点击缩略图设为背景，镜头每批展示 12 个，图像按可见范围载入。天气背景每 3 分钟、交通背景每 2 分钟更新，支持暂停自动更新、手动刷新及恢复照片背景；后台页面不定时请求图片，加载失败保留最后背景。`navi_camera_background` 只保存来源、镜头编号及刷新偏好，随预设导入导出、Google/GitHub 同步及恢复默认设置处理，照片 Cookie 保留为备用背景。
+
+镜头目录 `data/background-cameras.json` 于 2026-11-22 取自 [天文台天气照片](https://www.hko.gov.hk/tc/wxinfo/ts/index_webcam.htm)（34 个）及 [运输署交通快拍官方目录](https://static.data.gov.hk/td/traffic-snapshot-images/code/Traffic_Camera_Locations_Tc.csv)（973 个）。交通快拍本身通常为 320×240，并非视频。广告保持在快捷访问容器底部，剩余高度由上方快捷访问区域承担。

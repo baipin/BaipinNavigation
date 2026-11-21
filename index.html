@@ -185,13 +185,13 @@
 
         .content-layout { width:100%; max-width:1240px; min-width:0; box-sizing:border-box; margin:0 auto 80px; display:grid; grid-template-columns:minmax(0,1fr) 360px; align-items:stretch; gap:32px; padding:0 20px; }
         .card-glass { border-radius: 28px; background: var(--glass-bg); backdrop-filter: blur(20px); padding: 32px; border: 1px solid var(--glass-border); color: var(--text-main); }
-        #main-container { min-width:0; }
-        .quick-access-ad { min-width:0; width:100%; text-align:center; margin-top:24px; padding-top:16px; border-top:1px solid rgba(128,128,128,.16); }
+        #main-container { display:flex; flex-direction:column; min-width:0; }
+        .quick-access-ad { flex:none; min-width:0; width:100%; text-align:center; margin-top:24px; padding-top:16px; border-top:1px solid rgba(128,128,128,.16); }
         .quick-access-ad-label { margin:0 0 8px; text-align:left; font-size:.72rem; line-height:1.5; letter-spacing:.08em; color:var(--text-main); opacity:.6; }
         .quick-access-ad .adsbygoogle { max-width:100%; vertical-align:top; }
         .quick-access-ad:has(.adsbygoogle[data-ad-status="unfilled"]) { display:none; }
         @media(max-width:600px) { .quick-access-ad { margin-top:20px; padding-top:12px; } }
-        .links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 18px; margin-top: 18px; padding: 8px 4px 4px; overflow: visible; }
+        .links-grid { flex:1 0 auto; align-content:start; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 18px; margin-top: 18px; padding: 8px 4px 4px; overflow: visible; }
         .link-item {
             position: relative; display: flex; flex-direction: column; align-items: center; padding: 20px 10px;
             border-radius: 22px; background: rgba(128,128,128,0.1); text-decoration: none; color: var(--text-main) !important; transition: all 0.2s;
@@ -476,6 +476,21 @@
         @media(prefers-reduced-motion:reduce) { .warning-history-table tbody tr { transition:none; } }
         .settings-reset { margin-top:24px; padding-top:16px; border-top:1px solid var(--glass-border); }
         .settings-background-actions { display:flex; flex-direction:column; align-items:flex-start; gap:12px; }
+        .camera-gallery { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:16px 0; }
+        .camera-thumbnail { position:relative; min-width:0; min-height:120px; padding:0; overflow:hidden; border:2px solid transparent; border-radius:12px; background:rgba(128,128,128,.1); color:inherit; text-align:left; font:inherit; cursor:pointer; transition:border-color .15s,background-color .15s; }
+        .camera-thumbnail:hover { background:rgba(128,128,128,.2); }
+        .camera-thumbnail[aria-pressed="true"] { border-color:rgb(var(--mdui-color-primary)); }
+        .camera-thumbnail[aria-pressed="true"]::after { content:'✓'; position:absolute; top:6px; right:6px; width:24px; height:24px; border-radius:50%; background:rgb(var(--mdui-color-primary)); color:rgb(var(--mdui-color-on-primary)); text-align:center; line-height:24px; }
+        .camera-thumbnail:focus-visible { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:3px; }
+        .camera-thumbnail img { display:block; width:100%; height:auto; aspect-ratio:16/9; object-fit:cover; }
+        .camera-thumbnail span { display:block; padding:8px; font-size:.78rem; line-height:1.5; overflow-wrap:anywhere; }
+        .camera-image-unavailable { padding-top:40px; }
+        .camera-search { box-sizing:border-box; width:100%; min-height:48px; padding:12px; border:1px solid rgba(128,128,128,.5); border-radius:12px; background:transparent; color:inherit; font:inherit; }
+        .camera-search:focus-visible { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:2px; }
+        #background-camera-status { font-size:.85rem; line-height:1.6; }
+        @media(max-width:600px) { .camera-gallery { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } }
+        @media(prefers-reduced-motion:reduce) { .camera-thumbnail { transition:none; } }
+
         #search-clear { flex:none; color:inherit; }
         .footer-bottom { display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid var(--glass-border); }
         .footer-meta { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-left:auto; font-size:.8rem; }
@@ -783,11 +798,20 @@
         </mdui-tab-panel>
         <mdui-tab-panel slot="panel" value="background" class="settings-panel" data-settings-panel="background">
             <h3 data-settings-text="backgroundTitle">首页背景</h3>
+            <div class="settings-districts"><label><span data-camera-source-label>背景来源</span><select id="background-camera-source"><option value="photo">照片／默认背景</option><option value="hko">天文台天气摄影机</option><option value="traffic">交通快拍图像</option></select></label></div>
             <div class="settings-background-actions">
                 <mdui-button variant="tonal" id="random-bg-btn" icon="image" data-settings-text="random">从 Unsplash 获取随机背景</mdui-button>
                 <mdui-button variant="outlined" id="reset-bg-btn" icon="restore" data-settings-text="reset">恢复默认背景</mdui-button>
             </div>
             <p class="preset-sync-hint" data-settings-text="backgroundHint">背景会保存在此设备，开启同步后也可随预设同步。</p>
+            <div data-camera-controls hidden>
+                <p class="preset-sync-hint" data-camera-hint></p>
+                <input type="search" class="camera-search" id="background-camera-search" aria-label="搜索地点、地区或镜头编号" placeholder="搜索地点、地区或镜头编号">
+                <div class="camera-gallery" id="background-camera-gallery"></div>
+                <mdui-button variant="text" id="background-camera-more" hidden>载入更多镜头</mdui-button>
+                <div class="settings-actions"><mdui-checkbox id="background-camera-refresh" checked>自动更新摄影机背景</mdui-checkbox><mdui-button variant="text" icon="refresh" id="background-camera-retry">立即更新背景</mdui-button></div>
+            </div>
+            <p id="background-camera-status" role="status" aria-live="polite"></p>
         </mdui-tab-panel>
         <mdui-tab-panel slot="panel" value="sync" class="settings-panel" data-settings-panel="sync"><div class="settings-sync-content">
             <section id="preset-sync-panel" aria-label="多端预设同步">
@@ -800,7 +824,7 @@
                 <p data-sync-account>使用同一 Google 账号同步多个设备</p>
                 <p class="preset-sync-hint" data-sync-storage>预设保存在你的 Google Drive 应用专用空间。</p>
                 <p class="preset-sync-hint" data-sync-github-warning hidden>Secret Gist 不是真正私有存储，知道链接的人可以读取预设。GitHub 的 gist 权限允许访问账号下的 Gist；本站仅定位并读写标记为本站预设的 Secret Gist，不申请仓库或私人邮箱权限。</p>
-                <p class="preset-sync-hint">同步包括书签、搜索引擎、RSS、CITY FEED 自选股票与显示配置、语言、天气地区、主题和背景。两个服务独立保存预设，切换服务不会自动复制或合并账号。</p>
+                <p class="preset-sync-hint">同步包括书签、搜索引擎、RSS、CITY FEED 自选股票与显示配置、语言、天气地区、主题、照片及摄影机背景。两个服务独立保存预设，切换服务不会自动复制或合并账号。</p>
                 <div class="preset-sync-actions">
                     <mdui-button variant="outlined" icon="login" data-sync-login>使用 Google 登录</mdui-button>
                     <mdui-button variant="tonal" icon="sync" data-sync-now disabled>立即同步</mdui-button>
@@ -1570,6 +1594,7 @@ document.getElementById('random-bg-btn').onclick = async () => {
         const data = await res.json();
 
         if (!data.url) throw new Error('无图片');
+        window.naviStopCameraBackground?.();
 
         // ✅ 应用背景
         applyBackground(data.url);
@@ -1712,6 +1737,7 @@ function setBackgroundToCookie(value) {
 
         // 恢复默认背景按钮
         document.getElementById('reset-bg-btn').onclick = () => {
+                window.naviStopCameraBackground?.();
                 const oldStyle = document.getElementById('custom-bg-style');
                 if (oldStyle) oldStyle.remove();
                 document.body.style.backgroundImage = '';
@@ -4047,6 +4073,7 @@ function setBackgroundToCookie(value) {
     </script>
     <script src="js/app-info.js?v=local-greeting-title-v2"></script>
     <script src="js/settings.js?v=material-tabs-v2"></script>
-    <script type="module" src="js/sync.js?v=reset-settings-v1"></script>
+    <script type="module" src="js/camera-background.js?v=camera-background-v1"></script>
+    <script type="module" src="js/sync.js?v=camera-background-v1"></script>
 </body>
 </html>

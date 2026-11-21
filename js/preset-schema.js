@@ -1,5 +1,6 @@
+import {parseCameraPreference} from './camera-background-model.js';
 // Only user preferences travel between devices. Session credentials and live caches stay local.
-export const PRESET_KEYS = ['bp_v7','custom_engines','last_engine','theme_mode','custom_rss','navi_city_stocks','navi_city_feed','navi_rss_expansion_v1','navi_language','hko_rain_area','navi_aqhi_station'];
+export const PRESET_KEYS = ['bp_v7','custom_engines','last_engine','theme_mode','custom_rss','navi_city_stocks','navi_city_feed','navi_rss_expansion_v1','navi_language','hko_rain_area','navi_aqhi_station','navi_camera_background'];
 export const COOKIE_KEYS = ['homepage_bg'];
 export const MAX_PRESET_BYTES = 180000;
 export function sanitizePreset(input) {
@@ -27,6 +28,7 @@ export function sanitizePreset(input) {
             if (['navi_city_feed','custom_engines'].includes(key) && Array.isArray(parsed)) throw new Error('预设设置格式不正确');
         }
     }
+    if(result.localStorage.navi_camera_background!==null)result.localStorage.navi_camera_background=JSON.stringify(parseCameraPreference(result.localStorage.navi_camera_background));
     if (result.localStorage.custom_rss !== null) result.localStorage.navi_rss_expansion_v1 = '1';
     if (new TextEncoder().encode(JSON.stringify(result)).length > MAX_PRESET_BYTES) throw new Error('预设超过 180 KB，请减小背景或配置数据');
     return result;
