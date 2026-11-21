@@ -52,18 +52,18 @@
         .logo-area { display: flex; align-items: center; gap: 12px; font-weight: 900; font-size: 1.2rem; }
         .logo-area img { height: 32px; }
         .hero-space { height:var(--hero-height); display:flex; align-items:center; justify-content:center; padding-top:var(--nav-height); }
-        .app-site-footer { width:100%; margin-top:16px; padding:48px 5% 40px; box-sizing:border-box; background:#15171b; color:#b6bac3; }
+        .app-site-footer { width:100%; margin-top:16px; padding:48px 5% 40px; box-sizing:border-box; background:var(--glass-bg); color:var(--text-main); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-top:1px solid var(--glass-border); }
         .app-overview { box-sizing:border-box; width:100%; max-width:1160px; margin:0 auto; }
         .footer-brand { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
-        .footer-brand img { width:48px; height:48px; filter:grayscale(1) brightness(1.3); opacity:.55; flex:none; }
-        .app-overview h1 { margin:0; color:#d1d3d8; font-size:clamp(1.25rem,3vw,1.6rem); font-weight:800; }
+        .footer-brand img { width:48px; height:48px; flex:none; }
+        .app-overview h1 { margin:0; color:inherit; font-size:clamp(1.25rem,3vw,1.6rem); font-weight:800; }
         .app-overview p { margin:10px 0; line-height:1.8; font-size:.88rem; overflow-wrap:anywhere; }
-        .app-overview .app-purpose { color:#d1d3d8; font-weight:600; }
+        .app-overview .app-purpose { color:inherit; font-weight:600; }
         .footer-description { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px 48px; }
-        .app-overview .app-data-use { font-size:.82rem; color:#9ba1ac; }
-        .app-overview nav { display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; margin-top:24px; padding-top:20px; border-top:1px solid #34373e; font-size:.85rem; }
-        .app-overview a { color:#d1d3d8; text-underline-offset:4px; }
-        .app-overview a:hover { color:#fff; }
+        .app-overview .app-data-use { font-size:.82rem; opacity:.8; }
+        .app-overview nav { display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; margin-top:24px; padding-top:20px; border-top:1px solid var(--glass-border); font-size:.85rem; }
+        .app-overview a { color:inherit; text-underline-offset:4px; }
+        .app-overview a:hover { text-decoration-thickness:2px; }
         .app-overview a:focus-visible { outline:2px solid currentColor; outline-offset:4px; }
         #main-container { scroll-margin-top:88px; }
         @media(max-width:600px) { .app-site-footer { padding:32px 24px; } .footer-description { grid-template-columns:minmax(0,1fr); gap:0; } .footer-brand { gap:12px; } .footer-brand img { width:40px; height:40px; } }
