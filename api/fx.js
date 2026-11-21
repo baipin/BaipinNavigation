@@ -10,7 +10,7 @@ export default async function handler(req,res) {
                 const meta=(await response.json()).chart?.result?.[0]?.meta;
                 const price=Number(meta?.regularMarketPrice),close=Number(meta?.previousClose ?? meta?.chartPreviousClose);
                 if(!Number.isFinite(price)||price<=0||!Number.isFinite(close)||close<=0)return null;
-                return {id:'cny_twd',price,percent:(price-close)/close*100,date:meta.regularMarketTime?new Date(meta.regularMarketTime*1000).toISOString().slice(0,10):'',previousDate:'previous close',source:'Yahoo Finance'};
+                return {id:'twd_cny',price:1/price,percent:((1/price)-(1/close))/(1/close)*100,date:meta.regularMarketTime?new Date(meta.regularMarketTime*1000).toISOString().slice(0,10):'',previousDate:'previous close',source:'Yahoo Finance'};
             } catch {return null;}
         })();
         const read=async date=> {const response=await fetch('https://api.frankfurter.dev/v1/'+date+'?base=HKD&symbols=CNY,JPY,CHF,USD,EUR,GBP,AUD,CAD,SGD,KRW',{signal:AbortSignal.timeout(5000)});if(!response.ok)throw Error('FX unavailable');return response.json();};
@@ -25,12 +25,12 @@ export default async function handler(req,res) {
             if(id==='usd'){price=1/price;close=1/close;}
             return {id,price,percent:(price-close)/close*100,date:latest.date,previousDate:previous.date};
         });
-        for(const currency of ['USD','CHF','JPY','HKD','EUR','GBP','AUD','CAD','SGD','KRW']) {
-            let price=currency==='HKD'?1/latest.rates.CNY:latest.rates?.[currency]/latest.rates.CNY;
-            let close=currency==='HKD'?1/previous.rates.CNY:previous.rates?.[currency]/previous.rates.CNY;
+        for(const currency of ['USD','CHF','JPY','EUR','GBP','AUD','CAD','SGD','KRW']) {
+            const amount=currency==='JPY'?100:1;
+            const price=amount*latest.rates.CNY/latest.rates?.[currency];
+            const close=amount*previous.rates.CNY/previous.rates?.[currency];
             if(!Number.isFinite(price)||price<=0||!Number.isFinite(close)||close<=0)continue;
-            if(currency==='USD'){price=1/price;close=1/close;}
-            quotes.push({id:currency==='USD'?'usd_cny':'cny_'+currency.toLowerCase(),price,percent:(price-close)/close*100,date:latest.date,previousDate:previous.date});
+            quotes.push({id:currency.toLowerCase()+'_cny',price,percent:(price-close)/close*100,date:latest.date,previousDate:previous.date});
         }
         const twd=await twdRequest;if(twd)quotes.push(twd);
         res.setHeader('Cache-Control','public, s-maxage=300, stale-while-revalidate=600');

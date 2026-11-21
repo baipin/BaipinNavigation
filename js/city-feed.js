@@ -140,8 +140,8 @@
         { id:'chf', dom:'city-chf', names:['港币 / 瑞郎','港幣 / 瑞郎'] },
         { id:'usd', dom:'city-usd', names:['美元 / 港币','美元 / 港幣'] }
     ];
-    const cnyCurrencies=[['usd','美元','美元'],['chf','瑞士法郎','瑞士法郎'],['twd','新台币','新臺幣'],['jpy','日元','日圓'],['hkd','港币','港幣'],['eur','欧元','歐元'],['gbp','英镑','英鎊'],['aud','澳元','澳元'],['cad','加元','加元'],['sgd','新加坡元','新加坡元'],['krw','韩元','韓圜']];
-    cnyCurrencies.forEach(([currency,sc,tc])=>markets.push({id:currency==='usd'?'usd_cny':'cny_'+currency,fx:true,url:'https://finance.yahoo.com/quote/'+(currency==='usd'?'USDCNY':'CNY'+currency.toUpperCase())+'%3DX/',names:currency==='usd'?['美元 / 人民币','美元 / 人民幣']:['人民币 / '+sc,'人民幣 / '+tc]}));
+    const cnyCurrencies=[['usd','美元','美元'],['chf','瑞士法郎','瑞士法郎'],['twd','新台币','新臺幣'],['jpy','100日元','100日圓'],['eur','欧元','歐元'],['gbp','英镑','英鎊'],['aud','澳元','澳元'],['cad','加元','加元'],['sgd','新加坡元','新加坡元'],['krw','韩元','韓圜']];
+    cnyCurrencies.forEach(([currency,sc,tc])=>markets.push({id:currency+'_cny',fx:true,url:'https://finance.yahoo.com/quote/'+currency.toUpperCase()+'CNY%3DX/',names:[sc+' / 人民币',tc+' / 人民幣'],unitNames:[(currency==='jpy'?'每100日元':'每1'+sc)+'可兑换的人民币金额',(currency==='jpy'?'每100日圓':'每1'+tc)+'可兌換的人民幣金額']}));
     const featuredMarkets = markets.filter((market) => ['hsi','nasdaq','sp500','ftse'].includes(market.id) || market.index || market.dom || market.fx);
     const defaultStocks = markets.filter((market) => market.symbol && !featuredMarkets.includes(market));
     const validSymbol = symbol=>/^(?:[A-Z]{1,6}|\d{4,5}\.HK|\d{6}\.(?:SS|SZ))$/.test(symbol);
@@ -234,7 +234,7 @@
             span.textContent = value;
             face.append(span);
         });
-        slot.title = name + (market.id==='usd_cny' ? text(' · 1 美元可兑换的人民币金额',' · 1 美元可兌換的人民幣金額') : market.fx ? text(' · 1 人民币可兑换的金额',' · 1 人民幣可兌換的金額') : '') + (quote?.time ? ' · ' + text('行情时间 ','行情時間 ') + quote.time : '') + (quote?.stale ? text(' · 更新失败，保留上次数据',' · 更新失敗，保留上次數據') : '');
+        slot.title = name + (market.unitNames ? ' · '+market.unitNames[isSC()?0:1] : '') + (quote?.time ? ' · ' + text('行情时间 ','行情時間 ') + quote.time : '') + (quote?.stale ? text(' · 更新失败，保留上次数据',' · 更新失敗，保留上次數據') : '');
         if (previous) {
             previous.className = 'city-feed-face city-feed-outgoing';
             previous.setAttribute('aria-hidden','true');
@@ -575,7 +575,7 @@
             const ids=data.quotes.map(quote=>quote.id);
             if(new Set(ids).size!==ids.length || !['cny','jpy','chf','usd'].every(id=>ids.includes(id)) || data.quotes.some(quote=>!Number.isFinite(quote.price)||quote.price<=0||!Number.isFinite(quote.percent)))throw Error('Invalid FX quote');
             for(const quote of data.quotes) {
-                const currency=quote.id==='usd_cny' ? 'CNY ' : quote.id.startsWith('cny_') ? quote.id.slice(4).toUpperCase()+' ' : {cny:'¥',jpy:'¥',chf:'CHF ',usd:'HK$'}[quote.id];
+                const currency=quote.id.endsWith('_cny') ? 'CNY ' : {cny:'¥',jpy:'¥',chf:'CHF ',usd:'HK$'}[quote.id];
                 if(!currency || !markets.some(item=>item.id===quote.id))continue;
                 state.set(quote.id,{price:currency+quote.price.toFixed(4),change:(quote.percent>0?'+':'')+quote.percent.toFixed(2)+'%',direction:quote.percent>0?'up':quote.percent<0?'down':'flat',time:quote.date+text(' · 较 ',' · 較 ')+(quote.previousDate==='previous close'?text('前收市','前收市'):quote.previousDate),fxSource:true});
             }
