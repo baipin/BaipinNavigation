@@ -185,12 +185,12 @@
 
         .content-layout { width:100%; max-width:1240px; min-width:0; box-sizing:border-box; margin:0 auto 80px; display:grid; grid-template-columns:minmax(0,1fr) 360px; align-items:stretch; gap:32px; padding:0 20px; }
         .card-glass { border-radius: 28px; background: var(--glass-bg); backdrop-filter: blur(20px); padding: 32px; border: 1px solid var(--glass-border); color: var(--text-main); }
-        #main-container { display:flex; flex-direction:column; min-width:0; }
-        .quick-access-ad { flex:1 0 auto; display:flex; flex-direction:column; justify-content:center; min-width:0; width:100%; margin-top:32px; padding-top:24px; border-top:1px solid rgba(128,128,128,.16); }
-        .quick-access-ad-label { margin:0 0 12px; text-align:center; font-size:.72rem; line-height:1.5; letter-spacing:.08em; color:var(--text-main); opacity:.6; }
-        .quick-access-ad .adsbygoogle { display:block; width:100%; min-height:250px; }
+        #main-container { min-width:0; }
+        .quick-access-ad { min-width:0; width:100%; text-align:center; margin-top:24px; padding-top:16px; border-top:1px solid rgba(128,128,128,.16); }
+        .quick-access-ad-label { margin:0 0 8px; text-align:left; font-size:.72rem; line-height:1.5; letter-spacing:.08em; color:var(--text-main); opacity:.6; }
+        .quick-access-ad .adsbygoogle { max-width:100%; vertical-align:top; }
         .quick-access-ad:has(.adsbygoogle[data-ad-status="unfilled"]) { display:none; }
-        @media(max-width:600px) { .quick-access-ad { margin-top:24px; padding-top:20px; } }
+        @media(max-width:600px) { .quick-access-ad { margin-top:20px; padding-top:12px; } }
         .links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 18px; margin-top: 18px; padding: 8px 4px 4px; overflow: visible; }
         .link-item {
             position: relative; display: flex; flex-direction: column; align-items: center; padding: 20px 10px;
@@ -602,10 +602,10 @@
                 </div>
             </div>
             <div class="links-grid" id="links-wrapper"></div>
-            <section class="quick-access-ad" aria-label="广告" id="quick-access-ad">
-                <p class="quick-access-ad-label" data-ad-label>广告</p>
+            <section class="quick-access-ad" aria-label="最新推介" id="quick-access-ad">
+                <p class="quick-access-ad-label" data-ad-label>最新推介：</p>
                 <!-- 导航AD -->
-                <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3664886958722859" data-ad-slot="4606570127" data-ad-format="auto" data-full-width-responsive="true"></ins>
+                <ins class="adsbygoogle" style="display:inline-block;width:728px;height:260px" data-ad-client="ca-pub-3664886958722859" data-ad-slot="4606570127"></ins>
             </section>
         </main>
         <aside class="side-stack" style="display:flex; flex-direction:column; gap:24px;">
@@ -4037,8 +4037,8 @@ function setBackgroundToCookie(value) {
         (() => {
             const placement=document.getElementById('quick-access-ad');
             function translateAdLabel() {
-                const label=document.documentElement.lang==='zh-CN'?'广告':'廣告';
-                placement.setAttribute('aria-label',label);placement.querySelector('[data-ad-label]').textContent=label;
+                const label='最新推介';
+                placement.setAttribute('aria-label',label);placement.querySelector('[data-ad-label]').textContent=label+'：';
             }
             translateAdLabel();
             new MutationObserver(translateAdLabel).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
