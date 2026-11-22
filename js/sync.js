@@ -1,4 +1,4 @@
-import {syncRequest} from './sync-request.js?v=transport-v1';
+import {syncRequest} from './sync-request.js?v=transport-v2';
 import {PRESET_KEYS,COOKIE_KEYS,sanitizePreset} from './preset-schema.js?v=server-v4';
 import {removeCloudCalendarVault} from './preset-vault-removal.js?v=remove-v2';
 
@@ -125,6 +125,12 @@ async function request(action,body,selectedProvider=provider) {
     try {
         return await syncRequest(providers[selectedProvider].endpoint,action,body,{name:providers[selectedProvider].name,t:(s,c)=>simplified()?s:c});
     } catch(error) {
+        if(action==='push'&&body?.preset&&(error.uncertain||[500,502,503,504].includes(error.status))){
+            try{
+                const cloud=await syncRequest(providers[selectedProvider].endpoint,'pull',undefined,{name:providers[selectedProvider].name,t:(s,c)=>simplified()?s:c});
+                if(cloud.exists&&await hash(sanitizePreset(cloud.preset))===await hash(sanitizePreset(body.preset)))return {revision:cloud.revision,updatedAt:cloud.updatedAt};
+            }catch{}
+        }
         if(error.status===401&&selectedProvider===provider){account=null;updateControls();}
         throw error;
     }

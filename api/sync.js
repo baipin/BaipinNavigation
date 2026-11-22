@@ -43,7 +43,8 @@ function sessionValue(req){const values=cookies(req);return (values[SESSION]||''
 function saveSession(res,data){const value=data?seal(data):'',age=data?Math.max(0,Math.floor((data.expires-Date.now())/1000)):0;if(value.length>10500)throw new SyncError(502,'登录资料过大，请重新登录');for(let i=0;i<3;i++){const part=value.slice(i*3500,(i+1)*3500);cookie(res,SESSION+(i?'_'+i:''),part,part?age:0);}}
 const redirect = (res,url) => { res.statusCode = 303; res.setHeader('Location',url); return res.end(); };
 async function google(url,options={}) {
-    return fetch(url,{...options,signal:AbortSignal.timeout(12000)});
+    try { return await fetch(url,{...options,signal:AbortSignal.timeout(12000)}); }
+    catch { throw new SyncError(504,'Google 请求超时或连接失败，请稍后重试'); }
 }
 async function token(values) {
     const settings = config();
@@ -75,9 +76,12 @@ async function readCloud(data) {
     const listing = await (await drive(data,`${DRIVE}?${query}`)).json();
     const file = listing.files?.[0];
     if (!file) return {exists:false,revision:null};
-    const metadata = await drive(data,`${DRIVE}/${encodeURIComponent(file.id)}?fields=id,version,modifiedTime`);
+    const [metadata,content] = await Promise.all([
+        drive(data,`${DRIVE}/${encodeURIComponent(file.id)}?fields=id,version,modifiedTime`),
+        drive(data,`${DRIVE}/${encodeURIComponent(file.id)}?alt=media`)
+    ]);
     const etag = metadata.headers.get('etag');
-    const payload = await (await drive(data,`${DRIVE}/${encodeURIComponent(file.id)}?alt=media`)).json();
+    const payload = await content.json();
     return {exists:true,id:file.id,etag,revision:payload.revision,updatedAt:payload.updatedAt,preset:sanitizePreset(payload.preset)};
 }
 async function writeCloud(data,body) {

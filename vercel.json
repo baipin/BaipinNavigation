@@ -16,5 +16,10 @@
       "source": "/api/canvas",
       "destination": "/api/sync?provider=canvas"
     }
-  ]
+  ],
+  "functions": {
+    "api/sync.js": {
+      "maxDuration": 60
+    }
+  }
 }
