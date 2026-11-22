@@ -39,7 +39,6 @@ export function installCalendarVault({api,t,node,button,connections,reload}){
  }catch(e){error.textContent=e.message;}finally{working=false;confirm.disabled=!check.checked;cancel.disabled=check.disabled=close.disabled=false;changed();}};
  function open(){render();dialog.open=true;}
  function section(){const host=node('section');host.className='calendar-account-section calendar-vault-section';host.append(node('small',status()));
-  if(localStorage.getItem(VAULT_KEY)){const remove=button(label(),'delete_outline');remove.disabled=working;remove.onclick=requestRemoval;host.append(remove);}
   return host;
  }
  async function capture(provider){localStorage.removeItem('navi_calendar_cloud_disabled');await sync(false,provider);}
