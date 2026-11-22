@@ -22,3 +22,5 @@ main nav { display:flex; flex-wrap:wrap; gap:14px 24px; padding-top:24px; margin
 footer { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:12px 24px; margin-bottom:48px; padding:16px 24px; font-size:.9rem; }
 #legal-photo-credit { opacity:.8; }
 @media(max-width:600px) { main,footer { width:calc(100% - 24px); } main { margin-top:88px; padding:24px 20px; } header > a { gap:8px; font-size:1.1rem; } main nav { flex-direction:column; gap:16px; } #legal-photo-credit { flex-basis:100%; text-align:center; } }
+
+.legal-external-icon { font-size:1em; line-height:1; margin-inline-start:.2em; vertical-align:-.12em; text-decoration:none; }
