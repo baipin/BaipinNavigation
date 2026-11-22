@@ -7,7 +7,7 @@ const previous=process.env.CANVAS_SESSION_KEY;process.env.CANVAS_SESSION_KEY='te
 const origin='https://school.instructure.com',token='test-canvas-token',calls=[];let nextMode='',address='8.8.8.8',coursePages=0;
 function request(url,options,callback){
  const req=new EventEmitter();req.destroy=error=>{if(error)req.emit('error',error);req.emit('close');};req.end=()=>queueMicrotask(()=>{
-  calls.push({url:String(url),options});assert.equal(options.method,'GET');assert.equal(options.headers.Authorization,'Bearer '+token);assert.equal(options.agent,false);
+  calls.push({url:String(url),options});assert.equal(options.method,'GET');assert.equal(options.headers.Authorization,'Bearer '+token);assert.match(options.headers['User-Agent'],/^BaipinNavigation\/1\.0 /);assert.ok(options.headers['User-Agent'].includes('https://123.baipon.com'));assert.equal(options.agent,false);
   options.lookup(url.hostname,{},(error,ip,family)=>{assert.equal(error,null);assert.equal(ip,'8.8.8.8');assert.equal(family,4);});
   let body={},headers={},statusCode=200;
   if(nextMode==='redirect'){statusCode=302;headers.location='https://evil.test/';}

@@ -21,7 +21,7 @@ export async function canvasJSON(data,path,{lookup=dnsLookup,request=httpsReques
  if(!addresses.length||addresses.some(x=>!publicCanvasAddress(x.address)))throw new CalendarError(400,'Canvas 网址必须指向公开的学校服务器');
  const address=addresses[0].address;
  return new Promise((resolve,reject)=>{
-  const req=request(url,{method:'GET',agent:false,family:4,lookup:(_host,options,callback)=>callback(null,options?.all?[{address,family:4}]:address,4),headers:{Authorization:'Bearer '+data.token,Accept:'application/json'}},response=>{
+  const req=request(url,{method:'GET',agent:false,family:4,lookup:(_host,options,callback)=>callback(null,options?.all?[{address,family:4}]:address,4),headers:{Authorization:'Bearer '+data.token,Accept:'application/json','User-Agent':'BaipinNavigation/1.0 (+https://123.baipon.com; Canvas calendar)'}},response=>{
    const fail=(code,message)=>{response.resume();reject(new CalendarError(code,message));};
    if(response.statusCode===401)return fail(401,'Canvas 令牌无效或已过期，请重新连接');
    if(response.statusCode===403)return fail(403,'学校 Canvas 未允许此访问，请检查令牌权限或联系学校管理员');
