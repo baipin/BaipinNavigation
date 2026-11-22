@@ -580,13 +580,12 @@
         #preset-cloud-clear-dialog { z-index:2800; --mdui-color-surface-container-high:255,255,255; color:var(--text-main); }
         .mdui-theme-dark #preset-cloud-clear-dialog { --mdui-color-surface-container-high:30,30,35; }
         #preset-cloud-clear-dialog::part(panel) { width:min(620px,calc(100vw - 32px)); background:rgb(var(--mdui-color-surface-container-high)); }
-        .cloud-clear-links { display:flex; flex-wrap:wrap; gap:10px; min-width:0; }
-        .cloud-clear-link,.cloud-clear-link:visited { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; box-sizing:border-box; padding:9px 16px; border:1px solid rgba(var(--mdui-color-primary),.35); border-radius:22px; background:rgba(var(--mdui-color-primary),.07); color:rgb(var(--mdui-color-primary)); text-decoration:none; font-size:.875rem; font-weight:500; line-height:1.4; transition:background-color .18s,border-color .18s,box-shadow .18s; }
-        .cloud-clear-link:hover { background:rgba(var(--mdui-color-primary),.14); border-color:rgb(var(--mdui-color-primary)); }
-        .cloud-clear-link:active { background:rgba(var(--mdui-color-primary),.2); }
-        .cloud-clear-link:focus-visible { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:3px; }
+        .cloud-clear-links { display:flex; flex-direction:column; align-items:flex-start; gap:12px; min-width:0; }
+        #preset-cloud-clear-dialog a.cloud-clear-link,#preset-cloud-clear-dialog a.cloud-clear-link:visited { display:inline-flex; align-items:center; gap:5px; padding:0; border:0; border-radius:0; background:none; box-shadow:none; color:rgb(var(--mdui-color-primary)); text-decoration:underline; text-underline-offset:3px; font-size:.875rem; font-weight:400; line-height:1.6; transition:opacity .18s; }
+        #preset-cloud-clear-dialog a.cloud-clear-link:hover { color:rgb(var(--mdui-color-primary)); opacity:.8; }
+        #preset-cloud-clear-dialog a.cloud-clear-link:active { color:rgb(var(--mdui-color-primary)); opacity:.65; }
+        #preset-cloud-clear-dialog a.cloud-clear-link:focus-visible { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:3px; }
         .cloud-clear-link .material-icons { flex-shrink:0; }
-
         .calendar-vault-content details small { display:block; margin-top:8px; }
         .calendar-vault-content summary { cursor:pointer; font-size:.85rem; }
         .calendar-vault-content p { margin:0; overflow-wrap:anywhere; }
@@ -4339,7 +4338,7 @@ function setBackgroundToCookie(value) {
     <script src="js/app-info.js?v=privacy-hk-v2"></script>
     <script src="js/settings.js?v=calendar-settings-v6"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
-    <script type="module" src="js/sync.js?v=cloud-clear-links-v11"></script>
+    <script type="module" src="js/sync.js?v=cloud-clear-links-v12"></script>
     <script type="module" src="js/calendar.js?v=calendar-independent-v27"></script>
 </body>
 </html>
