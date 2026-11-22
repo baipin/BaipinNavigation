@@ -128,7 +128,7 @@ function renderCanvasConnection(section,heading,state){
  if(state.configured===false)section.append(node('small',t('服务器需配置 CANVAS_SESSION_KEY（也可复用现有 ICLOUD_SESSION_KEY）。','伺服器需設定 CANVAS_SESSION_KEY（亦可沿用現有 ICLOUD_SESSION_KEY）。')));
  if(switchingCanvas){const cancel=button(t('取消','取消'));cancel.onclick=()=>{switchingCanvas=false;renderAccounts();};section.append(cancel);}
 }
-function renderAccounts(){accountsBody.replaceChildren();const hint=node('p',t('已有预设同步账号会自动识别。日历读写需要另外授权；Google 和 Microsoft 各可连接一个账号，iCloud 独立连接一个账号，每五分钟刷新。Canvas 可连接学校账号，只读显示课程日历和作业 Due。','已有預設同步帳戶會自動識別。日曆讀寫需要另外授權；Google 和 Microsoft 各可連接一個帳戶，iCloud 獨立連接一個帳戶，每五分鐘更新。Canvas 可連接學校帳戶，唯讀顯示課程日曆和作業 Due。'));hint.className='calendar-hint';accountsBody.append(hint);if(calendarVault)accountsBody.append(calendarVault.section());
+function renderAccounts(){accountsBody.replaceChildren();const hint=node('p',t('已有预设同步账号会自动识别。日历读写需要另外授权；Google 和 Microsoft 各可连接一个账号，iCloud 独立连接一个账号，每五分钟刷新。Canvas 可连接学校账号，只读显示课程日历和作业 Due。','已有預設同步帳戶會自動識別。日曆讀寫需要另外授權；Google 和 Microsoft 各可連接一個帳戶，iCloud 獨立連接一個帳戶，每五分鐘更新。Canvas 可連接學校帳戶，唯讀顯示課程日曆和作業 Due。'));hint.className='calendar-hint';accountsBody.append(hint);
  for(const provider of Object.keys(endpoints)){const section=node('section');section.className='calendar-account-section';section.dataset.calendarProvider=provider;const h=node('h3'),brand=node('img');brand.src=providerIcon(provider);brand.alt='';brand.width=24;brand.height=24;h.className='calendar-provider-heading';h.append(brand,document.createTextNode(names[provider]));const state=connections[provider]||{};section.append(h);const notice=calendarNotice(provider);if(notice)section.append(notice);const identity=node('p',state.authenticated?(provider==='canvas'?[state.user.name,state.user.email].filter(Boolean).join(' · '):state.user.email||state.user.name):t('尚未连接','尚未連接'));section.append(identity);if(state.authenticated&&!state.calendarAuthorized)section.append(node('small',t('预设同步账号已登录；日历尚未连接。','預設同步帳戶已登入；日曆尚未連接。')));
   if(provider==='canvas'){renderCanvasConnection(section,h,state);}
   else if(provider!=='icloud'){const authorize=button(state.authenticated?(state.calendarAuthorized?t('重新授权日历','重新授權日曆'):t('授权日历读写','授權日曆讀寫')):t('登录并授权日历','登入並授權日曆'),'event_available');authorize.disabled=state.configured===false;authorize.onclick=()=>location.href=endpoints[provider]+'?action=calendar-login';section.append(authorize);if(state.configured===false)section.append(node('small',t('服务端尚未配置此登录服务','伺服器尚未設定此登入服務')));}
@@ -151,7 +151,7 @@ if(result){callbackUrl.searchParams.delete('calendar');callbackUrl.searchParams.
  if(Object.hasOwn(endpoints,callbackProvider))providerNotices.set(callbackProvider,{kind:result==='connected'?'success':result==='cancelled'?'info':'error',sc:pair[0],tc:pair[1]});
 }
 // The calendar remains usable even if the optional encrypted-backup module cannot load.
-import('./calendar-vault.js?v=server-default-v13').then(({installCalendarVault})=>{
+import('./calendar-vault.js?v=server-default-v14').then(({installCalendarVault})=>{
  calendarVault=installCalendarVault({api,t,node,button,passwordField,connections:()=>connections,reload});
  const vaultDialog=document.getElementById('calendar-vault-dialog');vaultDialog.addEventListener('open',()=>{if(activeReminder)reminderBar.open=false;});vaultDialog.addEventListener('closed',nextReminder);
  document.addEventListener('navi-calendar-vault-error',e=>{providerNotices.set(e.detail.provider,{kind:'error',message:e.detail.message});if(accountsDialog.open)renderAccounts();});

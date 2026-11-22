@@ -23,7 +23,7 @@ function environment({signedIn=true,busy=false,fail=false,conflict=false,remote=
  let cloud={exists:true,preset:sanitizePreset({localStorage:{theme_mode:'dark',bp_v7:'[{"name":"Cloud","url":"https://example.test","icon":"star"}]',navi_calendar_vault:JSON.stringify(remote)}}),revision:'one'},pushes=0;
  const storage=new Map();
  const context={window:{},busy,authenticating:false,account:signedIn?{id:'7'}:null,updateControls(){},sanitizePreset,hash:async p=>JSON.stringify(p),stateKey:()=> 'sync-state',savedState:()=>({baseHash:JSON.stringify(cloud.preset)}),snapshot:()=>local,
- localStorage:{setItem:(k,v)=>storage.set(k,v)},request:async(action,body)=>{if(fail)throw Error('offline');if(action==='pull')return structuredClone(cloud);pushes++;if(conflict&&pushes===1){cloud.revision='two';throw Object.assign(Error('conflict'),{status:409});}assert.equal(body.revision,cloud.revision);cloud={...cloud,preset:body.preset,revision:'three'};return {revision:'three'};}};
+ localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},request:async(action,body)=>{if(fail)throw Error('offline');if(action==='pull')return structuredClone(cloud);pushes++;if(conflict&&pushes===1){cloud.revision='two';throw Object.assign(Error('conflict'),{status:409});}assert.equal(body.revision,cloud.revision);cloud={...cloud,preset:body.preset,revision:'three'};return {revision:'three'};}};
  vm.runInNewContext(coordinator,context);return {context,cloud:()=>cloud,storage,pushes:()=>pushes};
 }
 {
@@ -47,7 +47,7 @@ const ui=await readFile(new URL('../js/calendar-vault.js',import.meta.url),'utf8
 const sync=ui.slice(ui.indexOf('async function sync('),ui.indexOf('function render()'));
 function frontend({connected=false}={}){
  const calls=[],storage=new Map(),states=connected?{canvas:{authenticated:true,calendarAuthorized:true}}:{};
- const context={working:false,queued:false,queuedRestore:false,lastError:'',captured:new Set(),queuedProviders:new Set(),VAULT_KEY:'navi_calendar_vault',saved:()=>({version:2,algorithm:'AES-256-GCM-SERVER',accounts:{}}),connections:()=>states,localStorage:{setItem:(k,v)=>storage.set(k,v)},changed(){},reload:async()=>{},api:async(provider,action,body)=>{calls.push({provider,action,body});return {encrypted:b};},window:{naviSyncCalendarLogins:async value=>({...envelope,accounts:{...envelope.accounts,...value.accounts}})}};
+ const context={working:false,queued:false,queuedRestore:false,lastError:'',captured:new Set(),queuedProviders:new Set(),VAULT_KEY:'navi_calendar_vault',saved:()=>({version:2,algorithm:'AES-256-GCM-SERVER',accounts:{}}),connections:()=>states,localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},changed(){},reload:async()=>{},api:async(provider,action,body)=>{calls.push({provider,action,body});return {encrypted:b};},window:{naviSyncCalendarLogins:async value=>({...envelope,accounts:{...envelope.accounts,...value.accounts}})}};
  vm.runInNewContext(sync,context);return {context,calls};
 }
 {const {context,calls}=frontend();await context.sync(true);assert.equal(calls[0].action,'calendar-vault-restore');assert.equal(calls[0].body.encrypted,a);}

@@ -85,12 +85,18 @@ async function writeCloud(data,body) {
     if(gist.public!==false || String(gist.owner?.id)!==data.user.id) throw new AuthError(502,'Gist 保存结果无法确认，请检查 GitHub');
     return {revision:payload.revision,updatedAt:payload.updatedAt};
 }
+function clearBody(req){
+ if(!String(req.headers['content-type']||'').startsWith('application/json'))throw new AuthError(415,'请使用 JSON 请求');
+ const raw=typeof req.body==='string'?req.body:JSON.stringify(req.body||{});if(Buffer.byteLength(raw)>1024)throw new AuthError(400,'清除请求格式不正确');
+ let body;try{body=JSON.parse(raw);}catch{throw new AuthError(400,'清除请求格式不正确');}
+ if(body.confirm!==true||!(body.revision===null||typeof body.revision==='string'&&body.revision.length<=200))throw new AuthError(400,'请确认清除云端预设');return body;
+}
 export default async function handler(req,res) {
     res.setHeader('Cache-Control','no-store, max-age=0');res.setHeader('Referrer-Policy','no-referrer');
     const url=new URL(req.url,'https://localhost'),action=url.searchParams.get('action') || 'status';
     const config=settings(),origin=new URL(config.redirect).origin;
     try {
-        const post=['push','logout'].includes(action);
+        const post=['push','clear','logout'].includes(action);
         if(req.method!==(post?'POST':'GET')) {res.setHeader('Allow',post?'POST':'GET');throw new AuthError(405,'请求方法不支持');}
         if(post && req.headers.origin!==origin) throw new AuthError(403,'请求来源不正确');
         if(action==='logout') {setCookie(res,SESSION,'',0);return res.status(200).json({ok:true});}
@@ -118,7 +124,7 @@ export default async function handler(req,res) {
             if(value.length>3800) return redirect(res,'login-error');
             setCookie(res,SESSION,value,30*86400);return redirect(res,'connected');
         }
-        if(!['status','pull','push'].includes(action)) throw new AuthError(404,'接口不存在');
+        if(!['status','pull','push','clear'].includes(action)) throw new AuthError(404,'接口不存在');
         let data;
         try {data=await session(req,res);} catch(error) {
             if(action==='status' && error.status===401) {setCookie(res,SESSION,'',0);return res.status(200).json({configured:true,authenticated:false,provider:'github',redirectUri:config.redirect});}
@@ -133,6 +139,16 @@ export default async function handler(req,res) {
             return res.status(200).json({configured:true,authenticated:true,provider:'github',user:data.user,redirectUri:config.redirect});
         }
         if(action==='pull') {const cloud=await readCloud(data);delete cloud.id;delete cloud.etag;return res.status(200).json(cloud);}
+        if(action==='clear'){
+            const body=clearBody(req),current=await readCloud(data);
+            if(!current.exists)return res.status(200).json({ok:true});
+            if(body.revision!==current.revision)throw new AuthError(409,'云端预设已改变，请重新确认清除');
+            const headers={'Content-Type':'application/json',...(current.etag&&!current.etag.startsWith('W/')?{'If-Match':current.etag}:{})};
+            // Keep any unrelated files a user may have added to the same Gist.
+            await api(data.accessToken,'/gists/'+current.id,{method:'PATCH',headers,body:JSON.stringify({files:{[FILE]:null}})});
+            if((await readCloud(data)).exists)throw new AuthError(409,'仍有其他版本的云端预设，请重新确认清除');
+            return res.status(200).json({ok:true});
+        }
         if(!String(req.headers['content-type'] || '').startsWith('application/json')) throw new AuthError(415,'请使用 JSON 请求');
         const raw=typeof req.body==='string'?req.body:JSON.stringify(req.body || {});
         if(Buffer.byteLength(raw)>MAX_PRESET_BYTES+4096) throw new AuthError(413,'预设文件过大');

@@ -17,6 +17,7 @@ globalThis.fetch=async (url,options={})=> {
         return json({access_token:'test-access',refresh_token:'test-refresh',expires_in:3600,scope:'openid email profile https://www.googleapis.com/auth/drive.appdata'});
     }
     if (url.includes('userinfo')) return json({sub:'account-test',name:'测试账号',email:'test@example.test',picture:'https://lh3.googleusercontent.com/test-avatar'});
+    if(options.method==='DELETE'){assert.equal(url,'https://www.googleapis.com/drive/v3/files/test-file');assert.equal(options.headers['If-Match'],'"etag-'+generation+'"');if(rejectWrite)return new Response('',{status:412});cloud=null;return new Response(null,{status:204});}
     if (url.includes('/upload/drive/v3/files')) {
         writes++;
         if (rejectWrite) return new Response('',{status:412});
@@ -85,6 +86,14 @@ try {
     now+=3601000;
     result=await call('status',{cookie}); assert.equal(result.body.authenticated,true); assert.equal(refreshes,1);
     cookie=result.headers['Set-Cookie'][0].split(';')[0];
+    let toDelete=await call('pull',{cookie});
+    assert.equal((await call('clear',{cookie})).statusCode,405);
+    assert.equal((await call('clear',{cookie,method:'POST',body:{confirm:true,revision:toDelete.body.revision},requestOrigin:'https://evil.test'})).statusCode,403);
+    assert.equal((await call('clear',{cookie,method:'POST',body:{confirm:false,revision:toDelete.body.revision}})).statusCode,400);
+    assert.equal((await call('clear',{cookie,method:'POST',body:{confirm:true,revision:'stale'}})).statusCode,409);assert.ok(cloud);
+    rejectWrite=true;assert.equal((await call('clear',{cookie,method:'POST',body:{confirm:true,revision:toDelete.body.revision}})).statusCode,409);assert.ok(cloud);rejectWrite=false;
+    assert.equal((await call('clear',{cookie,method:'POST',body:{confirm:true,revision:toDelete.body.revision}})).statusCode,200);assert.equal(cloud,null);
+    assert.equal((await call('clear',{cookie,method:'POST',body:{confirm:true,revision:null}})).statusCode,200);
     result=await call('logout',{cookie,method:'POST',body:{}}); assert.match(result.headers['Set-Cookie'][0],/Max-Age=0/);
     now+=31*86400000;
     result=await call('pull',{cookie}); assert.equal(result.statusCode,401);

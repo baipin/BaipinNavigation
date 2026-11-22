@@ -29,7 +29,7 @@ const traditional = new Map([
     ['无法访问 OneDrive 应用文件夹，请确认权限及账号支持','無法存取 OneDrive 應用程式資料夾，請確認權限及帳戶支援'],
     ['OneDrive 暂时不可用，请稍后重试','OneDrive 暫時無法使用，請稍後重試'],['OneDrive 请求过于频繁，请稍后重试','OneDrive 請求過於頻繁，請稍後重試'],
     ['Microsoft 同步暂时不可用，请稍后重试','Microsoft 同步暫時無法使用，請稍後重試'],
-    ['设置','設定'],['GitHub 登录','GitHub 登入'],['Google 登录','Google 登入'],
+    ['清除云端储存','清除雲端儲存'],['设置','設定'],['GitHub 登录','GitHub 登入'],['Google 登录','Google 登入'],
     ['多端预设同步','多端預設同步'],['使用同一 GitHub 账号同步多个设备','使用同一 GitHub 帳戶同步多個裝置'],
     ['使用 GitHub 登录','使用 GitHub 登入'],['预设保存在你的 Google Drive 应用专用空间。','預設儲存在你的 Google Drive 應用專用空間。'],
     ['预设保存在你的 GitHub Secret Gist。','預設儲存在你的 GitHub Secret Gist。'],
@@ -162,6 +162,7 @@ function updateControls() {
     syncButton.disabled = busy || !account;
     auto.disabled = busy || !account;
     logout.disabled = busy;
+    panel.querySelector('[data-sync-clear]').disabled=busy||!account;panel.querySelector('[data-sync-clear]').hidden=!account;
     document.getElementById('import-data-btn').disabled = busy;
     renderFooterAccount();
     for (const button of choices.querySelectorAll('mdui-button')) button.disabled = busy;
@@ -201,7 +202,7 @@ function showConflict(cloud) {
 }
 async function sync(automatic=false) {
     if (busy || !account || pending) return;
-    if (automatic && editing()) return;
+    if (automatic && (editing()||localStorage.getItem('navi_cloud_clear_hold')==='1')) return;
     busy = true; updateControls();
     if (!automatic) show('正在检查两端预设…');
     try {
@@ -218,7 +219,7 @@ async function sync(automatic=false) {
             remember(localHash,result.updatedAt);
         } else if (previous.baseHash === localHash) {
             // Recheck before reloading: edits made while the network was busy must survive.
-            if (automatic && editing()) return;
+            if (automatic && (editing()||localStorage.getItem('navi_cloud_clear_hold')==='1')) return;
             if (await hash(snapshot()) !== localHash) { showConflict(cloud); return; }
             applyPreset(remote); remember(remoteHash,cloud.updatedAt); location.reload();
         } else {
@@ -229,7 +230,7 @@ async function sync(automatic=false) {
     finally { busy = false; updateControls(); }
 }
 window.naviSyncCalendarLogins=async (local,active=[])=>{
-    if(busy||authenticating||!account)return local;
+    if(busy||authenticating||!account||localStorage.getItem('navi_cloud_clear_hold')==='1')return local;
     busy=true;updateControls();
     try{
         for(let attempt=0;attempt<3;attempt++){
@@ -346,6 +347,56 @@ syncButton.onclick = () => sync();
 auto.addEventListener('change',()=> { if (account) { localStorage.setItem(autoKey(),auto.checked?'1':'0'); if (auto.checked) sync(); } });
 panel.querySelector('[data-sync-use-cloud]').onclick = () => resolveConflict(true);
 panel.querySelector('[data-sync-use-local]').onclick = () => resolveConflict(false);
+const clearDialog=document.createElement('mdui-dialog');clearDialog.id='preset-cloud-clear-dialog';
+const clearTitle=document.createElement('div');clearTitle.slot='headline';const clearBody=document.createElement('div');clearBody.className='calendar-vault-content';
+const clearClose=document.createElement('mdui-button');clearClose.slot='action';clearClose.variant='text';clearClose.onclick=()=>clearDialog.open=false;
+clearDialog.append(clearTitle,clearBody,clearClose);document.body.append(clearDialog);
+let clearStage='confirm',clearWorking=false,clearProvider=null,clearAccount=null,clearRevision=null;
+const clearText=(sc,tc)=>simplified()?sc:tc;
+const clearButton=(sc,tc,icon,action)=>{const button=document.createElement('mdui-button');button.variant='outlined';button.icon=icon;button.textContent=clearText(sc,tc);button.onclick=action;button.disabled=clearWorking;return button;};
+function clearLinks(){
+ const hint=document.createElement('p');hint.textContent=clearText('退出本站不会撤销第三方授权。请到以下账户页面撤销本站授权；学校 Canvas 令牌和 iCloud App 专用密码也需自行撤销。','登出本站不會撤銷第三方授權。請到以下帳戶頁面撤銷本站授權；學校 Canvas 權杖及 iCloud App 專用密碼亦需自行撤銷。');clearBody.append(hint);
+ for(const [name,url]of [['Google','https://myaccount.google.com/connections'],['GitHub','https://github.com/settings/applications'],['Microsoft','https://account.live.com/consent/Manage'],['Microsoft 工作／学校','https://myapplications.microsoft.com/'],['Apple','https://account.apple.com/']]){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=name+' ';const icon=document.createElement('span');icon.className='material-icons';icon.textContent='open_in_new';icon.style.fontSize='16px';icon.setAttribute('aria-hidden','true');a.append(icon);a.style.marginRight='16px';clearBody.append(a);}
+}
+function renderClear(){
+ clearTitle.textContent=clearText(clearStage==='confirm'?'清除云端储存？':'云端预设已清除',clearStage==='confirm'?'清除雲端儲存？':'雲端預設已清除');clearBody.replaceChildren();clearClose.textContent=clearText('关闭','關閉');clearClose.disabled=clearWorking;
+ const hint=document.createElement('p');clearBody.append(hint);
+ if(clearStage==='loggedout'){hint.textContent=clearText('已退出本站所有预设同步及日历账号。本机普通设置保留。','已登出本站所有預設同步及日曆帳戶。本機一般設定保留。');clearLinks();}
+ else if(clearStage==='confirm'){
+  hint.textContent=clearText('将删除 '+providers[clearProvider].name+' · '+(clearAccount.name||clearAccount.login||clearAccount.email)+' 中本站的云端预设，包括加密的日历登录状态。本机设置和已连接日历暂时保留。此操作无法在本站撤销，建议先导出备份。','將刪除 '+providers[clearProvider].name+' · '+(clearAccount.name||clearAccount.login||clearAccount.email)+' 中本站的雲端預設，包括加密的日曆登入狀態。本機設定及已連接日曆暫時保留。此操作無法在本站復原，建議先匯出備份。');
+  clearBody.append(clearButton('先导出备份','先匯出備份','download',()=>document.getElementById('export-data-btn').click()),clearButton('确认清除云端储存','確認清除雲端儲存','delete_forever',performClear));
+ }else{
+  hint.textContent=clearText('自动同步已暂停，防止本地资料立即重新上传。请选择下一步；关闭对话框会保留本机设置及暂停状态。其他同步账号及旧导出文件不受影响。','自動同步已暫停，避免本機資料立即重新上傳。請選擇下一步；關閉對話框會保留本機設定及暫停狀態。其他同步帳戶及舊匯出檔案不受影響。');
+  clearBody.append(clearButton('将本地重新同步到云端','將本機重新同步至雲端','cloud_upload',()=>afterClear('upload')),clearButton('本地也恢复初始设置','本機亦還原初始設定','restart_alt',()=>afterClear('reset')),clearButton('完全退出本站登录','完全登出本站','logout',()=>afterClear('logout')));clearLinks();
+ }
+ const error=document.createElement('p');error.dataset.clearError='';error.setAttribute('role','status');clearBody.append(error);
+}
+async function clearRun(action){if(clearWorking||busy)return;clearWorking=true;busy=true;updateControls();renderClear();try{await action();}catch(error){clearBody.querySelector('[data-clear-error]').textContent=error.message;}finally{clearWorking=false;busy=false;updateControls();clearClose.disabled=false;for(const b of clearBody.querySelectorAll('mdui-button'))b.disabled=false;}}
+async function performClear(){await clearRun(async()=>{
+ // Pause before deletion, including the automatic calendar-credential upload path.
+ pauseAutoSync();localStorage.setItem('navi_cloud_clear_hold','1');localStorage.setItem('navi_calendar_cloud_disabled','1');
+ const cloud=await request('pull',undefined,clearProvider);clearRevision=cloud.revision??null;
+ await request('clear',{confirm:true,revision:clearRevision},clearProvider);
+ localStorage.removeItem(stateKey());pending=null;choices.hidden=true;delete panel.dataset.needsAttention;
+ document.getElementById('data-manage-btn')?.classList.remove('sync-attention');clearStage='done';renderClear();show(clearText('云端预设已清除；自动同步已暂停。','雲端預設已清除；自動同步已暫停。'));
+ });}
+async function afterClear(action){await clearRun(async()=>{
+ if(action==='upload'){
+  const cloud=await request('pull',undefined,clearProvider);if(cloud.exists)throw new Error(clearText('云端已有其他设备新建的预设，请先同步并选择保留版本。','雲端已有其他裝置新建的預設，請先同步並選擇保留版本。'));
+  const local=snapshot(),result=await request('push',{preset:local,revision:null},clearProvider);remember(await hash(local),result.updatedAt);localStorage.removeItem('navi_cloud_clear_hold');localStorage.removeItem('navi_calendar_cloud_disabled');clearDialog.open=false;return;
+ }
+ if(action==='reset'){
+  sessionStorage.setItem(resetBackupKey,JSON.stringify(snapshot()));pauseAutoSync();applyPreset({localStorage:{},cookies:{}});location.reload();return;
+ }
+ const failed=[];
+ for(const id of Object.keys(providers)){try{await request('logout',{},id);}catch{failed.push(providers[id].name);}}
+ for(const id of ['icloud','canvas']){try{await syncRequest('/api/'+id,'disconnect',{}, {name:id});}catch{failed.push(id);}}
+ if(failed.length)throw new Error(clearText('部分账号未能退出，请重试：','部分帳戶未能登出，請重試：')+failed.join('、'));
+ localStorage.removeItem('navi_calendar_vault');account=null;auto.checked=false;pending=null;choices.hidden=true;detailsRequested=false;document.dispatchEvent(new Event('navi-sync-account-change'));
+ clearStage='loggedout';clearBody.replaceChildren();const done=document.createElement('p');done.textContent=clearText('已退出本站所有预设同步及日历账号。本机普通设置保留。','已登出本站所有預設同步及日曆帳戶。本機一般設定保留。');clearBody.append(done);clearLinks();const error=document.createElement('p');error.dataset.clearError='';clearBody.append(error);
+ });}
+panel.querySelector('[data-sync-clear]').onclick=()=>{if(busy||!account)return;clearStage='confirm';clearProvider=provider;clearAccount={...account};renderClear();dialog.open=false;clearDialog.open=true;};
+new MutationObserver(()=>{panel.querySelector('[data-sync-clear]').textContent=clearText('清除云端储存','清除雲端儲存');if(clearDialog.open&&!clearWorking)renderClear();}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
 // Local file backup uses the same schema as Google Drive and never exports auth cookies.
 document.getElementById('export-data-btn').onclick = () => {
     try {

@@ -577,6 +577,9 @@
         .calendar-vault-content { display:grid; gap:14px; min-width:0; max-width:100%; }
         .calendar-vault-content > .calendar-provider-notice:empty { display:none; }
         #calendar-vault-remove-dialog { z-index:2700; }
+        #preset-cloud-clear-dialog { z-index:2800; --mdui-color-surface-container-high:255,255,255; color:var(--text-main); }
+        .mdui-theme-dark #preset-cloud-clear-dialog { --mdui-color-surface-container-high:30,30,35; }
+        #preset-cloud-clear-dialog::part(panel) { width:min(620px,calc(100vw - 32px)); background:rgb(var(--mdui-color-surface-container-high)); }
         .calendar-vault-content details small { display:block; margin-top:8px; }
         .calendar-vault-content summary { cursor:pointer; font-size:.85rem; }
         .calendar-vault-content p { margin:0; overflow-wrap:anywhere; }
@@ -1060,6 +1063,7 @@
                     <mdui-button variant="outlined" icon="login" data-sync-login>使用 Google 登录</mdui-button>
                     <mdui-button variant="tonal" icon="sync" data-sync-now disabled>立即同步</mdui-button>
                     <mdui-button variant="text" data-sync-logout hidden>退出登录</mdui-button>
+                    <mdui-button variant="outlined" icon="cloud_off" data-sync-clear disabled hidden>清除云端储存</mdui-button>
                 </div>
                 <mdui-checkbox data-sync-auto disabled>此设备自动同步（每 30 秒检查）</mdui-checkbox>
                 <p data-sync-status role="status" aria-live="polite">正在检查登录状态…</p>
@@ -4328,7 +4332,7 @@ function setBackgroundToCookie(value) {
     <script src="js/app-info.js?v=privacy-hk-v2"></script>
     <script src="js/settings.js?v=calendar-settings-v6"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
-    <script type="module" src="js/sync.js?v=push-recovery-v9"></script>
-    <script type="module" src="js/calendar.js?v=calendar-independent-v26"></script>
+    <script type="module" src="js/sync.js?v=cloud-clear-v10"></script>
+    <script type="module" src="js/calendar.js?v=calendar-independent-v27"></script>
 </body>
 </html>

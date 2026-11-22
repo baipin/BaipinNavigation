@@ -103,6 +103,12 @@ async function writeCloud(data,body) {
     }
     return {revision:payload.revision,updatedAt:payload.updatedAt};
 }
+function clearBody(req){
+ if(!String(req.headers['content-type']||'').startsWith('application/json'))throw new SyncError(415,'请使用 JSON 请求');
+ const raw=typeof req.body==='string'?req.body:JSON.stringify(req.body||{});if(Buffer.byteLength(raw)>1024)throw new SyncError(400,'清除请求格式不正确');
+ let body;try{body=JSON.parse(raw);}catch{throw new SyncError(400,'清除请求格式不正确');}
+ if(body.confirm!==true||!(body.revision===null||typeof body.revision==='string'&&body.revision.length<=200))throw new SyncError(400,'请确认清除云端预设');return body;
+}
 export default async function handler(req,res) {
     const route=new URL(req.url,'https://localhost');
     if(route.pathname==='/api/canvas'||route.searchParams.get('provider')==='canvas'||req.query?.provider==='canvas')return canvasHandler(req,res);
@@ -118,7 +124,7 @@ export default async function handler(req,res) {
             if (action === 'status') return res.status(200).json({configured:false,authenticated:false,redirectUri:settings.redirect});
             throw new SyncError(503,'服务器未配置 GOOGLE_KEY');
         }
-        const post = ['push','logout','calendar-save','calendar-delete','calendar-disconnect'].includes(action);
+        const post = ['push','clear','logout','calendar-save','calendar-delete','calendar-disconnect'].includes(action);
         if (req.method !== (post?'POST':'GET')) { res.setHeader('Allow',post?'POST':'GET'); throw new SyncError(405,'请求方法不支持'); }
         if (post && req.headers.origin !== origin) throw new SyncError(403,'请求来源不正确');
         if (['login','calendar-login'].includes(action)) {
@@ -150,7 +156,7 @@ export default async function handler(req,res) {
             return finish('connected');
         }
         if (action === 'logout') { saveSession(res,null); return res.status(200).json({ok:true}); }
-        if (!['status','pull','push','calendar-list','calendar-events','calendar-save','calendar-delete','calendar-disconnect'].includes(action)) throw new SyncError(404,'接口不存在');
+        if (!['status','pull','push','clear','calendar-list','calendar-events','calendar-save','calendar-delete','calendar-disconnect'].includes(action)) throw new SyncError(404,'接口不存在');
         let data;
         try { data = await session(req,res); }
         catch (error) {
@@ -171,6 +177,15 @@ export default async function handler(req,res) {
             const cloud = await readCloud(data);
             delete cloud.id; delete cloud.etag;
             return res.status(200).json(cloud);
+        }
+        if(action==='clear'){
+            const body=clearBody(req),current=await readCloud(data);
+            if(!current.exists)return res.status(200).json({ok:true});
+            if(body.revision!==current.revision)throw new SyncError(409,'云端预设已改变，请重新确认清除');
+            if(!current.etag)throw new SyncError(503,'Google Drive 未返回文件版本标识，已停止删除');
+            await drive(data,`${DRIVE}/${encodeURIComponent(current.id)}`,{method:'DELETE',headers:{'If-Match':current.etag}});
+            if((await readCloud(data)).exists)throw new SyncError(409,'仍有其他版本的云端预设，请重新确认清除');
+            return res.status(200).json({ok:true});
         }
         if (!String(req.headers['content-type'] || '').startsWith('application/json')) throw new SyncError(415,'请使用 JSON 请求');
         const raw = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});

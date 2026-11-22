@@ -24,6 +24,7 @@ globalThis.fetch=async(url,options={})=>{
  assert.equal(options.headers.Authorization,'Bearer '+access);
  if(fail)return json({error:{message:'must not expose token '+access}},500);
  if(url.includes('/me?$select='))return json({id:'user-7',displayName:'Test User',mail:'test@example.test',userPrincipalName:'test@example.test'});
+ if(options.method==='DELETE'){assert.ok(url.endsWith('/items/item-7'));assert.equal(options.headers['If-Match'],'"version-'+version+'"');if(reject)return json({},412);cloud=null;return new Response(null,{status:204});}
  if(options.method==='PUT'){
   assert.ok(url.includes('/special/approot:/'+file+':/content') || url.includes('/items/item-7/content'));
   if(reject)return json({},412);
@@ -73,6 +74,13 @@ try{
  now+=3601000;result=await call('status',{cookie});assert.equal(result.body.authenticated,true);assert.equal(refreshes,1);cookie=sessionCookies(result);
  for(const header of result.headers['Set-Cookie'].filter(x=>!x.includes('Max-Age=0')))assert.ok(Number(header.match(/Max-Age=(\d+)/)[1])<30*86400);
  now+=3601000;result=await call('status',{cookie});assert.equal(refreshes,2);cookie=sessionCookies(result);
+ const toDelete=await call('pull',{cookie});
+ assert.equal((await call('clear',{cookie})).statusCode,405);
+ assert.equal((await call('clear',{method:'POST',cookie,body:{confirm:true,revision:toDelete.body.revision},requestOrigin:'https://evil.test'})).statusCode,403);
+ assert.equal((await call('clear',{method:'POST',cookie,body:{confirm:false,revision:toDelete.body.revision}})).statusCode,400);
+ assert.equal((await call('clear',{method:'POST',cookie,body:{confirm:true,revision:'stale'}})).statusCode,409);assert.ok(cloud);
+ assert.equal((await call('clear',{method:'POST',cookie,body:{confirm:true,revision:toDelete.body.revision}})).statusCode,200);assert.equal(cloud,null);
+ assert.equal((await call('clear',{method:'POST',cookie,body:{confirm:true,revision:null}})).statusCode,200);
  result=await call('logout',{method:'POST',cookie,body:{}});assert.equal(result.headers['Set-Cookie'].filter(x=>x.includes('Max-Age=0')).length,4);
  now+=31*86400000;assert.equal((await call('pull',{cookie})).statusCode,401);
  delete process.env.MICROSOFT_KEY;assert.equal((await call('status')).body.configured,false);

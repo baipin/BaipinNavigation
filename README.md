@@ -149,3 +149,5 @@ iCloud／Canvas 日历登录状态默认使用服务器 `CALENDAR_SYNC_KEY` 加�
 测试：`node tests/calendar-vault.test.mjs`（密码、篡改、nonce 唯一、不可导出密钥、完整预设往返、只收密文），`node tests/canvas.test.mjs`／`node tests/icloud.test.mjs`（凭据导出需要已登录同源 POST、响应 no-store、无权请求拒绝）。
 
 日历备份解锁仅用于从同步预设取回登录状态：先检查本机会话，跳过已连接的 iCloud／Canvas，不替换本机账号。刷新、锁定备份或载入新的预设不会清除现有日历会话；仅主动退出、本机会话到期或上游凭据失效需要重新连接。日常查看日历不依赖加密密码。
+
+已登录预设账号后可使用「清除云端储存」：同源 POST clear + 显式 confirm + revision 校验，仅移除本站当前账号的预设（GitHub 仅移除预设文件，保留 Gist 内其他文件）。确认删除后暂停本机自动同步和日历密文上传，提供重新上传本机、恢复本机默认或退出全部本机同步／日历会话；撤销提供商授权需由用户在官方账户入口操作。其他设备、账号、旧导出文件不在清除范围。
