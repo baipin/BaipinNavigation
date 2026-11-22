@@ -1,4 +1,4 @@
-import {installCalendarVault} from './calendar-vault.js?v=optional-vault-v1';
+import {installCalendarVault} from './calendar-vault.js?v=optional-vault-v2';
 import {calendarDayKey,occursOn,upcomingDays,holidayDates,upcomingEvents,reminderIdentity,reminderCookieName,hideReminderCookie} from './calendar-model.js?v=reminders-v1';
 import {calendarRequest} from './calendar-request.js?v=canvas-transport-v1';
 const sc=()=>document.documentElement.lang==='zh-CN',t=(s,c)=>sc()?s:c;

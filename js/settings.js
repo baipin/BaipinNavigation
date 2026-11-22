@@ -19,6 +19,7 @@
         document.getElementById('settings-rain-region').setAttribute('aria-label',labels.rain);
         document.getElementById('settings-aqhi-region').setAttribute('aria-label',labels.aqhi);
         document.getElementById('settings-current-engine').setAttribute('aria-label',labels.engine);
+        document.getElementById('settings-preset-scope-hint').textContent=sc?'导出与同步使用相同的完整预设范围；不包含明文登录凭证或实时数据缓存，启用日历账号加密同步后会包含相应密文。':'匯出與同步使用相同的完整預設範圍；不包含明文登入憑證或即時資料快取，啟用日曆帳戶加密同步後會包含對應密文。';
         document.getElementById('settings-calendar-heading').textContent=sc?'日历账号与授权':'日曆帳戶與授權';
         document.querySelector('[data-open-calendar-accounts]').textContent=sc?'日历账号与显示':'日曆帳戶與顯示';
         document.getElementById('settings-calendar').textContent=sc?'日历账号与显示':'日曆帳戶與顯示';

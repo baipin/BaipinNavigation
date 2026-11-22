@@ -575,8 +575,11 @@
         .calendar-day.calendar-red-day[aria-pressed="true"] { background:#f9dedc; color:#8c1d18; }
         .mdui-theme-dark .calendar-day.calendar-red-day[aria-pressed="true"] { background:#601410; color:#ffdad6; }
         .calendar-vault-content { display:grid; gap:14px; min-width:0; max-width:100%; }
+        .calendar-vault-content > .calendar-provider-notice:empty { display:none; }
         .calendar-vault-content p { margin:0; overflow-wrap:anywhere; }
         .calendar-vault-content small { line-height:1.6; opacity:.8; }
+        .calendar-vault-action { display:grid; gap:4px; }
+        .calendar-vault-action small { display:block; }
         .calendar-vault-section { margin-bottom:12px; }
         .calendar-vault-account-list { padding:12px; border-radius:12px; background:rgba(128,128,128,.08); }
         #calendar-vault-dialog::part(panel) { width:min(620px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); }
@@ -1066,9 +1069,10 @@
             </section>
             <section class="settings-calendar-section" aria-labelledby="settings-calendar-heading">
                 <strong id="settings-calendar-heading">日历账号与授权</strong>
-                <div class="preset-sync-actions" style="margin-top:12px;"><mdui-button variant="outlined" icon="lock" data-open-calendar-vault>日历账号加密同步</mdui-button><small id="settings-calendar-vault-status"></small></div>
                 <div id="settings-calendar-accounts" class="settings-calendar-accounts" role="status" aria-live="polite"></div>
                 <div class="preset-sync-actions" style="margin-top:12px;"><mdui-button variant="outlined" icon="calendar_month" data-open-calendar-accounts>日历账号与显示</mdui-button></div>
+                <div class="preset-sync-actions" style="margin-top:12px;"><mdui-button variant="outlined" icon="lock" data-open-calendar-vault>日历账号加密同步</mdui-button><small id="settings-calendar-vault-status"></small></div>
+                <p id="settings-calendar-vault-hint" class="preset-sync-hint">如果在此设定独立密码，则在同步及导入导出预设时，将一并涵盖加密后的 iCloud 及 Canvas 日历令牌（如果有）。</p>
             </section>
             <mdui-divider></mdui-divider>
             <mdui-button variant="tonal" id="export-data-btn" icon="download">导出预设（JSON）</mdui-button>
@@ -1076,7 +1080,7 @@
             <input type="file" id="import-file-input" accept=".json" style="display: none;">
             
             <div style="margin-top: 8px; font-size: 0.85rem; opacity: 0.7; line-height: 1.5;">
-                导出与同步使用相同的预设范围，不包含登录凭证或实时数据缓存。<br>
+                <span id="settings-preset-scope-hint">导出与同步使用相同的完整预设范围；不包含明文登录凭证或实时数据缓存，启用日历账号加密同步后会包含相应密文。</span><br>
                 导入后页面将自动刷新。
             </div>
         </div></mdui-tab-panel>
@@ -4320,9 +4324,9 @@ function setBackgroundToCookie(value) {
         })();
     </script>
     <script src="js/app-info.js?v=privacy-hk-v2"></script>
-    <script src="js/settings.js?v=calendar-settings-v4"></script>
+    <script src="js/settings.js?v=calendar-settings-v5"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
     <script type="module" src="js/sync.js?v=calendar-vault-v4"></script>
-    <script type="module" src="js/calendar.js?v=calendar-vault-v14"></script>
+    <script type="module" src="js/calendar.js?v=calendar-vault-layout-v15"></script>
 </body>
 </html>
