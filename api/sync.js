@@ -76,11 +76,14 @@ async function readCloud(data) {
     const listing = await (await drive(data,`${DRIVE}?${query}`)).json();
     const file = listing.files?.[0];
     if (!file) return {exists:false,revision:null};
-    const [metadata,content] = await Promise.all([
-        drive(data,`${DRIVE}/${encodeURIComponent(file.id)}?fields=id,version,modifiedTime`),
-        drive(data,`${DRIVE}/${encodeURIComponent(file.id)}?alt=media`)
-    ]);
-    const etag = metadata.headers.get('etag');
+    // Drive v3 metadata does not reliably include an ETag header. The v2
+    // resource exposes the opaque ETag explicitly; use it with If-Match.
+    // Read metadata before content so a concurrent update can only fail closed.
+    const metadata = await drive(data,`https://www.googleapis.com/drive/v2/files/${encodeURIComponent(file.id)}?fields=id,etag`);
+    const info = await metadata.json();
+    const content = await drive(data,`${DRIVE}/${encodeURIComponent(file.id)}?alt=media`);
+    const candidate = content.headers.get('etag') || info.etag || metadata.headers.get('etag');
+    const etag = typeof candidate==='string' && /^(?:W\/)?"[^"\r\n]+"$/.test(candidate) ? candidate : null;
     const payload = await content.json();
     return {exists:true,id:file.id,etag,revision:payload.revision,updatedAt:payload.updatedAt,preset:sanitizePreset(payload.preset)};
 }
@@ -91,7 +94,7 @@ async function writeCloud(data,body) {
     const payload = {revision:randomBytes(18).toString('base64url'),updatedAt:new Date().toISOString(),preset};
     if (current.exists) {
         // A conditional update also catches writes racing the revision check above.
-        if (!current.etag) throw new SyncError(502,'云端未返回版本校验信息，请稍后重试');
+        if (!current.etag) throw new SyncError(503,'Google Drive 未返回文件版本标识，已停止写入以保留云端预设，请稍后重试');
         await drive(data,`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(current.id)}?uploadType=media`,{method:'PATCH',headers:{'Content-Type':'application/json','If-Match':current.etag},body:JSON.stringify(payload)});
     } else {
         const boundary = 'navi_'+randomBytes(12).toString('hex');

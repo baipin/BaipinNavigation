@@ -5,7 +5,7 @@ const originalFetch = globalThis.fetch, originalTime = Date.now;
 const savedSecret = process.env.GOOGLE_KEY;
 process.env.GOOGLE_KEY = 'local-test-only-not-a-production-secret';
 const origin='https://123.baipon.com';
-let now=originalTime(), cloud=null, generation=0, rejectWrite=false, refreshes=0, tokenCalls=0;
+let now=originalTime(), cloud=null, generation=0, rejectWrite=false, refreshes=0, tokenCalls=0, metadataEtag=true, metadataHeader=false, mediaEtag=false, writes=0;
 Date.now=()=>now;
 const preset=sanitizePreset({localStorage:{bp_v7:JSON.stringify([{name:'测试',url:'https://example.com',icon:'link'}]),navi_city_stocks:JSON.stringify({ids:['aapl'],symbols:['MSFT']}),navi_city_feed:JSON.stringify({speed:72,rss:['source']}),navi_language:'tc',hko_rain_area:'沙田',navi_aqhi_station:'Sha Tin',navi_camera_background:JSON.stringify({source:'hko',id:'HKO',refresh:true})},cookies:{homepage_bg:'https://example.com/photo.jpg',unrelated:'private'}});
 const json=data=>new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json'}});
@@ -18,6 +18,7 @@ globalThis.fetch=async (url,options={})=> {
     }
     if (url.includes('userinfo')) return json({sub:'account-test',name:'测试账号',email:'test@example.test',picture:'https://lh3.googleusercontent.com/test-avatar'});
     if (url.includes('/upload/drive/v3/files')) {
+        writes++;
         if (rejectWrite) return new Response('',{status:412});
         if (options.method==='PATCH') {
             assert.equal(options.headers['If-Match'],'"etag-'+generation+'"');
@@ -28,8 +29,8 @@ globalThis.fetch=async (url,options={})=> {
         }
         generation++; return json({id:'test-file'});
     }
-    if (url.includes('alt=media')) return json(cloud);
-    if (url.includes('/files/test-file?')) return new Response(JSON.stringify({id:'test-file',version:String(generation)}),{headers:{etag:'"etag-'+generation+'"'}});
+    if (url.includes('alt=media')) return new Response(JSON.stringify(cloud),{headers:mediaEtag?{etag:'\"etag-'+generation+'\"'}:{}});
+    if (url.includes('/files/test-file?')) {assert.ok(url.includes('/drive/v2/'));return new Response(JSON.stringify({id:'test-file',...(metadataEtag?{etag:'\"etag-'+generation+'\"'}:{})}),{headers:metadataHeader?{etag:'\"etag-'+generation+'\"'}:{}});}
     if (url.includes('/drive/v3/files?')) return json({files:cloud?[{id:'test-file',modifiedTime:cloud.updatedAt}]:[]});
     throw new Error('Unexpected test URL');
 };
@@ -71,6 +72,14 @@ try {
     result=await call('push',{cookie,method:'POST',body:{preset:changed,revision:firstRevision}}); assert.equal(result.statusCode,409);
     rejectWrite=false;
     result=await call('push',{cookie,method:'POST',body:{preset:changed,revision:firstRevision}}); assert.equal(result.statusCode,200); assert.equal(cloud.preset.localStorage.theme_mode,'dark');
+    // Realistic Drive responses omit metadata headers: the v2 JSON ETag must protect uploads.
+    assert.equal(metadataHeader,false);assert.equal(mediaEtag,false);
+    let latest=await call('pull',{cookie});
+    const beforeMissing=writes;metadataEtag=false;
+    result=await call('push',{cookie,method:'POST',body:{preset,revision:latest.body.revision}});assert.equal(result.statusCode,503);assert.equal(writes,beforeMissing);assert.equal(cloud.preset.localStorage.theme_mode,'dark');
+    mediaEtag=true;
+    result=await call('push',{cookie,method:'POST',body:{preset,revision:latest.body.revision}});assert.equal(result.statusCode,200);assert.equal(cloud.preset.localStorage.theme_mode,null);
+    mediaEtag=false;metadataEtag=true;
     result=await call('push',{cookie,method:'POST',body:{preset:{localStorage:{bp_v7:'invalid'}}}}); assert.equal(result.statusCode,400);
     result=await call('pull',{cookie:cookie.slice(0,-4)+'xxxx'}); assert.equal(result.statusCode,401);
     now+=3601000;
