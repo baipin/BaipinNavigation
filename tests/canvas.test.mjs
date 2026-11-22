@@ -27,6 +27,7 @@ try{
  for(const value of ['http://school.test','https://127.0.0.1','https://school.test:444','https://user:pass@school.test','https://school.test/?token=x','https://localhost','https://school.test/#x'])assert.throws(()=>canvasOrigin(value));
  assert.equal(canvasOrigin(origin+'/courses'),origin);
  for(const ip of ['127.0.0.1','10.0.0.1','169.254.169.254','172.16.1.1','192.168.0.1','100.64.0.1','0.0.0.0','224.0.0.1','::1','::ffff:127.0.0.1'])assert.equal(publicCanvasAddress(ip),false);assert.equal(publicCanvasAddress('8.8.8.8'),true);
+ for(const invalid of ['test-中文','test-😀','test-\u00a0token','Bearer:test','Bearer token']){const before=calls.length;const invalidResult=await call('connect',{body:{origin,token:invalid}});assert.equal(invalidResult.code,400);assert.equal(calls.length,before);}
  let result=await call('status');assert.equal(result.body.authenticated,false);
  result=await call('connect',{body:{origin,token},origin:'https://evil.test'});assert.equal(result.code,403);assert.equal(calls.length,0);
  address='127.0.0.1';result=await call('connect',{body:{origin,token}});assert.equal(result.code,400);assert.equal(calls.length,0);address='8.8.8.8';

@@ -53,6 +53,7 @@ export function canvasEvent(row,origin,range){
 export function createCanvasHandler(dependencies={}){
  const call=(data,path)=>canvasJSON(data,path,dependencies);
  return async function canvasHandler(req,res){
+  let phase='request';
   res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');
   const url=new URL(req.url,'https://localhost'),action=url.searchParams.get('action')||req.query?.action||'status',secret=key();
   try{
@@ -61,10 +62,12 @@ export function createCanvasHandler(dependencies={}){
    if(action==='disconnect'){storeSession(res,COOKIE,null,secret);return res.status(200).json({ok:true});}
    const configured=typeof secret==='string'&&secret.length>=32;if(!configured){if(action==='status')return res.status(200).json({configured:false,authenticated:false});throw new CalendarError(503,'请先配置 CANVAS_SESSION_KEY（至少 32 个随机字符）');}
    if(action==='connect'){
-    const body=calendarBody(req);if(typeof body.origin!=='string'||body.origin.length>500||typeof body.token!=='string'||!body.token.trim()||body.token.length>2048||/[\s\x00-\x1f\x7f]/.test(body.token))throw new CalendarError(400,'请填写学校 Canvas 网址及个人访问令牌');
+    const body=calendarBody(req);if(typeof body.origin!=='string'||body.origin.length>500||typeof body.token!=='string'||!body.token.trim()||body.token.length>2048||!/^[\x21-\x7e]+$/.test(body.token))throw new CalendarError(400,'请填写学校 Canvas 网址，并粘贴个人访问令牌原文（仅英文字符／数字／符号，不含中文、空格或 Bearer 前缀）');
+    if(/^Bearer(?:\s|:)/i.test(body.token))throw new CalendarError(400,'请只粘贴 Canvas 令牌，不要添加 Bearer 前缀');
+    phase='profile';
     const data={origin:canvasOrigin(body.origin.trim()),token:body.token,expires:Date.now()+30*86400000};const profile=(await call(data,'/api/v1/users/self/profile')).json;
     if(!profile?.id)throw new CalendarError(502,'无法确认 Canvas 用户');data.user={id:'canvas:'+createHash('sha256').update(data.origin+'#'+String(profile.id)).digest('hex'),name:clean(profile.name||profile.short_name,100)||'Canvas',email:data.origin};
-    storeSession(res,COOKIE,data,secret);return res.status(200).json({authenticated:true,calendarAuthorized:true,user:data.user});
+    phase='session';storeSession(res,COOKIE,data,secret);return res.status(200).json({authenticated:true,calendarAuthorized:true,user:data.user});
    }
    const data=readSession(req,COOKIE,secret);if(action==='status')return res.status(200).json({configured:true,authenticated:!!data,calendarAuthorized:!!data,user:data?.user||null});if(!data)throw new CalendarError(401,'请先连接学校 Canvas');
    if(action==='calendar-list'){
@@ -74,7 +77,7 @@ export function createCanvasHandler(dependencies={}){
    const id=url.searchParams.get('calendar');if(!/^course_\d{1,20}$/.test(id||''))throw new CalendarError(400,'请选择 Canvas 课程');const range=calendarRange(url);
    const results=await Promise.all(['assignment','event'].map(async type=>{const query=new URLSearchParams({type,start_date:range.start,end_date:range.end,per_page:'100','context_codes[]':id});const result=await pages(data,'/api/v1/calendar_events?'+query,call);return {events:result.rows.filter(x=>x.context_code===id).map(x=>canvasEvent(x,data.origin,range)).filter(Boolean),truncated:result.truncated};}));
    const events=[...new Map(results.flatMap(x=>x.events).map(x=>[x.id,x])).values()];return res.status(200).json({events:events.slice(0,1000),truncated:results.some(x=>x.truncated)||events.length>1000});
-  }catch(error){return res.status(error instanceof CalendarError?error.status:502).json({error:error instanceof CalendarError?error.message:'Canvas 暂时不可用，请检查学校网址、令牌或网络'});}
+  }catch(error){if(!(error instanceof CalendarError))console.error('[canvas] request failed',{phase,code:/^[A-Z_]{2,60}$/.test(error?.code||'')?error.code:'UNEXPECTED'});return res.status(error instanceof CalendarError?error.status:502).json({error:error instanceof CalendarError?error.message:'Canvas 请求失败（阶段：'+phase+'），请稍后重试'});}
  };
 }
 export default createCanvasHandler();
