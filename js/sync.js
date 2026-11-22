@@ -1,4 +1,5 @@
 import {PRESET_KEYS,COOKIE_KEYS,sanitizePreset} from './preset-schema.js';
+import {removeCloudCalendarVault} from './preset-vault-removal.js?v=remove-v1';
 
 const dialog = document.getElementById('data-manage-dialog');
 const panel = document.getElementById('preset-sync-panel');
@@ -125,7 +126,7 @@ async function request(action,body,selectedProvider=provider) {
     try { data = await response.json(); } catch { throw new Error('同步服务暂时不可用，请稍后重试'); }
     if (!response.ok) {
         if (response.status === 401 && selectedProvider === provider) { account = null; updateControls(); }
-        throw new Error(data.error || '同步失败，请稍后重试');
+        throw Object.assign(new Error(data.error || '同步失败，请稍后重试'),{status:response.status});
     }
     return data;
 }
@@ -222,6 +223,31 @@ async function sync(automatic=false) {
     } catch (error) { show(error.message); }
     finally { busy = false; updateControls(); }
 }
+// Exposed to the optional calendar UI; the existing sync lock protects provider/account changes.
+window.naviCancelCalendarVaultStorage=async expectedVault=>{
+    const text=(sc,tc)=>simplified()?sc:tc;
+    if(busy || authenticating)throw new Error(text('预设同步正在进行，请稍后重试。','預設同步正在進行，請稍後再試。'));
+    busy=true;updateControls();
+    try {
+        await checkLogin();
+        if(!account)throw new Error(text('请先登录保存过日历登录状态的预设同步账号，再重试；尚未取消储存。','請先登入儲存過日曆登入狀態的預設同步帳戶，再試一次；尚未取消儲存。'));
+        if(localStorage.getItem('navi_calendar_vault')!==expectedVault)throw new Error(text('备份刚刚有更新，请重新操作。','備份剛剛有更新，請重新操作。'));
+        const local=snapshot(),previous=savedState(),selected=provider;
+        const cloud=await removeCloudCalendarVault((action,body)=>request(action,body,selected));
+        if(localStorage.getItem('navi_calendar_vault')!==expectedVault)throw new Error(text('云端已移除，但本机备份刚刚有更新，请重新操作以取消新的备份。','雲端已移除，但本機備份剛剛有更新，請重新操作以取消新的備份。'));
+        localStorage.removeItem('navi_calendar_vault');
+        // Rebase only a known common version, so unrelated local/cloud differences survive.
+        let baseHash=previous.baseHash;
+        if(baseHash && baseHash===await hash(local))baseHash=await hash(sanitizePreset({...local,localStorage:{...local.localStorage,navi_calendar_vault:null}}));
+        else if(baseHash && cloud.exists && baseHash===await hash(cloud.before))baseHash=await hash(cloud.preset);
+        if(baseHash!==previous.baseHash)localStorage.setItem(stateKey(),JSON.stringify({...previous,baseHash}));
+        pending=null;choices.hidden=true;delete panel.dataset.needsAttention;
+        document.getElementById('data-manage-btn')?.classList.remove('sync-attention');
+        const result=text('已取消日历登录状态的云端及后续导出储存；日历保持连接。','已取消日曆登入狀態的雲端及往後匯出儲存；日曆保持連接。');
+        show(result);return result;
+    } catch(error) {show(error.message);throw error;}
+    finally {busy=false;updateControls();}
+};
 async function resolveConflict(useCloud) {
     if (busy || !pending) return;
     busy = true; updateControls();

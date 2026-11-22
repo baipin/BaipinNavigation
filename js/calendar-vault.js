@@ -5,9 +5,21 @@ export function installCalendarVault({api,t,node,button,passwordField,connection
  const dialog=node('mdui-dialog');dialog.id='calendar-vault-dialog';dialog.setAttribute('close-on-overlay-click','');const title=node('div');title.slot='headline';const content=node('div');content.className='calendar-vault-content';const close=button('');close.slot='action';close.onclick=()=>dialog.open=false;dialog.append(title,content,close);document.body.append(dialog);
  const removeDialog=node('mdui-dialog');removeDialog.id='calendar-vault-remove-dialog';removeDialog.setAttribute('close-on-overlay-click','');const removeTitle=node('div');removeTitle.slot='headline';const removeBody=node('div');removeBody.className='calendar-vault-content';const removeDescription=node('p'),removeCheck=node('mdui-checkbox'),removeError=node('p');removeError.setAttribute('role','alert');removeCheck.id='calendar-vault-remove-confirm';const removeCancel=button(''),removeConfirm=button('','delete');removeCancel.slot=removeConfirm.slot='action';removeConfirm.variant='tonal';removeConfirm.disabled=true;removeBody.append(removeDescription,removeCheck,removeError);removeDialog.append(removeTitle,removeBody,removeCancel,removeConfirm);document.body.append(removeDialog);let removalSnapshot=null;
  removeCancel.onclick=()=>removeDialog.open=false;removeCheck.addEventListener('change',()=>removeConfirm.disabled=!removeCheck.checked);
- function removalLabels(){removeTitle.textContent=t('从云端中移除iCloud及Canvas日历登录状态？','從雲端中移除iCloud及Canvas日曆登入狀態？');removeDescription.textContent=t('这会移除本地 iCloud／Canvas 登录状态与云端的同步，并不会退出已登录的日历，也不会删除日程。随后请同步预设，并在发生冲突时选择「用本机替换云端」，即可将同步账号中保存的日历登录状态从云端移除。其他同步账号、设备及以前导出的 JSON 备份需分别处理。','這會移除本機 iCloud／Canvas 登入狀態與雲端的同步，並不會登出已登入的日曆，亦不會刪除日程。隨後請同步預設，並在發生衝突時選擇「用本機取代雲端」，即可將同步帳戶中儲存的日曆登入狀態從雲端移除。其他同步帳戶、裝置及以前匯出的 JSON 備份需分別處理。');removeCheck.textContent=t('我已了解，并确认移除这份加密备份','我已了解，並確認移除這份加密備份');removeCancel.textContent=t('取消','取消');removeConfirm.textContent=t('确认移除','確認移除');}
+ function removalLabels(){removeTitle.textContent=t('取消iCloud及Canvas日历登录状态在云端及导出文件中的储存？','取消iCloud及Canvas日曆登入狀態在雲端及匯出檔案中的儲存？');removeDescription.textContent=t('确认后，将自动移除当前预设同步账号云端预设中的加密日历登录状态，本机及之后导出的预设也不再保存。已连接的日历和日程不受影响。请先登录对应的预设同步账号；其他账号、设备及以前导出的文件需分别处理。','確認後，將自動移除目前預設同步帳戶雲端預設中的加密日曆登入狀態，本機及之後匯出的預設亦不再儲存。已連接的日曆及日程不受影響。請先登入對應的預設同步帳戶；其他帳戶、裝置及以前匯出的檔案需分別處理。');removeCheck.textContent=t('我已了解，并确认移除这份加密备份','我已了解，並確認移除這份加密備份');removeCancel.textContent=t('取消','取消');removeConfirm.textContent=t('确认移除','確認移除');}
  function requestRemoval(){if(working)return;removalSnapshot=localStorage.getItem(VAULT_KEY);removeCheck.checked=false;removeConfirm.disabled=true;removeError.textContent='';removalLabels();removeDialog.open=true;}
- removeConfirm.onclick=()=>{if(!removeCheck.checked||working)return;try{if(localStorage.getItem(VAULT_KEY)!==removalSnapshot)throw Error(t('备份刚刚有更新，请取消后重新操作。','備份剛剛有更新，請取消後重新操作。'));localStorage.removeItem(VAULT_KEY);lock();render();removeDialog.open=false;message.textContent=t('本机已取消保存，日历仍保持登录。请到「登录与备份」点击「立即同步」，冲突时选择「用本机替换云端」，以更新云端保存状态。','本機已取消儲存，日曆仍保持登入。請到「登入與備份」點擊「立即同步」，衝突時選擇「用本機取代雲端」，以更新雲端儲存狀態。');}catch(error){removeError.textContent=error.message;}};
+ removeConfirm.onclick=async()=>{
+  if(!removeCheck.checked||working)return;
+  working=true;removeConfirm.disabled=removeCancel.disabled=removeCheck.disabled=close.disabled=true;removeDialog.removeAttribute('close-on-overlay-click');removeDialog.setAttribute('aria-busy','true');
+  removeError.textContent=t('正在取消云端及导出储存…','正在取消雲端及匯出儲存…');
+  try{
+   if(localStorage.getItem(VAULT_KEY)!==removalSnapshot)throw Error(t('备份刚刚有更新，请取消后重新操作。','備份剛剛有更新，請取消後重新操作。'));
+   if(!window.naviCancelCalendarVaultStorage)throw Error(t('预设同步暂不可用，请刷新后重试；尚未取消储存。','預設同步暫時無法使用，請重新整理後再試；尚未取消儲存。'));
+   lock();
+   const result=await window.naviCancelCalendarVaultStorage(removalSnapshot);
+   changed();render();removeDialog.open=false;message.textContent=result;
+  }catch(error){removeError.textContent=error.message;}
+  finally{working=false;removeConfirm.disabled=!removeCheck.checked;removeCancel.disabled=removeCheck.disabled=close.disabled=false;removeDialog.setAttribute('close-on-overlay-click','');removeDialog.removeAttribute('aria-busy');}
+ };
  const message=node('p');message.className='calendar-provider-notice';message.setAttribute('role','status');
  function envelope(){const raw=localStorage.getItem(VAULT_KEY);return raw?validateVault(JSON.parse(raw)):null;}
  function changed(){document.dispatchEvent(new Event('navi-calendar-vault-change'));}
@@ -39,7 +51,7 @@ export function installCalendarVault({api,t,node,button,passwordField,connection
   content.append(node('small',t('开启预设自动同步，或点击「立即同步」，即可更新云端。本机退出日历不会删除云端已保存的登录状态。','開啟預設自動同步，或點擊「立即同步」，即可更新雲端。本機登出日曆不會刪除雲端已儲存的登入狀態。')));
   const details=node('details'),summary=node('summary',t('了解加密与备份','了解加密與備份'));details.append(summary,node('small',t('完整预设包括书签、搜索引擎、RSS、CITY FEED、背景等设置；只有 iCloud App 专用密码及 Canvas 令牌单独加密，Google／Microsoft OAuth 令牌不包含在内。采用 AES-256-GCM 与 PBKDF2-SHA256（600,000 次）；独立密码不上传、不保存。刷新后只会锁定备份，不会退出日历。加密不能防止已解锁页面上的恶意脚本。','完整預設包括書籤、搜尋引擎、RSS、CITY FEED、背景等設定；只有 iCloud App 專用密碼及 Canvas 權杖另外加密，Google／Microsoft OAuth 權杖不包含在內。採用 AES-256-GCM 及 PBKDF2-SHA256（600,000 次）；獨立密碼不會上傳或儲存。重新整理後只會鎖定備份，不會登出日曆。加密不能防止已解鎖頁面上的惡意程式碼。')));content.append(details);
 
-  if(saved){const remove=button(t('从云端中移除iCloud及Canvas日历登录状态','從雲端中移除iCloud及Canvas日曆登入狀態'),'delete_outline');remove.onclick=requestRemoval;content.append(remove);}
+  if(saved){const remove=button(t('取消iCloud及Canvas日历登录状态在云端及导出文件中的储存','取消iCloud及Canvas日曆登入狀態在雲端及匯出檔案中的儲存'),'delete_outline');remove.onclick=requestRemoval;content.append(remove);}
   content.append(message);
  }
  function open(){message.textContent='';render();dialog.open=true;}
