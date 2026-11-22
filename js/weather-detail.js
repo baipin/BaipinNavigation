@@ -3,15 +3,15 @@
     const dialog=document.createElement('mdui-dialog');dialog.id='weather-detail-dialog';dialog.setAttribute('close-on-overlay-click','');
     dialog.innerHTML=`<div slot="headline" class="weather-detail-headline"><span data-wd="title"></span><mdui-button-icon icon="close" data-weather-close-top aria-label="关闭"></mdui-button-icon></div>
       <mdui-tabs value="forecast" id="weather-detail-tabs" aria-label="天气详情分类">
-        <mdui-tab value="forecast" data-wd="forecastTab"></mdui-tab><mdui-tab value="radar" data-wd="radarTab"></mdui-tab><mdui-tab value="satellite" data-wd="satelliteTab"></mdui-tab>
+        <mdui-tab value="forecast" data-wd="forecastTab"></mdui-tab><mdui-tab value="radar" data-wd="radarTab"></mdui-tab><mdui-tab value="satellite" data-wd="satelliteTab"></mdui-tab><mdui-tab value="rainfall" data-wd="rainfallTab"></mdui-tab>
         <mdui-tab-panel slot="panel" value="forecast"><div class="weather-detail-overview"><section data-weather-narrative aria-live="polite"></section><section><h3 data-wd="nineDays"></h3><p data-weather-outlook></p><div class="weather-forecast-grid" data-weather-days></div><div class="weather-day-details" data-weather-day-details aria-live="polite"></div></section></div><p class="weather-detail-meta" data-weather-updated></p></mdui-tab-panel>
         <mdui-tab-panel slot="panel" value="radar"><figure class="weather-imagery" data-imagery="radar"><figcaption data-wd="radarCaption"></figcaption><p role="status"></p><img hidden><a target="_blank" rel="noopener noreferrer" data-weather-original></a></figure></mdui-tab-panel>
         <mdui-tab-panel slot="panel" value="satellite"><figure class="weather-imagery" data-imagery="satellite"><figcaption data-wd="satelliteCaption"></figcaption><p role="status"></p><img hidden><a target="_blank" rel="noopener noreferrer" data-weather-original></a></figure></mdui-tab-panel>
-      </mdui-tabs><mdui-button slot="action" variant="text" icon="refresh" data-weather-refresh></mdui-button><mdui-button slot="action" variant="text" data-weather-close></mdui-button>`;
+      <mdui-tab-panel slot="panel" value="rainfall"><figure class="weather-imagery" data-imagery="rainfall"><figcaption data-wd="rainfallCaption"></figcaption><p role="status"></p><img hidden><a target="_blank" rel="noopener noreferrer" data-weather-original></a></figure></mdui-tab-panel></mdui-tabs><mdui-button slot="action" variant="text" icon="refresh" data-weather-refresh></mdui-button><mdui-button slot="action" variant="text" data-weather-close></mdui-button>`;
     document.body.append(dialog);
     const button=document.getElementById('weather-detail-btn'),tabs=dialog.querySelector('mdui-tabs');
     let revision=0,controller=null,forecastRows=[],selected=0,imagery={},imageRequests={},refreshTimer=null;
-    const labels={title:['香港天气详情','香港天氣詳情'],forecastTab:['天气预报','天氣預報'],radarTab:['雷达图','雷達圖'],satelliteTab:['卫星图','衛星圖'],nineDays:['九天天气预报','九天天氣預報'],radarCaption:['天气雷达 · 256 公里范围 · 3 公里高','天氣雷達 · 256 公里範圍 · 3 公里高'],satelliteCaption:['气象卫星 · 红外云图（Himawari-8/9）','氣象衛星 · 紅外雲圖（Himawari-8/9）']};
+    const labels={rainfallTab:['分区雨量','分區雨量'],rainfallCaption:['分区雨量示意图 · 过去一小时','分區雨量示意圖 · 過去一小時'],title:['香港天气详情','香港天氣詳情'],forecastTab:['天气预报','天氣預報'],radarTab:['雷达图','雷達圖'],satelliteTab:['卫星图','衛星圖'],nineDays:['九天天气预报','九天天氣預報'],radarCaption:['天气雷达 · 256 公里范围 · 3 公里高','天氣雷達 · 256 公里範圍 · 3 公里高'],satelliteCaption:['气象卫星 · 红外云图（Himawari-8/9）','氣象衛星 · 紅外雲圖（Himawari-8/9）']};
     const el=tag=>document.createElement(tag);
     function paragraph(parent,text){const p=el('p');p.textContent=text || '--';parent.append(p);return p;}
     function section(parent,heading,text){const h=el('h3');h.textContent=heading;parent.append(h);paragraph(parent,text);}
@@ -22,7 +22,7 @@
         button.setAttribute('aria-label',t('查看详细天气','查看詳細天氣'));button.title=t('详细天气','詳細天氣');
         tabs.setAttribute('aria-label',t('天气详情分类','天氣詳情分類'));
         dialog.querySelector('[data-weather-close]').textContent=t('关闭','關閉');dialog.querySelector('[data-weather-refresh]').textContent=t('刷新','重新整理');
-        for(const type of ['radar','satellite']){const link=dialog.querySelector('[data-imagery="'+type+'"] a');link.textContent=t('香港天文台原始图像','香港天文台原始圖像');link.href='https://www.hko.gov.hk/'+(sc()?'sc':'tc')+'/wxinfo/'+(type==='radar'?'radars/radar.htm':'intersat/satellite/sate.htm');}
+        for(const type of ['radar','satellite','rainfall']){const link=dialog.querySelector('[data-imagery="'+type+'"] a');link.textContent=t('香港天文台原始图像','香港天文台原始圖像');link.href='https://www.hko.gov.hk/'+(sc()?'sc':'tc')+'/wxinfo/'+(type==='radar'?'radars/radar.htm':type==='rainfall'?'rainfall/isohyet_past1hr.shtml':'intersat/satellite/sate.htm');}
     }
     function showDay(){
         const target=dialog.querySelector('[data-weather-day-details]'),row=forecastRows[selected];target.replaceChildren();
@@ -86,17 +86,17 @@
             const r=await fetch('/api/weather-imagery?type='+type,{signal:AbortSignal.timeout(18000),cache:force?'reload':'default'});if(!r.ok)throw new Error('imagery');const data=await r.json();
             if(imageRequests[type]!==request || !dialog.open)return;
             const frame=data.frames?.at(-1),url=new URL(frame?.url);
-            if(url.origin!=='https://www.hko.gov.hk' || !url.pathname.startsWith(type==='radar'?'/wxinfo/radars/rad_256_png/':'/wxinfo/intersat/satellite/image/images/'))throw new Error('image');
+            if(url.origin!=='https://www.hko.gov.hk' || !url.pathname.startsWith(type==='radar'?'/wxinfo/radars/rad_256_png/':type==='rainfall'?'/wxinfo/rainfall/cokrig_barnes/':'/wxinfo/intersat/satellite/image/images/'))throw new Error('image');
             const raw=frame.time,iso=raw.slice(0,4)+'-'+raw.slice(4,6)+'-'+raw.slice(6,8)+'T'+raw.slice(8,10)+':'+raw.slice(10,12)+':00'+(frame.utc?'Z':'+08:00');
             img.onload=()=>{if(imageRequests[type]!==request)return;img.hidden=false;status.textContent=t('图像时间：','圖像時間：')+timestamp(iso);imagery[type]=true;};
             img.onerror=()=>{img.hidden=true;status.textContent=t('图像载入失败，请刷新或查看天文台原始图像。','圖像載入失敗，請重新整理或查看天文台原始圖像。');};
-            img.alt=t(type==='radar'?'香港天文台最新天气雷达图':'香港天文台最新红外卫星图',type==='radar'?'香港天文台最新天氣雷達圖':'香港天文台最新紅外衛星圖');img.src=url.href;
+            img.alt=t(type==='radar'?'香港天文台最新天气雷达图':'香港天文台最新红外卫星图',type==='radar'?'香港天文台最新天氣雷達圖':'香港天文台最新紅外衛星圖');if(type==='rainfall')img.alt=t('香港天文台过去一小时分区雨量示意图','香港天文台過去一小時分區雨量示意圖');img.src=url.href;
         } catch {if(imageRequests[type]===request)status.textContent=t('图像暂时无法取得，请刷新或查看天文台原始图像。','圖像暫時無法取得，請重新整理或查看天文台原始圖像。');}
     }
     const refresh=()=>{if(tabs.value==='forecast')loadForecast();else loadImagery(tabs.value,true);};
     button.onclick=()=>{labelsUpdate();dialog.open=true;loadForecast();if(tabs.value!=='forecast')loadImagery(tabs.value,true);clearInterval(refreshTimer);refreshTimer=setInterval(()=>{if(document.visibilityState==='visible')refresh();},300000);};
     tabs.addEventListener('change',e=>{if(e.target===tabs && tabs.value!=='forecast')loadImagery(tabs.value);});
     for(const close of dialog.querySelectorAll('[data-weather-close],[data-weather-close-top]'))close.onclick=()=>{dialog.open=false;};dialog.querySelector('[data-weather-refresh]').onclick=refresh;
-    dialog.addEventListener('closed',()=>{revision++;controller?.abort();clearInterval(refreshTimer);imageRequests.radar=(imageRequests.radar || 0)+1;imageRequests.satellite=(imageRequests.satellite || 0)+1;});
+    dialog.addEventListener('closed',()=>{revision++;controller?.abort();clearInterval(refreshTimer);for(const type of ['radar','satellite','rainfall'])imageRequests[type]=(imageRequests[type] || 0)+1;});
     new MutationObserver(()=>{labelsUpdate();if(dialog.open){imagery={};refresh();}}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});labelsUpdate();
 })();

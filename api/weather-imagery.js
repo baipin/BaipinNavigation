@@ -15,11 +15,20 @@ export function parseSatellite(text) {
     if(!frames.length)throw new Error('Satellite frames unavailable');
     return frames.slice(-12);
 }
+export function rainfallCandidates(now=Date.now()) {
+    const slot=Math.floor((now-11*60000)/(15*60000))*15*60000;
+    return Array.from({length:4},(_,i)=>{const time=new Date(slot-i*15*60000+8*3600000).toISOString().replace(/[-:T]/g,'').slice(0,12);return {url:HKO+'/wxinfo/rainfall/cokrig_barnes/rfmap'+time+'c.png',time};});
+}
 export default async function handler(req,res) {
     if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'Method not allowed'});}
     const type=req.query?.type;
-    if(!['radar','satellite'].includes(type))return res.status(400).json({error:'Invalid imagery type'});
+    if(!['radar','satellite','rainfall'].includes(type))return res.status(400).json({error:'Invalid imagery type'});
     try {
+        if(type==='rainfall'){
+            const checks=await Promise.all(rainfallCandidates().map(async frame=>{try{const response=await fetch(frame.url,{method:'HEAD',signal:AbortSignal.timeout(7000),redirect:'error'});return response.ok && response.headers.get('content-type')?.includes('image/')?frame:null;}catch{return null;}}));
+            const frames=checks.filter(Boolean).sort((a,b)=>a.time.localeCompare(b.time));if(!frames.length)throw new Error('Rainfall unavailable');
+            res.setHeader('Cache-Control','public, max-age=60, s-maxage=120');return res.status(200).json({type,frames});
+        }
         const url=type==='radar'?HKO+'/wxinfo/radars/temp_json/nradar_img.json':HKO+'/wxinfo/intersat/satellite/image/data/infrared_h8_img.js';
         const response=await fetch(url,{signal:AbortSignal.timeout(12000),redirect:'error'});
         if(!response.ok)throw new Error('HKO unavailable');

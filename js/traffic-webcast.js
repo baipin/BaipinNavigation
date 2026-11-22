@@ -66,7 +66,7 @@ export function webcastFrameBlob(video) {
 }
 
 // The five thumbnail captures run sequentially; streams stop as soon as a frame is available.
-export function getWebcastFrame(id,{signal,force=false}={}) {
+export function getWebcastFrame(id,{signal,force=false,priority=false}={}) {
     if(!IDS.has(id))return Promise.reject(new Error('Unknown webcast'));
     const run=async()=>{
         if(signal?.aborted)throw aborted();
@@ -79,5 +79,6 @@ export function getWebcastFrame(id,{signal,force=false}={}) {
             return value;
         } finally {player.destroy();}
     };
+    if(priority)return run();
     const result=queue.then(run);queue=result.catch(()=>{});return result;
 }

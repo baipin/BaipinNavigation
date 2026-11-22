@@ -452,8 +452,8 @@
         .settings-districts select { box-sizing:border-box; width:100%; min-width:0; min-height:48px; padding:10px 12px; border:1px solid rgba(128,128,128,.5); border-radius:12px; background:transparent; color:inherit; font:inherit; }
         .settings-districts select:focus-visible { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:2px; }
         .settings-districts option { color:rgb(var(--mdui-color-on-surface,33 33 33)); background:rgb(var(--mdui-color-surface,255 255 255)); }
-        #weather-warning-dialog { --mdui-color-surface-container-high:255,255,255; color:var(--text-main); }
-        .mdui-theme-dark #weather-warning-dialog { --mdui-color-surface-container-high:30,30,35; }
+        #weather-warning-dialog { z-index:3001; --mdui-color-surface-container-high:255,255,255; color:var(--text-main); }
+        .mdui-theme-dark #weather-warning-dialog { z-index:3001; --mdui-color-surface-container-high:30,30,35; }
         #weather-warning-dialog::part(panel) { background:rgb(var(--mdui-color-surface-container-high)); color:var(--text-main); width:min(720px,calc(100vw - 32px)); box-sizing:border-box; }
         .warning-dialog-content { max-width:100%; line-height:1.7; overflow-wrap:anywhere; }
         .warning-dialog-content h3 { font-size:1rem; margin:12px 0; }
@@ -912,7 +912,7 @@
         <mdui-button slot="action" variant="filled" id="settings-reset-confirm">恢复默认设置</mdui-button>
     </mdui-dialog>
     <script src="js/weather-warning-dialog.js?v=material-table-v3"></script>
-    <script src="js/weather-detail.js?v=weather-current-icon-v4"></script>
+    <script src="js/weather-detail.js?v=weather-rainfall-v5"></script>
     <script src="js/aed-wait.js?v=wait-colors-v1"></script>
     <script src="js/weather-upgrades.js?v=warning-details-v1"></script>
     <script>
@@ -1202,7 +1202,7 @@
         const engineTrigger = document.getElementById('engine-trigger');
         const mobileSearchToggle = document.getElementById('header-search-toggle');
         const mobileSearchMedia = matchMedia('(max-width:600px)');
-        let searchDocked = false;
+        let searchDocked = false, searchPromoted = false;
         function setEngineMenuOpen(open) {
             engineMenu.hidden = !open;
             engineTrigger.setAttribute('aria-expanded', String(open));
@@ -1224,8 +1224,9 @@
             if (searchCloseAnimation) { searchCloseAnimation.cancel(); searchCloseAnimation=null; }
             const finish = () => {
                 appBar.classList.remove('search-open','search-closing');
+                if(searchPromoted){searchPromoted=false;appBar.classList.toggle('search-docked',searchDocked);if(!searchDocked)heroSearchSlot.appendChild(searchBox);}
                 mobileSearchToggle.setAttribute('aria-expanded','false');
-                if (returnFocus) mobileSearchToggle.focus();
+                if (returnFocus && searchDocked) mobileSearchToggle.focus();else if(returnFocus)searchInput.blur();
             };
             if (animate && mobileSearchMedia.matches && appBar.classList.contains('search-open') && !matchMedia('(prefers-reduced-motion:reduce)').matches) {
                 appBar.classList.add('search-closing'); searchInput.blur();
@@ -1238,6 +1239,7 @@
             } else finish();
         }
         function placeSearch() {
+            if(searchPromoted && mobileSearchMedia.matches)return;
             closeHeaderSearch(false);
             const dock = searchDocked;
             appBar.classList.toggle('search-docked', dock);
@@ -1251,6 +1253,20 @@
             mobileSearchToggle.setAttribute('aria-expanded', 'true');
             searchInput.focus();
         };
+        function promoteMobileSearch() {
+            if(!mobileSearchMedia.matches || appBar.classList.contains('search-open'))return;
+            const from=searchBox.getBoundingClientRect();
+            searchPromoted=true;appBar.classList.add('search-docked','search-open');
+            headerSearchHost.insertBefore(searchBox,document.getElementById('header-search-close'));
+            mobileSearchToggle.setAttribute('aria-expanded','true');
+            if(!matchMedia('(prefers-reduced-motion:reduce)').matches){
+                const to=searchBox.getBoundingClientRect();
+                searchBox.animate([{transform:`translate(${from.left-to.left}px,${from.top-to.top}px) scale(${from.width/to.width},${from.height/to.height})`},{transform:'none'}],{duration:300,easing:'cubic-bezier(.2,0,0,1)'});
+            }
+            searchInput.focus({preventScroll:true});
+        }
+        searchInput.addEventListener('focus',promoteMobileSearch);
+        searchInput.addEventListener('pointerdown',event=>{if(mobileSearchMedia.matches && !appBar.classList.contains('search-open')){event.preventDefault();promoteMobileSearch();}});
         document.getElementById('header-search-close').onclick = () => closeHeaderSearch(true,true);
         searchInput.addEventListener('keydown', event => {
             if (event.key === 'Escape' && mobileSearchMedia.matches && appBar.classList.contains('search-open')) {
@@ -4125,7 +4141,7 @@ function setBackgroundToCookie(value) {
     </script>
     <script src="js/app-info.js?v=local-greeting-title-v2"></script>
     <script src="js/settings.js?v=material-tabs-v2"></script>
-    <script type="module" src="js/camera-background.js?v=traffic-webcast-v6"></script>
+    <script type="module" src="js/camera-background.js?v=traffic-preview-v7"></script>
     <script type="module" src="js/sync.js?v=camera-background-v1"></script>
 </body>
 </html>

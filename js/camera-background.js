@@ -1,4 +1,4 @@
-import {startWebcastVideo,getWebcastFrame,webcastFrameBlob} from './traffic-webcast.js?v=live-buffer-v6';
+import {startWebcastVideo,getWebcastFrame,webcastFrameBlob} from './traffic-webcast.js?v=priority-preview-v7';
 import {CAMERA_BACKGROUND_KEY,parseCameraPreference,cameraImageUrl,cameraRefreshInterval} from './camera-background-model.js';
 
 const sourcePicker=document.getElementById('background-camera-source');
@@ -58,7 +58,7 @@ async function updateBackground(candidate=choice,persist=false) {
             }});
             newPlayer=liveSession;url=URL.createObjectURL(await webcastFrameBlob(newPlayer.video));owned=true;
         } else if(candidate.source==='webcast') {
-            const frame=await getWebcastFrame(candidate.id,{signal,force:!persist});
+            const frame=await getWebcastFrame(candidate.id,{signal,force:!persist,priority:persist});
             url=URL.createObjectURL(frame.blob);owned=true;
         } else {
             url=cameraImageUrl(candidate.source,item.imageId || candidate.id)+'?v='+Math.floor(Date.now()/cameraRefreshInterval(candidate.source));
@@ -96,14 +96,14 @@ function renderGallery() {
     const filtered=rows.filter(item=>[item.sc,item.tc,item.id,item.areaSc,item.areaTc].join(' ').toLowerCase().includes(query));
     loadMore.hidden=filtered.length<=shown;
     if(!filtered.length){const p=document.createElement('p');p.textContent=t('没有找到对应镜头。','找不到相應鏡頭。');gallery.append(p);return;}
-    thumbnailObserver=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const image=entry.target;thumbnailObserver.unobserve(image);if(image.dataset.webcast){getWebcastFrame(image.dataset.webcast,{signal}).then(frame=>{if(!signal.aborted)image.src=frame.url;}).catch(error=>{if(error.name!=='AbortError'){image.hidden=true;image.parentElement?.classList.add('camera-image-unavailable');}});}else image.src=image.dataset.src;}},{rootMargin:'80px'});
+    thumbnailObserver=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const image=entry.target;thumbnailObserver.unobserve(image);image.src=image.dataset.src;}},{rootMargin:'80px'});
     for(const item of filtered.slice(0,shown)) {
         const button=document.createElement('button');button.type='button';button.className='camera-thumbnail';button.dataset.camera=item.id;
         button.setAttribute('aria-label',t('设为背景：','設為背景：')+name(item));
-        const image=document.createElement('img');image.width=240;image.height=135;image.alt='';image.decoding='async';image.referrerPolicy='no-referrer';if(sourcePicker.value.startsWith('webcast'))image.dataset.webcast=item.id;else image.dataset.src=cameraImageUrl(sourcePicker.value,item.imageId || item.id,true);
+        const image=document.createElement('img');image.width=240;image.height=135;image.alt='';image.decoding='async';image.referrerPolicy='no-referrer';if(sourcePicker.value.startsWith('webcast')){const previews={HK:'H429F',KL:'K202F',TW:'TW120F',TM:'TR116F',BBI:'TR114F'};image.dataset.src=cameraImageUrl('traffic',previews[item.id],true);}else image.dataset.src=cameraImageUrl(sourcePicker.value,item.imageId || item.id,true);
         image.onerror=()=>{image.hidden=true;button.classList.add('camera-image-unavailable');};
-        const caption=document.createElement('span');caption.textContent=name(item);
-        button.append(image,caption);button.onclick=()=>updateBackground({source:sourcePicker.value,id:item.id,refresh:sourcePicker.value==='webcast-live' || refreshCheck.checked},true);
+        const caption=document.createElement('span');caption.textContent=name(item)+(sourcePicker.value.startsWith('webcast')?t(' · 区域快拍预览',' · 區域快拍預覽'):'');
+        button.append(image,caption);button.onclick=()=>{thumbnailController?.abort();thumbnailObserver?.disconnect();updateBackground({source:sourcePicker.value,id:item.id,refresh:sourcePicker.value==='webcast-live' || refreshCheck.checked},true);};
         gallery.append(button);thumbnailObserver.observe(image);
     }
     renderSelection();
@@ -121,7 +121,7 @@ function render() {
     document.getElementById('background-camera-retry').textContent=sourcePicker.value==='webcast-live'?t('重新连接直播','重新連接直播'):t('立即更新背景','立即更新背景');
     refreshCheck.textContent=t('自动更新摄影机背景','自動更新攝影機背景');
     document.querySelector('[data-camera-hint]').textContent=sourcePicker.value==='hko'?t('点击缩略图设为背景；每 3 分钟获取新照片。','點擊縮圖設為背景；每 3 分鐘取得新照片。'):t('点击缩略图设为背景；每 2 分钟获取快拍。交通图像分辨率较低，放大后可能不清晰，并非视频。','點擊縮圖設為背景；每 2 分鐘取得快拍。交通圖像解像度較低，放大後可能不清晰，並非影片。');
-    if(sourcePicker.value.startsWith('webcast'))document.querySelector('[data-camera-hint]').textContent=sourcePicker.value==='webcast-live'?t('静音播放所选区域的轮播直播，每 2 分钟重新请求；切到后台时暂停。缩略图为直播首帧，镜头随官方序列轮播。','靜音播放所選區域的輪播直播，每 2 分鐘重新請求；切至背景時暫停。縮圖為直播首幀，鏡頭隨官方序列輪播。'):t('获取五路区域直播的首帧作为静态背景，截取后立即停止加载视频；可每 2 分钟自动更新。','取得五路區域直播的首幀作為靜態背景，擷取後立即停止載入影片；可每 2 分鐘自動更新。');
+    if(sourcePicker.value.startsWith('webcast'))document.querySelector('[data-camera-hint]').textContent=sourcePicker.value==='webcast-live'?t('静音播放所选区域的轮播直播，每 2 分钟重新请求；切到后台时暂停。缩略图为同区域交通快拍预览，直播镜头随官方序列轮播。','靜音播放所選區域的輪播直播，每 2 分鐘重新請求；切至背景時暫停。縮圖為同區域交通快拍預覽，直播鏡頭隨官方序列輪播。'):t('获取五路区域直播的首帧作为静态背景，截取后立即停止加载视频；可每 2 分钟自动更新。缩略图为同区域交通快拍预览。','取得五路區域直播的首幀作為靜態背景，擷取後立即停止載入影片；可每 2 分鐘自動更新。縮圖為同區域交通快拍預覽。');
     if(catalog && isCamera)renderGallery();
     updateAttribution();
     if(pending)showStatus(t('正在获取摄影机图像…','正在取得攝影機圖像…'));
