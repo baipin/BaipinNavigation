@@ -555,6 +555,10 @@
         .weather-extra-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; min-height:200px; padding:24px; text-align:center; }
         .weather-extra-loading mdui-circular-progress { width:40px; height:40px; }
         .weather-extra-loading p { margin:0; opacity:.75; }
+        .weather-external-link { color:inherit; font-size:.85rem; line-height:1.6; text-underline-offset:4px; overflow-wrap:anywhere; }
+        .weather-external-link:hover { text-decoration-thickness:2px; }
+        .weather-external-link:focus-visible { outline:2px solid currentColor; outline-offset:4px; border-radius:4px; }
+        .weather-external-link .material-icons { font-size:1em; margin-inline-start:.25em; vertical-align:-.12em; }
         .cyclone-detail { margin:16px 0 24px; line-height:1.7; }
         .cyclone-track { display:block; max-width:100%; max-height:60dvh; object-fit:contain; margin:16px auto; border-radius:12px; }
         .aqhi-map-layout { display:grid; grid-template-columns:minmax(0,2fr) minmax(220px,1fr); gap:16px; margin:16px 0; }
@@ -981,7 +985,7 @@
         <mdui-button slot="action" variant="filled" id="settings-reset-confirm">恢复默认设置</mdui-button>
     </mdui-dialog>
     <script src="js/weather-warning-dialog.js?v=material-table-v3"></script>
-    <script type="module" src="js/weather-extra.js?v=weather-pin-footer-v1"></script>
+    <script type="module" src="js/weather-extra.js?v=cyclone-external-link-v2"></script>
     <script src="js/aqhi-detail.js?v=aqhi-map-v1"></script>
     <script src="js/weather-detail.js?v=imagery-loading-v8"></script>
     <script src="js/aed-wait.js?v=wait-colors-v2"></script>

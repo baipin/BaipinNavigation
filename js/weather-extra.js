@@ -58,7 +58,7 @@ import {normalizeCities} from './weather-cities.js';
    const doc=plain(storm.forecast),original=doc.querySelector('table');if(original){const surface=node('div');surface.className='warning-table-surface';const table=node('table');table.className='warning-history-table';for(const tr of original.rows){const row=table.insertRow();for(const cell of tr.cells){const target=node(cell.tagName.toLowerCase(),cell.textContent.trim());target.colSpan=Math.min(cell.colSpan,5);row.append(target);}}surface.append(table);card.append(surface);}
    panel.append(card);
   }
-  const link=node('a',t('香港天文台热带气旋路径资讯','香港天文台熱帶氣旋路徑資訊'));link.href='https://www.hko.gov.hk/'+(sc()?'sc':'tc')+'/wxinfo/currwx/tc_fixarea.htm';link.target='_blank';link.rel='noopener noreferrer';panel.append(link);
+  const link=node('a',t('香港天文台热带气旋路径资讯','香港天文台熱帶氣旋路徑資訊'));link.href='https://www.hko.gov.hk/'+(sc()?'sc':'tc')+'/wxinfo/currwx/tc_fixarea.htm';link.target='_blank';link.rel='noopener noreferrer';link.className='weather-external-link';link.title=t('在新标签页打开香港天文台网站','在新分頁開啟香港天文台網站');const externalIcon=node('span','open_in_new');externalIcon.className='material-icons';externalIcon.setAttribute('aria-hidden','true');link.append(externalIcon);panel.append(link);
  }
  window.naviLoadWeatherExtra=async(type,panel)=>{
   const current=(revisions[type] || 0)+1;revisions[type]=current;panel.replaceChildren();panel.setAttribute('aria-busy','true');
