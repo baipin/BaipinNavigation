@@ -46,6 +46,6 @@ export function installCalendarVault({api,t,node,button,connections,reload}){
  document.addEventListener('navi-sync-account-change',()=>{if(localStorage.getItem('navi_calendar_cloud_disabled')!=='1')void sync(true);});
  const start=()=>{document.removeEventListener('navi-calendar-updated',start);if(localStorage.getItem('navi_calendar_cloud_disabled')!=='1')void sync(true);};document.addEventListener('navi-calendar-updated',start);if(document.getElementById('home-calendar')?.getAttribute('aria-busy')==='false')start();
  window.naviOpenCalendarVault=open;document.querySelector('[data-open-calendar-vault]')?.addEventListener('click',()=>{document.getElementById('data-manage-dialog').open=false;setTimeout(open,200);});
- function labels(){const entry=document.querySelector('[data-open-calendar-vault]');if(entry)entry.textContent=t('日历登录状态同步','日曆登入狀態同步');const hint=document.getElementById('settings-calendar-vault-hint');if(hint)hint.textContent=t('iCloud／Canvas 登录状态默认加密加入预设，随云端同步及 JSON 导入导出保存，无需独立密码。','iCloud／Canvas 登入狀態預設加密加入預設，隨雲端同步及 JSON 匯入匯出儲存，毋須獨立密碼。');changed();}new MutationObserver(labels).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});labels();
+ function labels(){const entry=document.querySelector('[data-open-calendar-vault]');if(entry)entry.textContent=t('日历登录状态同步','日曆登入狀態同步');changed();}new MutationObserver(labels).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});labels();
  return {section,capture};
 }

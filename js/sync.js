@@ -1,3 +1,4 @@
+import {syncRequest} from './sync-request.js?v=transport-v1';
 import {PRESET_KEYS,COOKIE_KEYS,sanitizePreset} from './preset-schema.js?v=server-v4';
 import {removeCloudCalendarVault} from './preset-vault-removal.js?v=remove-v2';
 
@@ -121,14 +122,12 @@ function applyPreset(input) {
 }
 const hash = async preset => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(preset))))).map(byte=>byte.toString(16).padStart(2,'0')).join('');
 async function request(action,body,selectedProvider=provider) {
-    const response = await fetch(providers[selectedProvider].endpoint+'?action='+action,{credentials:'same-origin',cache:'no-store',...(body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{})});
-    let data;
-    try { data = await response.json(); } catch { throw new Error('同步服务暂时不可用，请稍后重试'); }
-    if (!response.ok) {
-        if (response.status === 401 && selectedProvider === provider) { account = null; updateControls(); }
-        throw Object.assign(new Error(data.error || '同步失败，请稍后重试'),{status:response.status});
+    try {
+        return await syncRequest(providers[selectedProvider].endpoint,action,body,{name:providers[selectedProvider].name,t:(s,c)=>simplified()?s:c});
+    } catch(error) {
+        if(error.status===401&&selectedProvider===provider){account=null;updateControls();}
+        throw error;
     }
-    return data;
 }
 function renderLoginButton(button,id,text){
     let label=button.querySelector('[data-provider-label]');
