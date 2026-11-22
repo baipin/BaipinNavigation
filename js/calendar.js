@@ -8,7 +8,7 @@ function placeCalendar(){const ad=document.getElementById('quick-access-ad');if(
 desktopCalendar.addEventListener('change',placeCalendar);placeCalendar();
 const node=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
 function button(label,icon){const e=node('mdui-button',label);e.variant='text';if(icon)e.icon=icon;return e;}
-const providerIcon=provider=>'/img/'+(provider==='icloud'?'calendar-icloud.svg':provider==='canvas'?'calendar-canvas.svg':'login-'+provider+'.svg');
+const providerIcon=provider=>'/img/'+(provider==='icloud'?'calendar-icloud.svg':provider==='canvas'?'calendar-canvas.svg?v=official-v2':'login-'+provider+'.svg');
 const dayKey=date=>date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
 let selected=dayKey(new Date()),month=new Date(new Date().getFullYear(),new Date().getMonth(),1),connections={},sources=[],events=[],revision=0,busy=false,editing=null,lastUpdated=null,loadErrors=[];
 const providerNotices=new Map();let switchingIcloud=false,switchingCanvas=false;
