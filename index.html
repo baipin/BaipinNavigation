@@ -588,6 +588,14 @@
         .calendar-provider-notice mdui-button-icon { color:inherit; width:32px; height:32px; flex:none; }
         .calendar-provider-heading { display:flex; align-items:center; gap:10px; }
         .calendar-provider-heading img { width:24px; height:24px; object-fit:contain; flex:none; }
+        .settings-calendar-accounts { display:grid; gap:10px; margin-top:14px; }
+        .settings-calendar-account { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border-radius:12px; background:rgba(128,128,128,.07); }
+        .settings-calendar-account>img { width:22px; height:22px; flex:none; margin-top:2px; }
+        .settings-calendar-account>div { flex:1; min-width:0; }
+        .settings-calendar-account strong { font-size:.85rem; }
+        .settings-calendar-account small { display:block; margin-top:2px; font-size:.75rem; opacity:.7; overflow-wrap:anywhere; }
+        .settings-calendar-account .calendar-connection-label { font-size:.75rem; display:inline-flex; align-items:center; gap:4px; margin-inline-start:8px; }
+        .calendar-connection-label .material-icons { font-size:16px; }
         .settings-calendar-section { margin-top:20px; padding-top:20px; border-top:1px solid rgba(128,128,128,.2); }
         .calendar-account-section h3,.calendar-account-section p { margin:0; }
         .calendar-account-section small { font-size:.75rem; opacity:.7; line-height:1.6; }
@@ -1030,6 +1038,7 @@
             </section>
             <section class="settings-calendar-section" aria-labelledby="settings-calendar-heading">
                 <strong id="settings-calendar-heading">日历账号与授权</strong>
+                <div id="settings-calendar-accounts" class="settings-calendar-accounts" role="status" aria-live="polite"></div>
                 <div class="preset-sync-actions" style="margin-top:12px;"><mdui-button variant="outlined" icon="calendar_month" data-open-calendar-accounts>日历账号与显示</mdui-button></div>
             </section>
             <mdui-divider></mdui-divider>
@@ -4285,6 +4294,6 @@ function setBackgroundToCookie(value) {
     <script src="js/settings.js?v=calendar-settings-v4"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
     <script type="module" src="js/sync.js?v=calendar-permissions-v3"></script>
-    <script type="module" src="js/calendar.js?v=calendar-provider-notice-v5"></script>
+    <script type="module" src="js/calendar.js?v=calendar-settings-status-v6"></script>
 </body>
 </html>
