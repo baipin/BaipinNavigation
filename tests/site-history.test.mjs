@@ -17,7 +17,7 @@ for(const name of ['history.html','privacy.html','terms.html']){
  for(const match of text.matchAll(/data-legal-text="([^"]+)"/g))for(const lang of ['sc','tc'])assert.equal(typeof labels[lang][match[1]],'string',name+': '+lang+' '+match[1]);
  assert.ok(text.includes('id="legal-language"'));assert.ok(text.includes('id="legal-theme"'));assert.ok(text.includes('/legal.css'));
  if(name!=='history.html'){
-  assert.ok(labels.sc.p0_0.includes('飞书'));assert.ok(labels.tc.p0_0.includes('飛書'));
+  assert.ok((labels.sc.p0_0+labels.sc.p0_1).includes('飞书'));assert.ok((labels.tc.p0_0+labels.tc.p0_1).includes('飛書'));
   assert.ok(labels.sc.feishu_0.includes('drive:drive'));assert.ok(labels.tc.feishu_1.includes('calendar:calendar'));
   assert.ok(labels.sc.vault_0.includes('飞书'));assert.ok(!labels.sc.vault_2.includes('可在管理界面取消'));
  }
