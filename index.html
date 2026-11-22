@@ -1068,11 +1068,13 @@
                     <mdui-button variant="tonal" data-sync-provider="google" aria-pressed="true">Google 登录</mdui-button>
                     <mdui-button variant="outlined" data-sync-provider="github" aria-pressed="false">GitHub 登录</mdui-button>
                     <mdui-button variant="outlined" data-sync-provider="microsoft" aria-pressed="false">Microsoft 登录</mdui-button>
+                    <mdui-button variant="outlined" data-sync-provider="feishu" aria-pressed="false">飞书登录</mdui-button>
                 </div>
                 <div data-sync-details hidden>
                 <p data-sync-account>使用同一 Google 账号同步多个设备</p>
                 <p class="preset-sync-hint" data-sync-storage>预设保存在你的 Google Drive 应用专用空间。</p>
                 <p class="preset-sync-hint" data-sync-github-warning hidden>Secret Gist 不是真正私有存储，知道链接的人可以读取预设。GitHub 的 gist 权限允许访问账号下的 Gist；本站仅定位并读写标记为本站预设的 Secret Gist，不申请仓库或私人邮箱权限。</p>
+                <p class="preset-sync-hint" data-sync-feishu-warning hidden>飞书云空间没有应用私有空间；授权包含云空间读写。本站仅操作 BaipinNavigation-Presets 文件夹内自己的预设文件，不改变共享权限。</p>
                 <p class="preset-sync-hint">同步包括书签、搜索引擎、RSS、CITY FEED 自选股票与显示配置、语言、天气地区、主题、照片及摄影机背景。各服务独立保存预设，切换服务不会自动复制或合并账号。</p>
                 <div class="preset-sync-actions">
                     <mdui-button variant="outlined" icon="login" data-sync-login>使用 Google 登录</mdui-button>
@@ -4347,7 +4349,7 @@ function setBackgroundToCookie(value) {
     <script src="js/app-info.js?v=privacy-hk-v2"></script>
     <script src="js/settings.js?v=calendar-settings-v6"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
-    <script type="module" src="js/sync.js?v=calendar-resume-v13"></script>
-    <script type="module" src="js/calendar.js?v=calendar-almanac-v30"></script>
+    <script type="module" src="js/sync.js?v=feishu-logout-v14"></script>
+    <script type="module" src="js/calendar.js?v=calendar-feishu-v31"></script>
 </body>
 </html>

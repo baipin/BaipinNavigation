@@ -1,5 +1,5 @@
 import {syncRequest} from './sync-request.js?v=transport-v2';
-import {PRESET_KEYS,COOKIE_KEYS,sanitizePreset} from './preset-schema.js?v=server-v4';
+import {PRESET_KEYS,COOKIE_KEYS,sanitizePreset} from './preset-schema.js?v=feishu-v5';
 import {removeCloudCalendarVault} from './preset-vault-removal.js?v=remove-v2';
 
 const dialog = document.getElementById('data-manage-dialog');
@@ -11,12 +11,13 @@ const syncButton = panel.querySelector('[data-sync-now]');
 const auto = panel.querySelector('[data-sync-auto]');
 const choices = panel.querySelector('[data-sync-conflict]');
 const callbackProvider = new URL(location.href).searchParams.get('provider');
-const providers={google:{name:'Google',endpoint:'/api/sync',storage:'预设保存在你的 Google Drive 应用专用空间。',missing:'服务端尚未配置 GOOGLE_KEY'},github:{name:'GitHub',endpoint:'/api/github',storage:'预设保存在你的 GitHub Secret Gist。',missing:'服务端尚未配置 GITHUB_CLIENT_ID 和 GITHUB_KEY'},microsoft:{name:'Microsoft',endpoint:'/api/microsoft',storage:'预设保存在你的 OneDrive 应用文件夹。',missing:'服务端尚未配置 MICROSOFT_CLIENT_ID 和 MICROSOFT_KEY'}};
+const providers={feishu:{name:'飞书',endpoint:'/api/feishu',storage:'预设保存在你的飞书云空间 BaipinNavigation-Presets 文件夹。',missing:'服务端尚未配置 FEISHU_APP_ID 和 FEISHU_APP_SECRET'},google:{name:'Google',endpoint:'/api/sync',storage:'预设保存在你的 Google Drive 应用专用空间。',missing:'服务端尚未配置 GOOGLE_KEY'},github:{name:'GitHub',endpoint:'/api/github',storage:'预设保存在你的 GitHub Secret Gist。',missing:'服务端尚未配置 GITHUB_CLIENT_ID 和 GITHUB_KEY'},microsoft:{name:'Microsoft',endpoint:'/api/microsoft',storage:'预设保存在你的 OneDrive 应用文件夹。',missing:'服务端尚未配置 MICROSOFT_CLIENT_ID 和 MICROSOFT_KEY'}};
 const selectedProvider=callbackProvider || localStorage.getItem('navi_sync_provider');
 let provider=Object.hasOwn(providers,selectedProvider)?selectedProvider:'google';
 let account = null, busy = false, pending = null, configured = false, detailsRequested = false, authenticating = false;
 let statusMessage = '';
 const traditional = new Map([
+    ['飛書 登录','飛書 登入'],['使用 飛書 登录','使用飛書登入'],['使用同一 飛書 账号同步多个设备','使用同一飛書帳戶同步多個裝置'],['飞书 登录','飛書 登入'],['使用 飞书 登录','使用飛書登入'],['使用同一 飞书 账号同步多个设备','使用同一飛書帳戶同步多個裝置'],['预设保存在你的飞书云空间 BaipinNavigation-Presets 文件夹。','預設儲存在你的飛書雲空間 BaipinNavigation-Presets 資料夾。'],['服务端尚未配置 FEISHU_APP_ID 和 FEISHU_APP_SECRET','伺服器尚未設定 FEISHU_APP_ID 及 FEISHU_APP_SECRET'],
     ['Microsoft 登录','Microsoft 登入'],['使用 Microsoft 登录','使用 Microsoft 登入'],
     ['使用同一 Microsoft 账号同步多个设备','使用同一 Microsoft 帳戶同步多個裝置'],
     ['预设保存在你的 OneDrive 应用文件夹。','預設儲存在你的 OneDrive 應用程式資料夾。'],
@@ -137,16 +138,18 @@ async function request(action,body,selectedProvider=provider) {
 }
 function renderLoginButton(button,id,text){
     let label=button.querySelector('[data-provider-label]');
-    if(!label){const icon=document.createElement('img');icon.src='/img/login-'+id+'.svg';icon.alt='';icon.slot='icon';icon.width=20;icon.height=20;label=document.createElement('span');label.dataset.providerLabel='';button.replaceChildren(icon,label);}
-    const icon=button.querySelector('img[slot="icon"]');if(icon)icon.src='/img/login-'+id+'.svg';
+    if(!label){const icon=document.createElement('img');icon.src='/img/login-'+id+(id==='feishu'?'.ico':'.svg');icon.alt='';icon.slot='icon';icon.width=20;icon.height=20;label=document.createElement('span');label.dataset.providerLabel='';button.replaceChildren(icon,label);}
+    const icon=button.querySelector('img[slot="icon"]');if(icon)icon.src='/img/login-'+id+(id==='feishu'?'.ico':'.svg');
     label.textContent=translate(text);
 }
 function updateProviderText() {
+    providers.feishu.name=simplified()?'飞书':'飛書';
     const name = providers[provider].name;
-    panel.querySelector('[data-sync-account]').textContent = account ? name+' · '+(provider === 'github' ? '@'+account.login : account.email) : translate('使用同一 '+name+' 账号同步多个设备');
+    panel.querySelector('[data-sync-account]').textContent = account ? name+' · '+(provider === 'github' ? '@'+account.login : account.email||account.name) : translate('使用同一 '+name+' 账号同步多个设备');
     renderLoginButton(login,provider,'使用 '+name+' 登录');
     panel.querySelector('[data-sync-storage]').textContent = translate(providers[provider].storage);
     panel.querySelector('[data-sync-github-warning]').hidden = provider !== 'github';
+    const warning=panel.querySelector('[data-sync-feishu-warning]');warning.hidden=provider!=='feishu';warning.textContent=simplified()?'飞书云空间没有应用私有空间；授权包含云空间读写。本站仅操作 BaipinNavigation-Presets 文件夹内自己的预设文件，不改变共享权限。':'飛書雲空間沒有應用程式私有空間；授權包含雲空間讀寫。本站僅操作 BaipinNavigation-Presets 資料夾內自己的預設檔案，不更改共享權限。';
     for (const button of panel.querySelectorAll('[data-sync-provider]')) {
         const active = button.dataset.syncProvider === provider;
         renderLoginButton(button,button.dataset.syncProvider,providers[button.dataset.syncProvider].name+' 登录');
@@ -362,7 +365,7 @@ const clearButton=(sc,tc,icon,action)=>{const button=document.createElement('mdu
 function clearLinks(){
  const hint=document.createElement('p');hint.textContent=clearText('退出本站不会撤销第三方授权。请到以下账户页面撤销本站授权；学校 Canvas 令牌和 iCloud App 专用密码也需自行撤销。','登出本站不會撤銷第三方授權。請到以下帳戶頁面撤銷本站授權；學校 Canvas 權杖及 iCloud App 專用密碼亦需自行撤銷。');clearBody.append(hint);
  const links=document.createElement('nav');links.className='cloud-clear-links';links.setAttribute('aria-label',clearText('第三方授权管理','第三方授權管理'));
- for(const [name,url]of [['Google','https://myaccount.google.com/connections'],['GitHub','https://github.com/settings/applications'],['Microsoft','https://account.live.com/consent/Manage'],[clearText('Microsoft 工作／学校','Microsoft 工作／學校'),'https://myapplications.microsoft.com/'],['Apple','https://account.apple.com/']]){const a=document.createElement('a');a.className='cloud-clear-link';a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=name+' ';const icon=document.createElement('span');icon.className='material-icons';icon.textContent='open_in_new';icon.style.fontSize='16px';icon.setAttribute('aria-hidden','true');a.append(icon);links.append(a);}
+ for(const [name,url]of [[clearText('飞书应用管理','飛書應用程式管理'),'https://www.feishu.cn/'],['Google','https://myaccount.google.com/connections'],['GitHub','https://github.com/settings/applications'],['Microsoft','https://account.live.com/consent/Manage'],[clearText('Microsoft 工作／学校','Microsoft 工作／學校'),'https://myapplications.microsoft.com/'],['Apple','https://account.apple.com/']]){const a=document.createElement('a');a.className='cloud-clear-link';a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=name+' ';const icon=document.createElement('span');icon.className='material-icons';icon.textContent='open_in_new';icon.style.fontSize='16px';icon.setAttribute('aria-hidden','true');a.append(icon);links.append(a);}
  clearBody.append(links);
 }
 function renderClear(){
@@ -397,7 +400,7 @@ async function afterClear(action){await clearRun(async()=>{
  }
  const failed=[];
  for(const id of Object.keys(providers)){try{await request('logout',{},id);}catch{failed.push(providers[id].name);}}
- for(const id of ['icloud','canvas']){try{await syncRequest('/api/'+id,'disconnect',{}, {name:id});}catch{failed.push(id);}}
+ for(const id of ['icloud','canvas','feishu']){try{await syncRequest('/api/'+id,id==='feishu'?'calendar-disconnect':'disconnect',{}, {name:id});}catch{failed.push(id);}}
  if(failed.length)throw new Error(clearText('部分账号未能退出，请重试：','部分帳戶未能登出，請重試：')+failed.join('、'));
  localStorage.removeItem('navi_calendar_vault');account=null;auto.checked=false;pending=null;choices.hidden=true;detailsRequested=false;document.dispatchEvent(new Event('navi-sync-account-change'));
  clearStage='loggedout';clearBody.replaceChildren();const done=document.createElement('p');done.textContent=clearText('已退出本站所有预设同步及日历账号。本机普通设置保留。','已登出本站所有預設同步及日曆帳戶。本機一般設定保留。');clearBody.append(done);clearLinks();const error=document.createElement('p');error.dataset.clearError='';clearBody.append(error);
@@ -467,6 +470,7 @@ if (result) {
     localStorage.setItem('navi_sync_provider',provider);
     const messages = {connected:'Google 登录成功。点击“立即同步”选择云端或本机预设。',cancelled:'已取消 Google 授权，本机预设不受影响。','state-error':'登录验证已过期，请从本站重新登录。','login-error':'Google 登录失败，请检查回调地址、Drive API 及 OAuth 配置。','permission-error':'请允许本站访问 Google Drive 应用预设空间后重新登录。'};
     if (provider === 'github') Object.assign(messages,{connected:'GitHub 登录成功。点击“立即同步”选择云端或本机预设。',cancelled:'已取消 GitHub 授权，本机预设不受影响。','login-error':'GitHub 登录失败，请检查回调地址及 OAuth App 配置。','permission-error':'请允许本站的 GitHub gist 权限后重新登录。'});
+    if(provider==='feishu')Object.assign(messages,{connected:simplified()?'飞书登录成功。日历可在「日历账号与显示」单独授权。':'飛書登入成功。日曆可在「日曆帳戶與顯示」另外授權。',cancelled:simplified()?'已取消飞书授权。':'已取消飛書授權。','login-error':simplified()?'飞书登录失败，请检查应用权限和回调地址。':'飛書登入失敗，請檢查應用程式權限及回呼網址。'});
     if(provider==='microsoft')Object.assign(messages,{connected:'Microsoft 登录成功。点击“立即同步”选择云端或本机预设。',cancelled:'已取消 Microsoft 授权，本机预设不受影响。','login-error':'Microsoft 登录失败，请检查回调地址及 Entra 应用配置。','permission-error':'请允许本站访问 OneDrive 应用文件夹及基本资料后重新登录。'});
     const url = new URL(location.href); url.searchParams.delete('sync'); url.searchParams.delete('provider'); history.replaceState(null,'',url);
     detailsRequested=true;

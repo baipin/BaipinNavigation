@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/feishu/callback",
+      "destination": "/api/sync?provider=feishu&action=callback"
+    },
+    {
+      "source": "/api/feishu",
+      "destination": "/api/sync?provider=feishu"
+    },
+    {
       "source": "/api/microsoft/callback",
       "destination": "/api/sync?provider=microsoft&action=callback"
     },

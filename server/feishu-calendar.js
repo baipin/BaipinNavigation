@@ -1,0 +1,66 @@
+import {feishuPresetStorage} from './feishu-preset-storage.js';
+import {sanitizePreset,MAX_PRESET_BYTES} from '../js/preset-schema.js';
+import {createHash,randomBytes,timingSafeEqual,randomUUID} from 'node:crypto';
+import {readSession,storeSession,setCookie} from './calendar-session.js';
+import {CalendarError,calendarBody,calendarRange,validateEvent} from './calendar-service.js';
+const API='https://open.feishu.cn/open-apis',COOKIE='__Host-navi_feishu',STATE='__Host-navi_feishu_oauth',ORIGIN='https://123.baipon.com';
+export const FEISHU_SCOPE='offline_access drive:drive calendar:calendar';
+const presetScope='offline_access drive:drive';
+const calendarGranted=data=>!data.calendarDisconnected&&String(data.scopes||'').split(' ').includes('calendar:calendar');
+const config=()=>({id:process.env.FEISHU_APP_ID,secret:process.env.FEISHU_APP_SECRET,key:process.env.FEISHU_SESSION_KEY||process.env.FEISHU_APP_SECRET,redirect:process.env.FEISHU_REDIRECT_URI||ORIGIN+'/api/feishu/callback'});
+const id=value=>{if(typeof value!=='string'||!value||value.length>2048||/[\x00-\x1f]/.test(value))throw new CalendarError(400,'飞书日历或日程标识不正确');return encodeURIComponent(value);};
+async function jsonRequest(path,options={}){
+ let response;try{response=await fetch(API+path,{...options,redirect:'error',signal:AbortSignal.timeout(15000)});}catch{throw new CalendarError(504,'飞书连接超时，请稍后重试');}
+ let value;try{value=await response.json();}catch{throw new CalendarError(502,'飞书返回格式不正确，请稍后重试');}
+ if(response.status===401||[99991663,99991664].includes(value.code))throw new CalendarError(401,'飞书授权已失效，请重新连接');
+ if(response.status===403)throw new CalendarError(403,'飞书日历权限不足，请检查应用权限并重新授权');
+ if(!response.ok||value.code&&value.code!==0)throw new CalendarError(response.status===429?429:502,'飞书日历请求失败'+(Number.isInteger(value.code)?'（'+value.code+'）':'')+'，请检查权限或稍后重试');return value;
+}
+async function exchange(values){const c=config(),value=await jsonRequest('/authen/v2/oauth/token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client_id:c.id,client_secret:c.secret,...values})});if(typeof value.access_token!=='string'||!value.access_token)throw new CalendarError(401,'飞书授权未完成，请重新连接');return value;}
+const call=(data,path,options={})=>jsonRequest(path,{...options,headers:{Authorization:'Bearer '+data.accessToken,...options.headers}}).then(value=>value.data||{});
+async function session(req,res){const c=config(),data=readSession(req,COOKIE,c.key);if(!data)throw new CalendarError(401,'请先登录并授权飞书日历');if(data.accessExpires<Date.now()+60000){if(!data.refreshToken)throw new CalendarError(401,'飞书授权已过期，请重新连接');const token=await exchange({grant_type:'refresh_token',refresh_token:data.refreshToken});data.accessToken=token.access_token;data.refreshToken=token.refresh_token||data.refreshToken;data.accessExpires=Date.now()+Number(token.expires_in||7200)*1000;storeSession(res,COOKIE,data,c.key);}return data;}
+async function calendars(data){const rows=[];let next='';for(let page=0;page<5;page++){const result=await call(data,'/calendar/v4/calendars?'+new URLSearchParams({page_size:'100',...(next?{page_token:next}:{})}));rows.push(...(result.calendar_list||[]).filter(x=>!x.is_deleted));if(!result.has_more)return {rows,truncated:false};next=result.page_token;if(typeof next!=='string'||!next)throw new CalendarError(502,'飞书日历分页格式不正确');}return {rows,truncated:true};}
+function editable(row,calendar){return ['owner','writer'].includes(calendar.role)&&['primary','shared'].includes(calendar.type)&&row.organizer_calendar_id===calendar.calendar_id&&!row.recurrence&&!row.recurring_event_id&&!row.is_exception&&!(row.attendees||[]).some(x=>!x.is_organizer);}
+export function feishuEvent(row,calendar){if(!row||row.status==='cancelled'||!row.event_id)return null;const allDay=!!row.start_time?.date;if(!allDay&&(!Number.isFinite(Number(row.start_time?.timestamp))||!Number.isFinite(Number(row.end_time?.timestamp))))return null;const start=allDay?row.start_time.date:new Date(Number(row.start_time?.timestamp)*1000).toISOString(),end=allDay?row.end_time?.date:new Date(Number(row.end_time?.timestamp)*1000).toISOString();if(!Number.isFinite(Date.parse(start))||!Number.isFinite(Date.parse(end))||Date.parse(end)<=Date.parse(start))return null;
+ const value={id:row.event_id,title:row.summary||'（无标题）',description:row.description||'',location:row.location?.name||'',start,end,allDay,editable:editable(row,calendar)};value.etag=createHash('sha256').update(JSON.stringify([value.title,value.description,value.location,start,end,!!row.recurrence,row.recurring_event_id||''])).digest('hex');return value;
+}
+function eventBody(event){const e=validateEvent(event),time=value=>e.allDay?{date:value}:{timestamp:String(Math.floor(Date.parse(value)/1000)),timezone:'UTC'};return {summary:e.title,description:e.description,location:{name:e.location},start_time:time(e.start),end_time:time(e.end)};}
+const finish=(res,result,calendar=true)=>{res.statusCode=303;res.setHeader('Location','/?'+(calendar?'calendar':'sync')+'='+result+'&provider=feishu');return res.end();};
+async function download(data,path){const response=await fetch(API+path,{redirect:'follow',signal:AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+data.accessToken}});if(!response.ok)throw new CalendarError(response.status===401?401:502,'飞书预设下载失败，请重新登录或稍后重试');const size=Number(response.headers.get('content-length'));if(size>184096)throw new CalendarError(400,'飞书预设文件过大');const reader=response.body.getReader(),chunks=[];let total=0;try{while(true){const {value,done}=await reader.read();if(done)break;total+=value.byteLength;if(total>184096)throw new CalendarError(400,'飞书预设文件过大');chunks.push(Buffer.from(value));}}finally{await reader.cancel();}return Buffer.concat(chunks).toString('utf8');}
+const storage=feishuPresetStorage(call,download);
+export default async function feishuHandler(req,res){
+ res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');const c=config(),url=new URL(req.url,ORIGIN),action=url.searchParams.get('action')||req.query?.action||'status';let callbackCalendar=false;
+ try{
+  const allowed=['login','logout','pull','push','clear','status','calendar-login','callback','calendar-disconnect','calendar-list','calendar-events','calendar-save','calendar-delete'];if(!allowed.includes(action))throw new CalendarError(404,'飞书仅用于日历连接');
+  const post=['logout','push','clear','calendar-disconnect','calendar-save','calendar-delete'].includes(action);if(req.method!==(post?'POST':'GET'))throw new CalendarError(405,'请求方法不支持');if(post&&req.headers.origin!==ORIGIN)throw new CalendarError(403,'请求来源不正确');
+  if(action==='logout'){storeSession(res,COOKIE,null,c.key);return res.status(200).json({ok:true});}
+  if(action==='calendar-disconnect'){const data=readSession(req,COOKIE,c.key);if(data){data.calendarDisconnected=true;storeSession(res,COOKIE,data,c.key);}return res.status(200).json({ok:true});}
+  const configured=!!(c.id&&c.secret&&typeof c.key==='string'&&c.key.length>=32);if(!configured){if(action==='status')return res.status(200).json({configured:false,authenticated:false,calendarAuthorized:false});throw new CalendarError(503,'请配置 FEISHU_APP_ID 和 FEISHU_APP_SECRET；会话密钥至少 32 个字符');}
+  if(action==='calendar-login'||action==='login'){
+   if(req.headers.host!=='123.baipon.com')throw new CalendarError(400,'请在正式网站连接飞书日历');const state=randomBytes(24).toString('base64url'),verifier=randomBytes(48).toString('base64url');
+   setCookie(res,STATE,state,600);storeSession(res,STATE+'_data',{state,verifier,calendar:action==='calendar-login',accountId:action==='calendar-login'?readSession(req,COOKIE,c.key)?.user.id:null,scopes:action==='calendar-login'||calendarGranted(readSession(req,COOKIE,c.key)||{})?FEISHU_SCOPE:presetScope,expires:Date.now()+600000},c.key);
+   res.statusCode=303;res.setHeader('Location','https://accounts.feishu.cn/open-apis/authen/v1/authorize?'+new URLSearchParams({client_id:c.id,redirect_uri:c.redirect,response_type:'code',scope:action==='calendar-login'||calendarGranted(readSession(req,COOKIE,c.key)||{})?FEISHU_SCOPE:presetScope,state,code_challenge:createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256'}));return res.end();
+  }
+  if(action==='callback'){
+   const saved=readSession(req,STATE+'_data',c.key),state=url.searchParams.get('state')||'';callbackCalendar=!!saved?.calendar;setCookie(res,STATE,'',0);storeSession(res,STATE+'_data',null,c.key);
+   if(!saved||!state||Buffer.byteLength(saved.state)!==Buffer.byteLength(state)||!timingSafeEqual(Buffer.from(saved.state),Buffer.from(state)))return finish(res,'state-error',callbackCalendar);if(url.searchParams.has('error'))return finish(res,'cancelled',saved.calendar);const code=url.searchParams.get('code');if(!code)return finish(res,'login-error',saved.calendar);
+   const token=await exchange({grant_type:'authorization_code',code,redirect_uri:c.redirect,code_verifier:saved.verifier});const user=await call({accessToken:token.access_token},'/authen/v1/user_info');if(!user.open_id)throw new CalendarError(401,'无法确认飞书用户');if(saved.accountId&&saved.accountId!==user.open_id)return finish(res,'account-mismatch',saved.calendar);
+   const previous=readSession(req,COOKIE,c.key);storeSession(res,COOKIE,{scopes:token.scope||saved.scopes,calendarDisconnected:saved.calendar?false:previous?.user.id===user.open_id&&previous.calendarDisconnected===true,accessToken:token.access_token,refreshToken:token.refresh_token||null,accessExpires:Date.now()+Number(token.expires_in||7200)*1000,expires:Date.now()+30*86400000,user:{id:user.open_id,name:String(user.name||'飞书用户').slice(0,254)}},c.key);return finish(res,'connected',saved.calendar);
+  }
+  let data;try{data=await session(req,res);}catch(error){if(action==='status'&&error.status===401)return res.status(200).json({configured:true,authenticated:false,calendarAuthorized:false});throw error;}
+  if(action==='status')return res.status(200).json({configured:true,authenticated:true,calendarAuthorized:calendarGranted(data),user:data.user});
+  if(action==='pull'){const cloud=await storage.read(data);delete cloud.folder;delete cloud.id;return res.status(200).json(cloud);}
+  if(action==='push'){if(!String(req.headers['content-type']||'').startsWith('application/json'))throw new CalendarError(415,'请使用 JSON 请求');const raw=typeof req.body==='string'?req.body:JSON.stringify(req.body||{});if(Buffer.byteLength(raw)>MAX_PRESET_BYTES+4096)throw new CalendarError(413,'预设文件过大');let body;try{body=JSON.parse(raw);}catch{throw new CalendarError(400,'预设格式不正确');}sanitizePreset(body.preset);return res.status(200).json(await storage.write(data,body));}
+  if(action==='clear'){const body=calendarBody(req);if(body.confirm!==true||!(body.revision===null||typeof body.revision==='string'&&body.revision.length<=200))throw new CalendarError(400,'请确认清除云端预设');return res.status(200).json(await storage.clear(data,body));}
+  if(!calendarGranted(data))throw new CalendarError(403,'同步账号已连接，日历未连接，请单独授权日历');
+  const listing=await calendars(data);if(action==='calendar-list')return res.status(200).json({calendars:listing.rows.filter(x=>x.calendar_id&&x.role!=='free_busy_reader').map(x=>({id:x.calendar_id,name:x.summary||'飞书日历',writable:['owner','writer'].includes(x.role)&&['primary','shared'].includes(x.type),primary:x.type==='primary'})),truncated:listing.truncated});
+  const body=post?calendarBody(req):null,calendarId=post?body.calendar:url.searchParams.get('calendar'),calendar=listing.rows.find(x=>x.calendar_id===calendarId);if(!calendar)throw new CalendarError(403,'飞书日历未授权或不存在');const path='/calendar/v4/calendars/'+id(calendarId)+'/events';
+  if(action==='calendar-events'){const range=calendarRange(url),result=await call(data,path+'/instance_view?'+new URLSearchParams({start_time:String(Math.floor(Date.parse(range.start)/1000)),end_time:String(Math.floor(Date.parse(range.end)/1000))}));const events=(result.items||[]).map(row=>feishuEvent(row,calendar)).filter(x=>x&&Date.parse(x.end)>Date.parse(range.start)&&Date.parse(x.start)<Date.parse(range.end));return res.status(200).json({events:events.slice(0,1000),truncated:events.length>1000});}
+  if(!['owner','writer'].includes(calendar.role)||!['primary','shared'].includes(calendar.type))throw new CalendarError(403,'此飞书日历不可编辑');
+  if(body.id){const current=(await call(data,path+'/'+id(body.id))).event,prepared=feishuEvent(current,calendar);if(!prepared?.editable)throw new CalendarError(403,'重复日程、邀请或非本人组织的日程请在飞书中处理');if(body.etag!==prepared.etag)throw new CalendarError(409,'日程已被其他设备修改，请刷新后重试');}
+  else if(action==='calendar-delete')throw new CalendarError(400,'请选择要删除的日程');
+  if(action==='calendar-delete')await call(data,path+'/'+id(body.id),{method:'DELETE'});
+  else await call(data,path+(body.id?'/'+id(body.id):'?idempotency_key='+randomUUID()),{method:body.id?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...eventBody(body.event),need_notification:false})});
+  return res.status(200).json({ok:true});
+ }catch(error){if(action==='callback')return finish(res,'login-error',callbackCalendar);return res.status(error instanceof CalendarError?error.status:502).json({error:error instanceof CalendarError?error.message:'飞书日历暂时不可用，请稍后重试'});}
+}

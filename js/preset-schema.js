@@ -31,7 +31,7 @@ export function sanitizePreset(input) {
         }
     }
     if(result.localStorage.navi_calendar_vault!==null){const v=validateVault(JSON.parse(result.localStorage.navi_calendar_vault));result.localStorage.navi_calendar_vault=JSON.stringify(v);}
-    if(result.localStorage.navi_calendar_preferences!==null){const p=JSON.parse(result.localStorage.navi_calendar_preferences);if(!p||typeof p!=='object'||Array.isArray(p)||Object.keys(p).some(k=>!['google','microsoft','icloud','canvas'].includes(k)))throw new Error('日历偏好不正确');for(const x of Object.values(p))if(!x||typeof x.account!=='string'||x.account.length>254||!Array.isArray(x.calendars)||x.calendars.length>100||x.calendars.some(id=>typeof id!=='string'||id.length>3000))throw new Error('日历偏好不正确');}
+    if(result.localStorage.navi_calendar_preferences!==null){const p=JSON.parse(result.localStorage.navi_calendar_preferences);if(!p||typeof p!=='object'||Array.isArray(p)||Object.keys(p).some(k=>!['google','microsoft','icloud','canvas','feishu'].includes(k)))throw new Error('日历偏好不正确');for(const x of Object.values(p))if(!x||typeof x.account!=='string'||x.account.length>254||!Array.isArray(x.calendars)||x.calendars.length>100||x.calendars.some(id=>typeof id!=='string'||id.length>3000))throw new Error('日历偏好不正确');}
     if(result.localStorage.navi_weather_cities!==null)result.localStorage.navi_weather_cities=JSON.stringify(normalizeCities(JSON.parse(result.localStorage.navi_weather_cities)));
     if(result.localStorage.navi_camera_background!==null)result.localStorage.navi_camera_background=JSON.stringify(parseCameraPreference(result.localStorage.navi_camera_background));
     if (result.localStorage.custom_rss !== null) result.localStorage.navi_rss_expansion_v1 = '1';
