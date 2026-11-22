@@ -27,17 +27,21 @@ export function installCalendarVault({api,t,node,button,connections,reload}){
   }catch(e){lastError=e.message;}
   finally{working=false;changed();if(queued){const restore=queuedRestore,providers=[...queuedProviders];queuedProviders.clear();queued=queuedRestore=false;void sync(restore,providers);}}
  }
+ function requestRemoval(){removalSnapshot=localStorage.getItem(VAULT_KEY);heading.textContent=label()+'？';description.textContent=t('将自动移除当前同步账号的云端备份，之后导出也不再包含登录状态。已连接的日历和日程不受影响。其他账号、设备及旧导出文件需分别处理。','將自動移除目前同步帳戶的雲端備份，往後匯出亦不再包含登入狀態。已連接的日曆及日程不受影響。其他帳戶、裝置及舊匯出檔案需分別處理。');check.textContent=t('我已了解并确认取消储存','我已了解並確認取消儲存');check.checked=false;confirm.disabled=true;cancel.textContent=t('返回','返回');confirm.textContent=t('确认取消储存','確認取消儲存');error.textContent='';removeDialog.open=true;}
  function render(){title.textContent=t('日历登录状态同步','日曆登入狀態同步');close.textContent=t('关闭','關閉');content.replaceChildren(node('p',status()),node('small',t('使用服务器密钥加密，无需独立密码。只保存 iCloud／Canvas 登录状态；Google／Microsoft 日历仍需各自授权。本机退出日历不会删除云端备份。','使用伺服器密鑰加密，毋須獨立密碼。只儲存 iCloud／Canvas 登入狀態；Google／Microsoft 日曆仍需各自授權。本機登出日曆不會刪除雲端備份。')));
   if(localStorage.getItem('navi_calendar_cloud_disabled')==='1'){const resume=button(t('恢复默认自动同步','恢復預設自動同步'),'cloud_sync');resume.onclick=()=>{localStorage.removeItem('navi_calendar_cloud_disabled');captured.clear();void sync(true);};content.append(resume);}
   const raw=localStorage.getItem(VAULT_KEY);if(raw&&(()=>{try{return JSON.parse(raw).version===1;}catch{return false;}})())content.append(node('small',t('旧的独立密码备份不会自动转换；请重新连接 iCloud／Canvas，生成新的加密备份。','舊的獨立密碼備份不會自動轉換；請重新連接 iCloud／Canvas，產生新的加密備份。')));
-  if(raw){const remove=button(label(),'delete_outline');remove.disabled=working;remove.onclick=()=>{removalSnapshot=localStorage.getItem(VAULT_KEY);heading.textContent=label()+'？';description.textContent=t('将自动移除当前同步账号的云端备份，之后导出也不再包含登录状态。已连接的日历和日程不受影响。其他账号、设备及旧导出文件需分别处理。','將自動移除目前同步帳戶的雲端備份，往後匯出亦不再包含登入狀態。已連接的日曆及日程不受影響。其他帳戶、裝置及舊匯出檔案需分別處理。');check.textContent=t('我已了解并确认取消储存','我已了解並確認取消儲存');check.checked=false;confirm.disabled=true;cancel.textContent=t('返回','返回');confirm.textContent=t('确认取消储存','確認取消儲存');error.textContent='';removeDialog.open=true;};content.append(remove);}
+  if(raw){const remove=button(label(),'delete_outline');remove.disabled=working;remove.onclick=requestRemoval;content.append(remove);}
  }
  confirm.onclick=async()=>{if(!check.checked||working)return;working=true;confirm.disabled=cancel.disabled=check.disabled=close.disabled=true;error.textContent=t('正在取消储存…','正在取消儲存…');try{
   if(!window.naviCancelCalendarVaultStorage)throw Error(t('同步暂不可用，请刷新重试。','同步暫時無法使用，請重新整理再試。'));
   const result=await window.naviCancelCalendarVaultStorage(removalSnapshot);localStorage.setItem('navi_calendar_cloud_disabled','1');lastError=result;removeDialog.open=false;
  }catch(e){error.textContent=e.message;}finally{working=false;confirm.disabled=!check.checked;cancel.disabled=check.disabled=close.disabled=false;changed();}};
  function open(){render();dialog.open=true;}
- function section(){const host=node('section');host.className='calendar-account-section calendar-vault-section';host.append(node('strong',t('日历登录状态同步','日曆登入狀態同步')),node('small',status()));const entry=button(t('管理日历登录状态同步','管理日曆登入狀態同步'),'cloud_sync');entry.onclick=()=>{document.getElementById('calendar-accounts-dialog').open=false;setTimeout(open,200);};host.append(entry);return host;}
+ function section(){const host=node('section');host.className='calendar-account-section calendar-vault-section';host.append(node('small',status()));
+  if(localStorage.getItem(VAULT_KEY)){const remove=button(label(),'delete_outline');remove.disabled=working;remove.onclick=requestRemoval;host.append(remove);}
+  return host;
+ }
  async function capture(provider){localStorage.removeItem('navi_calendar_cloud_disabled');await sync(false,provider);}
  document.addEventListener('navi-sync-account-change',()=>{if(localStorage.getItem('navi_calendar_cloud_disabled')!=='1')void sync(true);});
  const start=()=>{document.removeEventListener('navi-calendar-updated',start);if(localStorage.getItem('navi_calendar_cloud_disabled')!=='1')void sync(true);};document.addEventListener('navi-calendar-updated',start);if(document.getElementById('home-calendar')?.getAttribute('aria-busy')==='false')start();
