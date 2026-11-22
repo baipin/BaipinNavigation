@@ -1,4 +1,4 @@
-import {VAULT_KEY,validateVault,createVault,unlockVault,encryptVault,calendarRestoreTargets} from './calendar-vault-crypto.js';
+import {VAULT_KEY,validateVault,createVault,unlockVault,encryptVault,calendarRestoreTargets} from './calendar-vault-crypto.js?v=crypto-v2';
 export function installCalendarVault({api,t,node,button,passwordField,connections,reload}){
  let unlocked=null,working=false,generation=0;
  const names={icloud:'iCloud',canvas:'Canvas'};
@@ -18,28 +18,27 @@ export function installCalendarVault({api,t,node,button,passwordField,connection
  async function restore(){await reload();const errors=[];for(const [provider,record]of calendarRestoreTargets(unlocked.accounts,connections())){try{await api(provider,'connect',record.credentials);}catch(error){errors.push(names[provider]+'：'+error.message);}}await reload();return errors;}
  async function run(action){if(working)return;working=true;close.disabled=true;dialog.setAttribute('aria-busy','true');for(const el of content.querySelectorAll('mdui-button,input,mdui-button-icon,mdui-checkbox'))el.disabled=true;message.textContent=t('正在处理加密日历备份…','正在處理加密日曆備份…');try{const text=await action();render();message.textContent=text||t('备份已保存到本机。开启预设自动同步，或点击「立即同步」，即可保存到云端。','備份已儲存到本機。開啟預設自動同步，或點擊「立即同步」，即可儲存到雲端。');}catch(error){render();const translated={'加密日历备份格式不正确':'加密日曆備份格式不正確','日历账号备份格式不正确':'日曆帳戶備份格式不正確','iCloud 备份格式不正确':'iCloud 備份格式不正確','Canvas 备份格式不正确':'Canvas 備份格式不正確','日历账号备份过大':'日曆帳戶備份過大','请使用 12 至 256 个字符的独立加密密码':'請使用 12 至 256 個字符的獨立加密密碼','加密密码不正确，或日历备份已损坏':'加密密碼不正確，或日曆備份已損壞'};message.textContent=t(error.message,translated[error.message]||error.message);}finally{working=false;close.disabled=false;dialog.removeAttribute('aria-busy');}}
  function render(){title.textContent=t('日历账号加密同步','日曆帳戶加密同步');close.textContent=t('关闭','關閉');content.replaceChildren();
-  content.append(node('p',t('是否同步日历凭据由你选择。在默认状态下，同步预设包含书签、搜索引擎、RSS、CITY FEED、背景等全部设置，但不包括iCloud和Canvas日历的登录状态。在此页设置独立密码后，iCloud App 专用密码及 Canvas 令牌会额外加密，存储到预设中，随 Google／GitHub／Microsoft 进行云端同步及 JSON 导出保存时，将会包含iCloud及Canvas日历的登录状态。','是否同步日曆憑證由你選擇。在預設狀態下，同步預設包含書籤、搜尋引擎、RSS、CITY FEED、背景等全部設定，但不包括iCloud和Canvas日曆的登入狀態。在此頁設定獨立密碼後，iCloud App 專用密碼及 Canvas 權杖會額外加密，儲存到預設中，隨 Google／GitHub／Microsoft 進行雲端同步及 JSON 匯出儲存時，將會包含iCloud及Canvas日曆的登入狀態。')));
-  const state=node('strong',status());content.append(state);
-  content.append(node('small',t('请设置至少 12 个字符的独立密码，并妥善保管。此密码用于从同步预设取回日历登录状态；本机已连接的日历不需要重复输入。密码忘记后无法找回。','請設定至少 12 個字符的獨立密碼，並妥善保管。此密碼用於從同步預設取回日曆登入狀態；本機已連接的日曆毋須重複輸入。密碼忘記後無法找回。')));
-  const security=node('details'),securityTitle=node('summary',t('了解加密方式','了解加密方式'));security.append(securityTitle,node('small',t('使用 AES-256-GCM 加密，独立密码通过 PBKDF2-SHA256（600,000 次）生成密钥。密码不会发送到服务器，也不会保存到预设中。','使用 AES-256-GCM 加密，獨立密碼透過 PBKDF2-SHA256（600,000 次）產生密鑰。密碼不會傳送至伺服器，亦不會儲存到預設中。')));content.append(security);
-  content.append(node('small',t('如果不启用，iCloud／Canvas 日历的登录状态只保留在本机，不会跟随预设备份到其他设备。','如果不啟用，iCloud／Canvas 日曆的登入狀態只保留在本機，不會隨預設備份到其他裝置。')));
+  content.append(node('p',t('设置独立密码，即可把 iCloud／Canvas 日历的登录状态加密保存到完整预设中，随 Google／GitHub／Microsoft 同步或 JSON 导出。普通预设仍照常保存。','設定獨立密碼，即可把 iCloud／Canvas 日曆的登入狀態加密儲存到完整預設中，隨 Google／GitHub／Microsoft 同步或 JSON 匯出。一般預設仍照常儲存。')));
+  content.append(node('strong',status()));
+  content.append(node('small',t('本机日历会保持连接；只有从备份取回登录状态时才需输入密码。请使用至少 12 个字符，忘记后无法找回。','本機日曆會保持連接；只有從備份取回登入狀態時才需輸入密碼。請使用至少 12 個字符，忘記後無法找回。')));
   let saved;try{saved=envelope();}catch(error){content.append(node('p',error.message));content.append(message);return;}
   if(unlocked){
-   content.append(node('small',t('加密只能降低备份泄露的风险，不能防止已解锁设备上的恶意脚本或浏览器扩展；请保管备份和独立密码。','加密只能降低備份外洩的風險，不能防止已解鎖裝置上的惡意程式碼或瀏覽器擴充功能；請保管備份及獨立密碼。')));
+
    const list=node('div');list.className='calendar-vault-account-list';for(const [provider,record]of Object.entries(unlocked.accounts)){const row=node('p');row.append(node('strong',names[provider]),document.createTextNode(' · '+record.name+' · '+record.account));list.append(row);}if(!list.childElementCount)list.append(node('p',t('尚未保存账号；先连接 iCloud 或 Canvas，再点击更新备份。','尚未儲存帳戶；先連接 iCloud 或 Canvas，再點擊更新備份。')));content.append(list);
-   const update=button(t('更新日历登录状态的备份','更新日曆登入狀態的備份'),'cloud_upload');update.onclick=()=>run(async()=>{const errors=await collect();return errors.length?errors.join('；'):undefined;});
-   const restoreButton=button(t('恢复日历登录状态','還原日曆登入狀態'),'settings_backup_restore');restoreButton.disabled=!Object.keys(unlocked.accounts).length;restoreButton.onclick=()=>run(async()=>{const errors=await restore();return errors.length?errors.join('；'):t('已恢复日历登录状态。','已還原日曆登入狀態。');});
-   const lockButton=button(t('锁定加密备份','鎖定加密備份'),'lock');lockButton.onclick=()=>{lock();render();message.textContent=t('已锁定。现有日历连接保留。','已鎖定。現有日曆連接保留。');};const restoreGroup=node('div');restoreGroup.className='calendar-vault-action';restoreGroup.append(restoreButton,node('small',t('只恢复本机尚未连接的 iCloud／Canvas 日历，保留已连接的账号，不会修改日程。如果 App 专用密码或 Canvas 令牌已失效，请重新连接日历。','只還原本機尚未連接的 iCloud／Canvas 日曆，保留已連接的帳戶，不會修改日程。如果 App 專用密碼或 Canvas 權杖已失效，請重新連接日曆。')));const lockGroup=node('div');lockGroup.className='calendar-vault-action';lockGroup.append(lockButton,node('small',t('只锁定同步备份；下次从备份取回登录状态时才需要输入独立密码。iCloud／Canvas 日历会继续保持登录，备份和日程也不会被删除。','只鎖定同步備份；下次從備份取回登入狀態時才需要輸入獨立密碼。iCloud／Canvas 日曆會繼續保持登入，備份及日程亦不會被刪除。')));content.append(update,restoreGroup,lockGroup);
+   const update=button(t('保存当前日历登录状态','儲存目前日曆登入狀態'),'cloud_upload');update.onclick=()=>run(async()=>{const errors=await collect();return errors.length?errors.join('；'):undefined;});
+   content.append(update);
   }else{
    const form=node('form');form.className='calendar-icloud-connect';const password=node('input');password.type='password';password.minLength=12;password.maxLength=256;password.required=true;password.autocomplete='off';password.placeholder=t(saved?'加密密码':'设置独立加密密码（至少 12 个字符）',saved?'加密密碼':'設定獨立加密密碼（至少 12 個字符）');password.setAttribute('aria-label',password.placeholder);form.append(passwordField(password));
    let confirm;if(!saved){confirm=node('input');confirm.type='password';confirm.minLength=12;confirm.maxLength=256;confirm.required=true;confirm.autocomplete='off';confirm.placeholder=t('再次输入加密密码','再次輸入加密密碼');confirm.setAttribute('aria-label',confirm.placeholder);form.append(passwordField(confirm));}
-   const consent=node('mdui-checkbox',t(saved?'从备份取回尚未连接的 iCloud／Canvas 登录状态，保留本机已连接的账号':'同意加密保存 iCloud／Canvas 日历的登录状态，并随预设同步及导出',saved?'從備份取回尚未連接的 iCloud／Canvas 登入狀態，保留本機已連接的帳戶':'同意加密儲存 iCloud／Canvas 日曆的登入狀態，並隨預設同步及匯出'));consent.id='calendar-vault-consent';form.append(consent);
-   const submit=button(t(saved?'解锁并恢复连接':'启用加密同步',saved?'解鎖並還原連接':'啟用加密同步'),saved?'lock_open':'lock');submit.type='submit';submit.variant='tonal';form.append(submit);
+   const consent=node('mdui-checkbox',t(saved?'取回备份中的登录状态，保留本机已连接的日历':'同意加密保存 iCloud／Canvas 日历的登录状态，并随预设同步及导出',saved?'取回備份中的登入狀態，保留本機已連接的日曆':'同意加密儲存 iCloud／Canvas 日曆的登入狀態，並隨預設同步及匯出'));consent.id='calendar-vault-consent';form.append(consent);
+   const submit=button(t(saved?'取回日历登录状态':'加密保存登录状态',saved?'取回日曆登入狀態':'加密儲存登入狀態'),saved?'lock_open':'lock');submit.type='submit';submit.variant='tonal';form.append(submit);
    form.onsubmit=e=>{e.preventDefault();if(!form.reportValidity())return;if(!consent.checked){message.textContent=t('请先勾选确认上述操作。','請先勾選確認上述操作。');return;}let value=password.value,again=confirm?.value;password.value='';if(confirm)confirm.value='';run(async()=>{if(confirm&&value!==again)throw Error(t('两次加密密码不一致','兩次加密密碼不一致'));const current=generation;const result=saved?await unlockVault(saved,value):await createVault(value);value=again='';if(current!==generation)throw Error(t('备份已改变，请重新打开','備份已改變，請重新開啟'));unlocked=result;
      if(!saved){localStorage.setItem(VAULT_KEY,JSON.stringify(result.envelope));changed();const errors=await collect();return errors.length?errors.join('；'):undefined;}
      changed();const errors=await restore();return errors.length?errors.join('；'):t('已解锁并恢复日历登录状态。','已解鎖並還原日曆登入狀態。');});};content.append(form);
   }
-  content.append(node('small',t('在上方输入独立密码，即可从同步账户恢复 iCloud 及 Canvas 登录状态，而其后对 iCloud 及 Canvas 登录状态的改动亦会同步到云端（需开启预设自动同步，或点击「立即同步」）。在本机退出日历的连接将不会影响云端已保存的加密登录状态。','在上方輸入獨立密碼，即可從同步帳戶還原 iCloud 及 Canvas 登入狀態，而其後對 iCloud 及 Canvas 登入狀態的改動亦會同步到雲端（需開啟預設自動同步，或點擊「立即同步」）。在本機中斷日曆連接將不會影響雲端已儲存的加密登入狀態。')));
+  content.append(node('small',t('开启预设自动同步，或点击「立即同步」，即可更新云端。本机退出日历不会删除云端已保存的登录状态。','開啟預設自動同步，或點擊「立即同步」，即可更新雲端。本機登出日曆不會刪除雲端已儲存的登入狀態。')));
+  const details=node('details'),summary=node('summary',t('了解加密与备份','了解加密與備份'));details.append(summary,node('small',t('完整预设包括书签、搜索引擎、RSS、CITY FEED、背景等设置；只有 iCloud App 专用密码及 Canvas 令牌单独加密，Google／Microsoft OAuth 令牌不包含在内。采用 AES-256-GCM 与 PBKDF2-SHA256（600,000 次）；独立密码不上传、不保存。刷新后只会锁定备份，不会退出日历。加密不能防止已解锁页面上的恶意脚本。','完整預設包括書籤、搜尋引擎、RSS、CITY FEED、背景等設定；只有 iCloud App 專用密碼及 Canvas 權杖另外加密，Google／Microsoft OAuth 權杖不包含在內。採用 AES-256-GCM 及 PBKDF2-SHA256（600,000 次）；獨立密碼不會上傳或儲存。重新整理後只會鎖定備份，不會登出日曆。加密不能防止已解鎖頁面上的惡意程式碼。')));content.append(details);
+
   if(saved){const remove=button(t('从云端中移除iCloud及Canvas日历登录状态','從雲端中移除iCloud及Canvas日曆登入狀態'),'delete_outline');remove.onclick=requestRemoval;content.append(remove);}
   content.append(message);
  }

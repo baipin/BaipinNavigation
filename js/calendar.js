@@ -1,4 +1,3 @@
-import {installCalendarVault} from './calendar-vault.js?v=optional-vault-v6';
 import {calendarDayKey,occursOn,upcomingDays,holidayDates,upcomingEvents,reminderIdentity,reminderCookieName,hideReminderCookie} from './calendar-model.js?v=reminders-v1';
 import {calendarRequest} from './calendar-request.js?v=canvas-transport-v1';
 const sc=()=>document.documentElement.lang==='zh-CN',t=(s,c)=>sc()?s:c;
@@ -151,7 +150,13 @@ if(result){callbackUrl.searchParams.delete('calendar');callbackUrl.searchParams.
  const pair=messages[result]||['日历登录失败，请检查服务端配置','日曆登入失敗，請檢查伺服器設定'];
  if(Object.hasOwn(endpoints,callbackProvider))providerNotices.set(callbackProvider,{kind:result==='connected'?'success':result==='cancelled'?'info':'error',sc:pair[0],tc:pair[1]});
 }
-calendarVault=installCalendarVault({api,t,node,button,passwordField,connections:()=>connections,reload});
-document.getElementById('calendar-vault-dialog').addEventListener('open',()=>{if(activeReminder)reminderBar.open=false;});document.getElementById('calendar-vault-dialog').addEventListener('closed',nextReminder);
-document.addEventListener('navi-calendar-vault-error',e=>{providerNotices.set(e.detail.provider,{kind:'error',message:e.detail.message});if(accountsDialog.open)renderAccounts();});
+// The calendar remains usable even if the optional encrypted-backup module cannot load.
+import('./calendar-vault.js?v=simple-vault-v7').then(({installCalendarVault})=>{
+ calendarVault=installCalendarVault({api,t,node,button,passwordField,connections:()=>connections,reload});
+ const vaultDialog=document.getElementById('calendar-vault-dialog');vaultDialog.addEventListener('open',()=>{if(activeReminder)reminderBar.open=false;});vaultDialog.addEventListener('closed',nextReminder);
+ document.addEventListener('navi-calendar-vault-error',e=>{providerNotices.set(e.detail.provider,{kind:'error',message:e.detail.message});if(accountsDialog.open)renderAccounts();});
+ if(accountsDialog.open)renderAccounts();
+}).catch(()=>{
+ const hint=document.getElementById('settings-calendar-vault-status');if(hint)hint.textContent=t('加密同步设置暂时无法载入，请刷新重试；日历可继续使用。','加密同步設定暫時無法載入，請重新整理再試；日曆可繼續使用。');
+});
 renderLabels();loadHolidays();reload();
