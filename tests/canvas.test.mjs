@@ -1,3 +1,5 @@
+const previousVaultKey=process.env.CALENDAR_SYNC_KEY;process.env.CALENDAR_SYNC_KEY='test-vault-key-'.repeat(4);
+import {sealCalendarLogin,openCalendarLogin} from '../server/calendar-vault.js';
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import {Readable} from 'node:stream';
@@ -35,6 +37,17 @@ try{
  result=await call('connect',{body:{origin,token}});assert.equal(result.code,200);const cookie=result.headers['Set-Cookie'].map(x=>x.split(';')[0]).join('; ');assert.ok(!cookie.includes(token));assert.ok(result.headers['Set-Cookie'].every(x=>x.includes('HttpOnly; Secure; SameSite=Lax')));
  result=await call('status',{cookie});assert.equal(result.body.authenticated,true);assert.equal(result.body.calendarAuthorized,true);assert.equal(result.body.user.name,'Student');assert.equal(result.body.user.email,origin);assert.ok(!JSON.stringify(result.body).includes(token));
  const exported=await call('calendar-vault-export',{cookie,body:{}});assert.equal(exported.body.credentials.token,token);assert.equal(exported.headers['Cache-Control'],'no-store');assert.equal((await call('calendar-vault-export',{cookie})).code,405);assert.equal((await call('calendar-vault-export',{body:{}})).code,401);assert.equal((await call('calendar-vault-export',{cookie,body:{},origin:'https://evil.test'})).code,403);
+
+ const captured=await call('calendar-vault-capture',{cookie,method:'POST',body:{}});
+ assert.equal(captured.code,200);assert.equal(captured.headers['Cache-Control'],'no-store');
+ assert.deepEqual(openCalendarLogin('canvas',captured.body.encrypted),{origin,token});
+ assert.equal((await call('calendar-vault-capture',{cookie,method:'GET'})).code,405);
+ assert.equal((await call('calendar-vault-capture',{method:'POST',body:{}})).code,401);
+ assert.equal((await call('calendar-vault-capture',{cookie,method:'POST',body:{},origin:'https://evil.test'})).code,403);
+ const restored=await call('calendar-vault-restore',{method:'POST',body:{encrypted:captured.body.encrypted}});assert.equal(restored.code,200);assert.ok(restored.headers['Set-Cookie']);
+ assert.equal((await call('calendar-vault-restore',{method:'POST',body:{encrypted:'invalid'}})).code,400);
+ const kept=await call('calendar-vault-restore',{cookie,method:'POST',body:{encrypted:'invalid'}});assert.equal(kept.code,200);assert.equal(kept.headers['Set-Cookie'],undefined);
+ assert.equal((await call('calendar-vault-restore',{method:'POST',body:{encrypted:captured.body.encrypted},origin:'https://evil.test'})).code,403);
  const account=result.body.user.id;nextMode='pages';result=await call('calendar-list',{cookie});assert.equal(result.body.calendars.length,3);assert.equal(coursePages,1);assert.ok(result.body.calendars.every(x=>!x.writable));nextMode='evil-page';result=await call('calendar-list',{cookie});assert.equal(result.code,502);assert.ok(calls.every(x=>new URL(x.url).origin===origin));nextMode='';
  result=await call('calendar-events',{cookie,params:'&calendar=course_42&start=2026-11-01&end=2026-12-01'});assert.equal(result.code,200);assert.equal(result.body.events.length,2);const due=result.body.events.find(x=>x.due);assert.equal(due.start,'2026-11-22T15:59:00.000Z');assert.equal(Date.parse(due.end)-Date.parse(due.start),1);assert.equal(due.allDay,false);assert.equal(due.webLink,origin+'/courses/42/assignments/7');assert.equal(due.editable,false);assert.ok(!due.description.includes('<b>'));
  result=await call('calendar-events',{cookie,params:'&calendar=course_42&start=2026-11-01&end=2027-12-01'});assert.equal(result.code,400);
@@ -49,4 +62,4 @@ try{
  await assert.rejects(()=>canvasJSON({origin,token},'https://evil.test/api/v1/courses',{lookup:async()=>{throw Error('must not resolve');}}));
  result=await call('disconnect',{cookie,body:{}});assert.ok(result.headers['Set-Cookie'].every(x=>x.includes('Max-Age=0')));
  console.log('PASS: Canvas connection, encrypted session, read-only courses/events, Due precision, timezones, preset roundtrip, pagination, auth failures, pinned DNS and token leakage protection.');
-}finally{if(previous===undefined)delete process.env.CANVAS_SESSION_KEY;else process.env.CANVAS_SESSION_KEY=previous;}
+}finally{if(previousVaultKey===undefined)delete process.env.CALENDAR_SYNC_KEY;else process.env.CALENDAR_SYNC_KEY=previousVaultKey;if(previous===undefined)delete process.env.CANVAS_SESSION_KEY;else process.env.CANVAS_SESSION_KEY=previous;}

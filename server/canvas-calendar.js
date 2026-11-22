@@ -1,3 +1,4 @@
+import {sealCalendarLogin,openCalendarLogin} from './calendar-vault.js';
 import {createHash} from 'node:crypto';
 import {lookup as dnsLookup} from 'node:dns/promises';
 import {request as httpsRequest} from 'node:https';
@@ -57,12 +58,13 @@ export function createCanvasHandler(dependencies={}){
   res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');
   const url=new URL(req.url,'https://localhost'),action=url.searchParams.get('action')||req.query?.action||'status',secret=key();
   try{
-   if(!['status','connect','disconnect','calendar-list','calendar-events','calendar-vault-export'].includes(action))throw new CalendarError(404,'Canvas 在本站仅支持读取日历与作业截止日期');
-   const post=['connect','disconnect','calendar-vault-export'].includes(action);if(req.method!==(post?'POST':'GET'))throw new CalendarError(405,'请求方法不支持');if(post&&req.headers.origin!=='https://123.baipon.com')throw new CalendarError(403,'请求来源不正确');
+   if(!['status','connect','disconnect','calendar-list','calendar-events','calendar-vault-export','calendar-vault-capture','calendar-vault-restore'].includes(action))throw new CalendarError(404,'Canvas 在本站仅支持读取日历与作业截止日期');
+   const post=['connect','disconnect','calendar-vault-export','calendar-vault-capture','calendar-vault-restore'].includes(action);if(req.method!==(post?'POST':'GET'))throw new CalendarError(405,'请求方法不支持');if(post&&req.headers.origin!=='https://123.baipon.com')throw new CalendarError(403,'请求来源不正确');
    if(action==='disconnect'){storeSession(res,COOKIE,null,secret);return res.status(200).json({ok:true});}
    const configured=typeof secret==='string'&&secret.length>=32;if(!configured){if(action==='status')return res.status(200).json({configured:false,authenticated:false});throw new CalendarError(503,'请先配置 CANVAS_SESSION_KEY（至少 32 个随机字符）');}
-   if(action==='connect'){
-    const body=calendarBody(req);if(typeof body.origin!=='string'||body.origin.length>500||typeof body.token!=='string'||!body.token.trim()||body.token.length>2048||!/^[\x21-\x7e]+$/.test(body.token))throw new CalendarError(400,'请填写学校 Canvas 网址，并粘贴个人访问令牌原文（仅英文字符／数字／符号，不含中文、空格或 Bearer 前缀）');
+   if(action==='calendar-vault-restore'&&readSession(req,COOKIE,secret))return res.status(200).json({authenticated:true,calendarAuthorized:true});
+   if(action==='connect'||action==='calendar-vault-restore'){
+    const input=calendarBody(req),body=action==='calendar-vault-restore'?openCalendarLogin('canvas',input.encrypted):input;if(typeof body.origin!=='string'||body.origin.length>500||typeof body.token!=='string'||!body.token.trim()||body.token.length>2048||!/^[\x21-\x7e]+$/.test(body.token))throw new CalendarError(400,'请填写学校 Canvas 网址，并粘贴个人访问令牌原文（仅英文字符／数字／符号，不含中文、空格或 Bearer 前缀）');
     if(/^Bearer(?:\s|:)/i.test(body.token))throw new CalendarError(400,'请只粘贴 Canvas 令牌，不要添加 Bearer 前缀');
     phase='profile';
     const data={origin:canvasOrigin(body.origin.trim()),token:body.token,expires:Date.now()+30*86400000};const profile=(await call(data,'/api/v1/users/self/profile')).json;
@@ -70,6 +72,7 @@ export function createCanvasHandler(dependencies={}){
     phase='session';storeSession(res,COOKIE,data,secret);return res.status(200).json({authenticated:true,calendarAuthorized:true,user:data.user});
    }
    const data=readSession(req,COOKIE,secret);if(action==='status')return res.status(200).json({configured:true,authenticated:!!data,calendarAuthorized:!!data,user:data?.user||null});if(!data)throw new CalendarError(401,'请先连接学校 Canvas');
+   if(action==='calendar-vault-capture')return res.status(200).json({encrypted:sealCalendarLogin('canvas',{origin:data.origin,token:data.token})});
    if(action==='calendar-vault-export')return res.status(200).json({credentials:{origin:data.origin,token:data.token}});
    if(action==='calendar-list'){
     const listing=await pages(data,'/api/v1/courses?enrollment_state=active&per_page=100',call);

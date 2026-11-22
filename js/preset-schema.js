@@ -1,4 +1,4 @@
-import {validateVault} from './calendar-vault-crypto.js';
+import {validateVault} from './calendar-vault-crypto.js?v=server-v3';
 import {normalizeCities} from './weather-cities.js';
 import {parseCameraPreference} from './camera-background-model.js';
 // Preferences and an optional encrypted calendar vault travel between devices; auth cookies, plaintext credentials and live caches do not.

@@ -1,3 +1,5 @@
+const previousVaultKey=process.env.CALENDAR_SYNC_KEY;process.env.CALENDAR_SYNC_KEY='test-vault-key-'.repeat(4);
+import {sealCalendarLogin,openCalendarLogin} from '../server/calendar-vault.js';
 import assert from 'node:assert/strict';
 import icloudHandler from '../server/icloud-calendar.js';
 const original=globalThis.fetch,previous=process.env.APPLE_SESSION_KEY;process.env.APPLE_SESSION_KEY='s'.repeat(40);
@@ -12,6 +14,17 @@ try{
  result=await call('connect',{body:{email:'test@example.test',password:'aaaa-bbbb-cccc-dddd'}});assert.equal(result.code,200);const cookie=result.headers['Set-Cookie'].map(x=>x.split(';')[0]).join('; ');assert.ok(!cookie.includes('aaaa-bbbb'));
  result=await call('status',{cookie});assert.equal(result.body.user.email,'test@example.test');assert.ok(!JSON.stringify(result.body).includes('password'));
  result=await call('calendar-vault-export',{cookie,method:'POST',body:{}});assert.equal(result.body.credentials.password,'aaaa-bbbb-cccc-dddd');assert.equal(result.headers['Cache-Control'],'no-store');assert.equal((await call('calendar-vault-export',{cookie,method:'GET'})).code,405);assert.equal((await call('calendar-vault-export',{method:'POST',body:{}})).code,401);assert.equal((await call('calendar-vault-export',{cookie,method:'POST',body:{},origin:'https://evil.test'})).code,403);
+
+ const captured=await call('calendar-vault-capture',{cookie,method:'POST',body:{}});
+ assert.equal(captured.code,200);assert.equal(captured.headers['Cache-Control'],'no-store');
+ assert.deepEqual(openCalendarLogin('icloud',captured.body.encrypted),{email:'test@example.test',password:'aaaa-bbbb-cccc-dddd'});
+ assert.equal((await call('calendar-vault-capture',{cookie,method:'GET'})).code,405);
+ assert.equal((await call('calendar-vault-capture',{method:'POST',body:{}})).code,401);
+ assert.equal((await call('calendar-vault-capture',{cookie,method:'POST',body:{},origin:'https://evil.test'})).code,403);
+ const restored=await call('calendar-vault-restore',{method:'POST',body:{encrypted:captured.body.encrypted}});assert.equal(restored.code,200);assert.ok(restored.headers['Set-Cookie']);
+ assert.equal((await call('calendar-vault-restore',{method:'POST',body:{encrypted:'invalid'}})).code,400);
+ const kept=await call('calendar-vault-restore',{cookie,method:'POST',body:{encrypted:'invalid'}});assert.equal(kept.code,200);assert.equal(kept.headers['Set-Cookie'],undefined);
+ assert.equal((await call('calendar-vault-restore',{method:'POST',body:{encrypted:captured.body.encrypted},origin:'https://evil.test'})).code,403);
  result=await call('calendar-list',{cookie});assert.equal(result.body.calendars[0].writable,true);const id=result.body.calendars[0].id;
  result=await call('calendar-events',{cookie,params:'&calendar='+id+'&start=2026-11-01&end=2026-12-01'});assert.equal(result.body.events[0].title,'Test');const event=result.body.events[0];
  const updated={title:'Changed',allDay:false,start:'2026-11-22T02:00:00.000Z',end:'2026-11-22T03:00:00.000Z'};
@@ -22,4 +35,4 @@ try{
  result=await call('calendar-delete',{cookie,body:{calendar:id,id:event.id,etag}});assert.equal(result.code,200);assert.equal(deleted,true);
  result=await call('disconnect',{cookie,body:{}});assert.ok(result.headers['Set-Cookie'].every(x=>x.includes('Max-Age=0')));
  console.log('PASS: iCloud discovery, app-password validation, encrypted credential session, calendar REPORT, create/edit/delete, etag conflicts, CSRF and disconnect.');
-}finally{globalThis.fetch=original;if(previous===undefined)delete process.env.APPLE_SESSION_KEY;else process.env.APPLE_SESSION_KEY=previous;}
+}finally{if(previousVaultKey===undefined)delete process.env.CALENDAR_SYNC_KEY;else process.env.CALENDAR_SYNC_KEY=previousVaultKey;globalThis.fetch=original;if(previous===undefined)delete process.env.APPLE_SESSION_KEY;else process.env.APPLE_SESSION_KEY=previous;}

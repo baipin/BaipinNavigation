@@ -1074,8 +1074,8 @@
                 <strong id="settings-calendar-heading">日历账号与授权</strong>
                 <div id="settings-calendar-accounts" class="settings-calendar-accounts" role="status" aria-live="polite"></div>
                 <div class="preset-sync-actions" style="margin-top:12px;"><mdui-button variant="outlined" icon="calendar_month" data-open-calendar-accounts>日历账号与显示</mdui-button></div>
-                <div class="preset-sync-actions" style="margin-top:12px;"><mdui-button variant="outlined" icon="lock" data-open-calendar-vault>日历账号加密同步</mdui-button><small id="settings-calendar-vault-status"></small></div>
-                <p id="settings-calendar-vault-hint" class="preset-sync-hint">如果在此设定独立密码，则在同步及导入导出预设时，将一并涵盖加密后的 iCloud 及 Canvas 日历令牌（如果有）。</p>
+                <div class="preset-sync-actions" style="margin-top:12px;"><mdui-button variant="outlined" icon="lock" data-open-calendar-vault>日历登录状态同步</mdui-button><small id="settings-calendar-vault-status"></small></div>
+                <p id="settings-calendar-vault-hint" class="preset-sync-hint">iCloud／Canvas 登录状态默认加密加入预设，随云端同步及 JSON 导入导出保存，无需独立密码。</p>
             </section>
             <mdui-divider></mdui-divider>
             <mdui-button variant="tonal" id="export-data-btn" icon="download">导出预设（JSON）</mdui-button>
@@ -1083,7 +1083,7 @@
             <input type="file" id="import-file-input" accept=".json" style="display: none;">
             
             <div style="margin-top: 8px; font-size: 0.85rem; opacity: 0.7; line-height: 1.5;">
-                <span id="settings-preset-scope-hint">导出与同步使用相同的完整预设范围；不包含明文登录凭证或实时数据缓存，启用日历账号加密同步后会包含相应密文。</span><br>
+                <span id="settings-preset-scope-hint">导出与同步使用相同的完整预设范围；不包含明文登录凭证或实时数据缓存，默认包含 iCloud／Canvas 日历登录状态的密文（如果有）。</span><br>
                 导入后页面将自动刷新。
             </div>
         </div></mdui-tab-panel>
@@ -4327,9 +4327,9 @@ function setBackgroundToCookie(value) {
         })();
     </script>
     <script src="js/app-info.js?v=privacy-hk-v2"></script>
-    <script src="js/settings.js?v=calendar-settings-v5"></script>
+    <script src="js/settings.js?v=calendar-settings-v6"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
-    <script type="module" src="js/sync.js?v=calendar-vault-v5"></script>
-    <script type="module" src="js/calendar.js?v=calendar-independent-v21"></script>
+    <script type="module" src="js/sync.js?v=calendar-vault-v6"></script>
+    <script type="module" src="js/calendar.js?v=calendar-independent-v22"></script>
 </body>
 </html>

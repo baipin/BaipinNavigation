@@ -1,69 +1,46 @@
-import {VAULT_KEY,validateVault,createVault,unlockVault,encryptVault,calendarRestoreTargets} from './calendar-vault-crypto.js?v=crypto-v2';
-export function installCalendarVault({api,t,node,button,passwordField,connections,reload}){
- let unlocked=null,working=false,generation=0;
- const names={icloud:'iCloud',canvas:'Canvas'};
- const dialog=node('mdui-dialog');dialog.id='calendar-vault-dialog';dialog.setAttribute('close-on-overlay-click','');const title=node('div');title.slot='headline';const content=node('div');content.className='calendar-vault-content';const close=button('');close.slot='action';close.onclick=()=>dialog.open=false;dialog.append(title,content,close);document.body.append(dialog);
- const removeDialog=node('mdui-dialog');removeDialog.id='calendar-vault-remove-dialog';removeDialog.setAttribute('close-on-overlay-click','');const removeTitle=node('div');removeTitle.slot='headline';const removeBody=node('div');removeBody.className='calendar-vault-content';const removeDescription=node('p'),removeCheck=node('mdui-checkbox'),removeError=node('p');removeError.setAttribute('role','alert');removeCheck.id='calendar-vault-remove-confirm';const removeCancel=button(''),removeConfirm=button('','delete');removeCancel.slot=removeConfirm.slot='action';removeConfirm.variant='tonal';removeConfirm.disabled=true;removeBody.append(removeDescription,removeCheck,removeError);removeDialog.append(removeTitle,removeBody,removeCancel,removeConfirm);document.body.append(removeDialog);let removalSnapshot=null;
- removeCancel.onclick=()=>removeDialog.open=false;removeCheck.addEventListener('change',()=>removeConfirm.disabled=!removeCheck.checked);
- function removalLabels(){removeTitle.textContent=t('取消iCloud及Canvas日历登录状态在云端及导出文件中的储存？','取消iCloud及Canvas日曆登入狀態在雲端及匯出檔案中的儲存？');removeDescription.textContent=t('确认后，将自动移除当前预设同步账号云端预设中的加密日历登录状态，本机及之后导出的预设也不再保存。已连接的日历和日程不受影响。请先登录对应的预设同步账号；其他账号、设备及以前导出的文件需分别处理。','確認後，將自動移除目前預設同步帳戶雲端預設中的加密日曆登入狀態，本機及之後匯出的預設亦不再儲存。已連接的日曆及日程不受影響。請先登入對應的預設同步帳戶；其他帳戶、裝置及以前匯出的檔案需分別處理。');removeCheck.textContent=t('我已了解，并确认移除这份加密备份','我已了解，並確認移除這份加密備份');removeCancel.textContent=t('取消','取消');removeConfirm.textContent=t('确认移除','確認移除');}
- function requestRemoval(){if(working)return;removalSnapshot=localStorage.getItem(VAULT_KEY);removeCheck.checked=false;removeConfirm.disabled=true;removeError.textContent='';removalLabels();removeDialog.open=true;}
- removeConfirm.onclick=async()=>{
-  if(!removeCheck.checked||working)return;
-  working=true;removeConfirm.disabled=removeCancel.disabled=removeCheck.disabled=close.disabled=true;removeDialog.removeAttribute('close-on-overlay-click');removeDialog.setAttribute('aria-busy','true');
-  removeError.textContent=t('正在取消云端及导出储存…','正在取消雲端及匯出儲存…');
+import {VAULT_KEY,validateVault} from './calendar-vault-crypto.js?v=server-v3';
+export function installCalendarVault({api,t,node,button,connections,reload}){
+ let working=false,queued=false,queuedRestore=false,lastError='';const captured=new Set(),queuedProviders=new Set();
+ const empty=()=>({version:2,algorithm:'AES-256-GCM-SERVER',accounts:{}});
+ function saved(){try{const value=validateVault(JSON.parse(localStorage.getItem(VAULT_KEY)));return value.version===2?value:empty();}catch{return empty();}}
+ const dialog=node('mdui-dialog');dialog.id='calendar-vault-dialog';dialog.setAttribute('close-on-overlay-click','');
+ const title=node('div');title.slot='headline';const content=node('div');content.className='calendar-vault-content';const close=button('');close.slot='action';close.onclick=()=>dialog.open=false;dialog.append(title,content,close);document.body.append(dialog);
+ const removeDialog=node('mdui-dialog');removeDialog.id='calendar-vault-remove-dialog';const heading=node('div');heading.slot='headline';const description=node('p'),check=node('mdui-checkbox'),error=node('p'),cancel=button(''),confirm=button('','delete');check.id='calendar-vault-remove-confirm';error.setAttribute('role','status');cancel.slot=confirm.slot='action';confirm.variant='tonal';confirm.disabled=true;removeDialog.append(heading,description,check,error,cancel,confirm);document.body.append(removeDialog);cancel.onclick=()=>removeDialog.open=false;check.addEventListener('change',()=>confirm.disabled=!check.checked);let removalSnapshot=null;
+ const label=()=>t('取消iCloud及Canvas日历登录状态在云端及导出文件中的储存','取消iCloud及Canvas日曆登入狀態在雲端及匯出檔案中的儲存');
+ function status(){if(localStorage.getItem('navi_calendar_cloud_disabled')==='1')return t('已取消日历登录状态的云端及导出储存；已连接的日历继续使用。','已取消日曆登入狀態的雲端及匯出儲存；已連接的日曆繼續使用。');return lastError||t('iCloud／Canvas 登录状态默认加密保存，登录预设同步账号后自动同步。','iCloud／Canvas 登入狀態預設加密儲存，登入預設同步帳戶後自動同步。');}
+ function changed(){const hint=document.getElementById('settings-calendar-vault-status');if(hint)hint.textContent=status();if(dialog.open)render();}
+ async function sync(restore=true,provider){
+  if(working){queued=true;queuedRestore=queuedRestore||restore;if(provider)for(const id of Array.isArray(provider)?provider:[provider])queuedProviders.add(id);return;}working=true;lastError='';
   try{
-   if(localStorage.getItem(VAULT_KEY)!==removalSnapshot)throw Error(t('备份刚刚有更新，请取消后重新操作。','備份剛剛有更新，請取消後重新操作。'));
-   if(!window.naviCancelCalendarVaultStorage)throw Error(t('预设同步暂不可用，请刷新后重试；尚未取消储存。','預設同步暫時無法使用，請重新整理後再試；尚未取消儲存。'));
-   lock();
-   const result=await window.naviCancelCalendarVaultStorage(removalSnapshot);
-   changed();render();removeDialog.open=false;message.textContent=result;
-  }catch(error){removeError.textContent=error.message;}
-  finally{working=false;removeConfirm.disabled=!removeCheck.checked;removeCancel.disabled=removeCheck.disabled=close.disabled=false;removeDialog.setAttribute('close-on-overlay-click','');removeDialog.removeAttribute('aria-busy');}
- };
- const message=node('p');message.className='calendar-provider-notice';message.setAttribute('role','status');
- function envelope(){const raw=localStorage.getItem(VAULT_KEY);return raw?validateVault(JSON.parse(raw)):null;}
- function changed(){document.dispatchEvent(new Event('navi-calendar-vault-change'));}
- function lock(){generation++;unlocked=null;changed();}
- function status(){try{return unlocked?t('备份已解锁；日历保持连接','備份已解鎖；日曆保持連接'):envelope()?t('登录状态已加密保存；本机日历无需解锁即可使用','登入狀態已加密儲存；本機日曆毋須解鎖即可使用'):t('未启用','未啟用');}catch{return t('备份格式不正确','備份格式不正確');}}
- async function persist(accounts){if(!unlocked)throw Error(t('请先解锁日历备份','請先解鎖日曆備份'));const current=generation,key=unlocked.key,salt=unlocked.salt;const value=await encryptVault(accounts,key,salt);if(current!==generation)throw Error(t('日历备份已锁定，请重试','日曆備份已鎖定，請重試'));localStorage.setItem(VAULT_KEY,JSON.stringify(value));unlocked.accounts=accounts;changed();}
- async function collect(){const accounts={...unlocked.accounts},errors=[];for(const provider of Object.keys(names)){const state=connections()[provider];if(!state?.authenticated||!state?.calendarAuthorized)continue;try{const result=await api(provider,'calendar-vault-export',{});accounts[provider]={name:state.user?.name||state.user?.email||provider,account:state.user?.email||state.user?.id||'',credentials:result.credentials};}catch(error){errors.push(names[provider]+'：'+error.message);}}await persist(accounts);return errors;}
- async function restore(){await reload();const errors=[];for(const [provider,record]of calendarRestoreTargets(unlocked.accounts,connections())){try{await api(provider,'connect',record.credentials);}catch(error){errors.push(names[provider]+'：'+error.message);}}await reload();return errors;}
- async function run(action){if(working)return;working=true;close.disabled=true;dialog.setAttribute('aria-busy','true');for(const el of content.querySelectorAll('mdui-button,input,mdui-button-icon,mdui-checkbox'))el.disabled=true;message.textContent=t('正在处理加密日历备份…','正在處理加密日曆備份…');try{const text=await action();render();message.textContent=text||t('备份已保存到本机。开启预设自动同步，或点击「立即同步」，即可保存到云端。','備份已儲存到本機。開啟預設自動同步，或點擊「立即同步」，即可儲存到雲端。');}catch(error){render();const translated={'加密日历备份格式不正确':'加密日曆備份格式不正確','日历账号备份格式不正确':'日曆帳戶備份格式不正確','iCloud 备份格式不正确':'iCloud 備份格式不正確','Canvas 备份格式不正确':'Canvas 備份格式不正確','日历账号备份过大':'日曆帳戶備份過大','请使用 12 至 256 个字符的独立加密密码':'請使用 12 至 256 個字符的獨立加密密碼','加密密码不正确，或日历备份已损坏':'加密密碼不正確，或日曆備份已損壞'};message.textContent=t(error.message,translated[error.message]||error.message);}finally{working=false;close.disabled=false;dialog.removeAttribute('aria-busy');}}
- function render(){title.textContent=t('日历账号加密同步','日曆帳戶加密同步');close.textContent=t('关闭','關閉');content.replaceChildren();
-  content.append(node('p',t('设置独立密码，即可把 iCloud／Canvas 日历的登录状态加密保存到完整预设中，随 Google／GitHub／Microsoft 同步或 JSON 导出。','設定獨立密碼，即可把 iCloud／Canvas 日曆的登入狀態加密儲存到完整預設中，隨 Google／GitHub／Microsoft 同步或 JSON 匯出。')));
-  content.append(node('strong',status()));
-  content.append(node('small',t('本机日历会保持连接；只有从备份取回登录状态时才需输入密码。请使用至少 12 个字符，忘记后无法找回。','本機日曆會保持連接；只有從備份取回登入狀態時才需輸入密碼。請使用至少 12 個字符，忘記後無法找回。')));
-  let saved;try{saved=envelope();}catch(error){content.append(node('p',error.message));content.append(message);return;}
-  if(unlocked){
-
-   const list=node('div');list.className='calendar-vault-account-list';for(const [provider,record]of Object.entries(unlocked.accounts)){const row=node('p');row.append(node('strong',names[provider]),document.createTextNode(' · '+record.name+' · '+record.account));list.append(row);}if(!list.childElementCount)list.append(node('p',t('尚未保存账号；先连接 iCloud 或 Canvas，再点击更新备份。','尚未儲存帳戶；先連接 iCloud 或 Canvas，再點擊更新備份。')));content.append(list);
-   const update=button(t('保存当前日历登录状态','儲存目前日曆登入狀態'),'cloud_upload');update.onclick=()=>run(async()=>{const errors=await collect();return errors.length?errors.join('；'):undefined;});
-   content.append(update);
-  }else{
-   const form=node('form');form.className='calendar-icloud-connect';const password=node('input');password.type='password';password.minLength=12;password.maxLength=256;password.required=true;password.autocomplete='off';password.placeholder=t(saved?'加密密码':'设置独立加密密码（至少 12 个字符）',saved?'加密密碼':'設定獨立加密密碼（至少 12 個字符）');password.setAttribute('aria-label',password.placeholder);form.append(passwordField(password));
-   let confirm;if(!saved){confirm=node('input');confirm.type='password';confirm.minLength=12;confirm.maxLength=256;confirm.required=true;confirm.autocomplete='off';confirm.placeholder=t('再次输入加密密码','再次輸入加密密碼');confirm.setAttribute('aria-label',confirm.placeholder);form.append(passwordField(confirm));}
-   const consent=node('mdui-checkbox',t(saved?'取回备份中的登录状态，保留本机已连接的日历':'同意加密保存 iCloud／Canvas 日历的登录状态，并随预设同步及导出',saved?'取回備份中的登入狀態，保留本機已連接的日曆':'同意加密儲存 iCloud／Canvas 日曆的登入狀態，並隨預設同步及匯出'));consent.id='calendar-vault-consent';form.append(consent);
-   const submit=button(t(saved?'取回日历登录状态':'加密保存登录状态',saved?'取回日曆登入狀態':'加密儲存登入狀態'),saved?'lock_open':'lock');submit.type='submit';submit.variant='tonal';form.append(submit);
-   form.onsubmit=e=>{e.preventDefault();if(!form.reportValidity())return;if(!consent.checked){message.textContent=t('请先勾选确认上述操作。','請先勾選確認上述操作。');return;}let value=password.value,again=confirm?.value;password.value='';if(confirm)confirm.value='';run(async()=>{if(confirm&&value!==again)throw Error(t('两次加密密码不一致','兩次加密密碼不一致'));const current=generation;const result=saved?await unlockVault(saved,value):await createVault(value);value=again='';if(current!==generation)throw Error(t('备份已改变，请重新打开','備份已改變，請重新開啟'));unlocked=result;
-     if(!saved){localStorage.setItem(VAULT_KEY,JSON.stringify(result.envelope));changed();const errors=await collect();return errors.length?errors.join('；'):undefined;}
-     changed();const errors=await restore();return errors.length?errors.join('；'):t('已解锁并恢复日历登录状态。','已解鎖並還原日曆登入狀態。');});};content.append(form);
-  }
-  content.append(node('small',t('开启预设自动同步，或点击「立即同步」，即可更新云端。本机退出日历不会删除云端已保存的登录状态。','開啟預設自動同步，或點擊「立即同步」，即可更新雲端。本機登出日曆不會刪除雲端已儲存的登入狀態。')));
-  const details=node('details'),summary=node('summary',t('了解加密与备份','了解加密與備份'));details.append(summary,node('small',t('完整预设包括书签、搜索引擎、RSS、CITY FEED、背景等设置；只有 iCloud App 专用密码及 Canvas 令牌单独加密，Google／Microsoft OAuth 令牌不包含在内。采用 AES-256-GCM 与 PBKDF2-SHA256（600,000 次）；独立密码不上传、不保存。刷新后只会锁定备份，不会退出日历。加密不能防止已解锁页面上的恶意脚本。','完整預設包括書籤、搜尋引擎、RSS、CITY FEED、背景等設定；只有 iCloud App 專用密碼及 Canvas 權杖另外加密，Google／Microsoft OAuth 權杖不包含在內。採用 AES-256-GCM 及 PBKDF2-SHA256（600,000 次）；獨立密碼不會上傳或儲存。重新整理後只會鎖定備份，不會登出日曆。加密不能防止已解鎖頁面上的惡意程式碼。')));content.append(details);
-
-  if(saved){const remove=button(t('取消iCloud及Canvas日历登录状态在云端及导出文件中的储存','取消iCloud及Canvas日曆登入狀態在雲端及匯出檔案中的儲存'),'delete_outline');remove.onclick=requestRemoval;content.append(remove);}
-  content.append(message);
+   let value=saved();
+   for(const id of ['icloud','canvas'])if(connections()[id]?.authenticated&&connections()[id]?.calendarAuthorized&&(provider===id||provider?.includes(id)||!captured.has(id))){
+    const result=await api(id,'calendar-vault-capture',{});value.accounts[id]=result.encrypted;captured.add(id);
+   }
+   if(Object.keys(value.accounts).length)localStorage.setItem(VAULT_KEY,JSON.stringify(value));
+   if(window.naviSyncCalendarLogins)value=await window.naviSyncCalendarLogins(value,Object.keys(connections()).filter(id=>connections()[id]?.authenticated&&connections()[id]?.calendarAuthorized))||value;
+   if(restore)for(const [id,encrypted]of Object.entries(value.accounts)){
+    const state=connections()[id];if(state?.unavailable||state?.authenticated&&state?.calendarAuthorized)continue;
+    try{await api(id,'calendar-vault-restore',{encrypted});}catch(e){lastError+=id+'：'+e.message+' ';}
+   }
+   if(restore)await reload();
+  }catch(e){lastError=e.message;}
+  finally{working=false;changed();if(queued){const restore=queuedRestore,providers=[...queuedProviders];queuedProviders.clear();queued=queuedRestore=false;void sync(restore,providers);}}
  }
- function open(){message.textContent='';render();dialog.open=true;}
- function section(){const host=node('section');host.className='calendar-account-section calendar-vault-section';host.append(node('strong',t('日历账号加密同步','日曆帳戶加密同步')),node('small',status()));const entry=button(t('管理加密备份','管理加密備份'),'lock');entry.onclick=()=>{document.getElementById('calendar-accounts-dialog').open=false;setTimeout(open,200);};host.append(entry);return host;}
- async function capture(provider){if(!unlocked||working||!names[provider])return;try{const state=connections()[provider];if(!state?.authenticated)return;const result=await api(provider,'calendar-vault-export',{});if(!unlocked)return;await persist({...unlocked.accounts,[provider]:{name:state.user.name||state.user.email||provider,account:state.user.email||state.user.id||'',credentials:result.credentials}});}catch{document.dispatchEvent(new CustomEvent('navi-calendar-vault-error',{detail:{provider,message:t('日历已连接，但加密备份未更新，请在加密同步中重新保存。','日曆已連接，但加密備份未更新，請在加密同步中重新儲存。')}}));}}
- document.addEventListener('navi-calendar-vault-change',()=>{const el=document.getElementById('settings-calendar-vault-status');if(el)el.textContent=status();});
- window.addEventListener('pagehide',lock);window.addEventListener('pageshow',()=>{if(dialog.open)render();});
- window.addEventListener('storage',event=>{if(event.key===VAULT_KEY){lock();if(dialog.open)render();}});
- dialog.addEventListener('closed',()=>{removeDialog.open=false;for(const input of content.querySelectorAll('input'))input.value='';});
- new MutationObserver(()=>{if(dialog.open&&!working)render();removalLabels();changed();}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
- window.naviOpenCalendarVault=open;
- document.querySelector('[data-open-calendar-vault]')?.addEventListener('click',()=>{document.getElementById('data-manage-dialog').open=false;setTimeout(open,200);});
- const settingsButton=document.querySelector('[data-open-calendar-vault]');function settingsLabels(){if(settingsButton)settingsButton.textContent=t('日历账号加密同步','日曆帳戶加密同步');const hint=document.getElementById('settings-calendar-vault-hint');if(hint)hint.textContent=t('如果在此设定独立密码，则在同步及导入导出预设时，将一并涵盖加密后的 iCloud 及 Canvas 日历令牌（如果有）。','如果在此設定獨立密碼，則在同步及匯入匯出預設時，將一併涵蓋加密後的 iCloud 及 Canvas 日曆權杖（如果有）。');changed();}new MutationObserver(settingsLabels).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});settingsLabels();
+ function render(){title.textContent=t('日历登录状态同步','日曆登入狀態同步');close.textContent=t('关闭','關閉');content.replaceChildren(node('p',status()),node('small',t('使用服务器密钥加密，无需独立密码。只保存 iCloud／Canvas 登录状态；Google／Microsoft 日历仍需各自授权。本机退出日历不会删除云端备份。','使用伺服器密鑰加密，毋須獨立密碼。只儲存 iCloud／Canvas 登入狀態；Google／Microsoft 日曆仍需各自授權。本機登出日曆不會刪除雲端備份。')));
+  if(localStorage.getItem('navi_calendar_cloud_disabled')==='1'){const resume=button(t('恢复默认自动同步','恢復預設自動同步'),'cloud_sync');resume.onclick=()=>{localStorage.removeItem('navi_calendar_cloud_disabled');captured.clear();void sync(true);};content.append(resume);}
+  const raw=localStorage.getItem(VAULT_KEY);if(raw&&(()=>{try{return JSON.parse(raw).version===1;}catch{return false;}})())content.append(node('small',t('旧的独立密码备份不会自动转换；请重新连接 iCloud／Canvas，生成新的加密备份。','舊的獨立密碼備份不會自動轉換；請重新連接 iCloud／Canvas，產生新的加密備份。')));
+  if(raw){const remove=button(label(),'delete_outline');remove.disabled=working;remove.onclick=()=>{removalSnapshot=localStorage.getItem(VAULT_KEY);heading.textContent=label()+'？';description.textContent=t('将自动移除当前同步账号的云端备份，之后导出也不再包含登录状态。已连接的日历和日程不受影响。其他账号、设备及旧导出文件需分别处理。','將自動移除目前同步帳戶的雲端備份，往後匯出亦不再包含登入狀態。已連接的日曆及日程不受影響。其他帳戶、裝置及舊匯出檔案需分別處理。');check.textContent=t('我已了解并确认取消储存','我已了解並確認取消儲存');check.checked=false;confirm.disabled=true;cancel.textContent=t('返回','返回');confirm.textContent=t('确认取消储存','確認取消儲存');error.textContent='';removeDialog.open=true;};content.append(remove);}
+ }
+ confirm.onclick=async()=>{if(!check.checked||working)return;working=true;confirm.disabled=cancel.disabled=check.disabled=close.disabled=true;error.textContent=t('正在取消储存…','正在取消儲存…');try{
+  if(!window.naviCancelCalendarVaultStorage)throw Error(t('同步暂不可用，请刷新重试。','同步暫時無法使用，請重新整理再試。'));
+  const result=await window.naviCancelCalendarVaultStorage(removalSnapshot);localStorage.setItem('navi_calendar_cloud_disabled','1');lastError=result;removeDialog.open=false;
+ }catch(e){error.textContent=e.message;}finally{working=false;confirm.disabled=!check.checked;cancel.disabled=check.disabled=close.disabled=false;changed();}};
+ function open(){render();dialog.open=true;}
+ function section(){const host=node('section');host.className='calendar-account-section calendar-vault-section';host.append(node('strong',t('日历登录状态同步','日曆登入狀態同步')),node('small',status()));const entry=button(t('管理日历登录状态同步','管理日曆登入狀態同步'),'cloud_sync');entry.onclick=()=>{document.getElementById('calendar-accounts-dialog').open=false;setTimeout(open,200);};host.append(entry);return host;}
+ async function capture(provider){localStorage.removeItem('navi_calendar_cloud_disabled');await sync(false,provider);}
+ document.addEventListener('navi-sync-account-change',()=>{if(localStorage.getItem('navi_calendar_cloud_disabled')!=='1')void sync(true);});
+ const start=()=>{document.removeEventListener('navi-calendar-updated',start);if(localStorage.getItem('navi_calendar_cloud_disabled')!=='1')void sync(true);};document.addEventListener('navi-calendar-updated',start);if(document.getElementById('home-calendar')?.getAttribute('aria-busy')==='false')start();
+ window.naviOpenCalendarVault=open;document.querySelector('[data-open-calendar-vault]')?.addEventListener('click',()=>{document.getElementById('data-manage-dialog').open=false;setTimeout(open,200);});
+ function labels(){const entry=document.querySelector('[data-open-calendar-vault]');if(entry)entry.textContent=t('日历登录状态同步','日曆登入狀態同步');const hint=document.getElementById('settings-calendar-vault-hint');if(hint)hint.textContent=t('iCloud／Canvas 登录状态默认加密加入预设，随云端同步及 JSON 导入导出保存，无需独立密码。','iCloud／Canvas 登入狀態預設加密加入預設，隨雲端同步及 JSON 匯入匯出儲存，毋須獨立密碼。');changed();}new MutationObserver(labels).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});labels();
  return {section,capture};
 }

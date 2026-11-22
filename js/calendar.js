@@ -151,7 +151,7 @@ if(result){callbackUrl.searchParams.delete('calendar');callbackUrl.searchParams.
  if(Object.hasOwn(endpoints,callbackProvider))providerNotices.set(callbackProvider,{kind:result==='connected'?'success':result==='cancelled'?'info':'error',sc:pair[0],tc:pair[1]});
 }
 // The calendar remains usable even if the optional encrypted-backup module cannot load.
-import('./calendar-vault.js?v=cloud-removal-v8').then(({installCalendarVault})=>{
+import('./calendar-vault.js?v=server-default-v9').then(({installCalendarVault})=>{
  calendarVault=installCalendarVault({api,t,node,button,passwordField,connections:()=>connections,reload});
  const vaultDialog=document.getElementById('calendar-vault-dialog');vaultDialog.addEventListener('open',()=>{if(activeReminder)reminderBar.open=false;});vaultDialog.addEventListener('closed',nextReminder);
  document.addEventListener('navi-calendar-vault-error',e=>{providerNotices.set(e.detail.provider,{kind:'error',message:e.detail.message});if(accountsDialog.open)renderAccounts();});

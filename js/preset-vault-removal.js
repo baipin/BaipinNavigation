@@ -1,4 +1,4 @@
-import {sanitizePreset} from './preset-schema.js';
+import {sanitizePreset} from './preset-schema.js?v=server-v3';
 
 // Change only the vault in the latest cloud revision, never upload local preferences.
 export async function removeCloudCalendarVault(request) {

@@ -1,4 +1,4 @@
-import {PRESET_KEYS,COOKIE_KEYS,sanitizePreset} from './preset-schema.js';
+import {PRESET_KEYS,COOKIE_KEYS,sanitizePreset} from './preset-schema.js?v=server-v3';
 import {removeCloudCalendarVault} from './preset-vault-removal.js?v=remove-v1';
 
 const dialog = document.getElementById('data-manage-dialog');
@@ -223,6 +223,27 @@ async function sync(automatic=false) {
     } catch (error) { show(error.message); }
     finally { busy = false; updateControls(); }
 }
+window.naviSyncCalendarLogins=async (local,active=[])=>{
+    if(busy||authenticating||!account)return local;
+    busy=true;updateControls();
+    try{
+        for(let attempt=0;attempt<3;attempt++){
+            const cloud=await request('pull'),remote=cloud.exists?sanitizePreset(cloud.preset):snapshot();
+            let saved=null;try{saved=JSON.parse(remote.localStorage.navi_calendar_vault);}catch{}
+            const merged={version:2,algorithm:'AES-256-GCM-SERVER',accounts:{...local.accounts,...(saved?.version===2?saved.accounts:{}),...Object.fromEntries(Object.entries(local.accounts).filter(([id])=>active.includes(id)))}};
+            if(!Object.keys(merged.accounts).length)return local;
+            const encrypted=JSON.stringify(merged);
+            if(remote.localStorage.navi_calendar_vault!==encrypted){
+                const preset=sanitizePreset({...remote,localStorage:{...remote.localStorage,navi_calendar_vault:encrypted}});
+                try{await request('push',{preset,revision:cloud.revision??null});}
+                catch(error){if(error.status===409&&attempt<2)continue;throw error;}
+                // Don't treat a partial update as a full preset synchronization.
+                const state=savedState();if(cloud.exists&&state.baseHash===await hash(remote))localStorage.setItem(stateKey(),JSON.stringify({...state,baseHash:await hash(preset)}));
+            }
+            localStorage.setItem('navi_calendar_vault',encrypted);return merged;
+        }
+    }finally{busy=false;updateControls();}
+};
 // Exposed to the optional calendar UI; the existing sync lock protects provider/account changes.
 window.naviCancelCalendarVaultStorage=async expectedVault=>{
     const text=(sc,tc)=>simplified()?sc:tc;
@@ -282,7 +303,7 @@ async function checkLogin() {
         if (!pending) show(!result.configured ? providers[provider].missing : account ? previous.updatedAt ? '上次同步：'+new Date(previous.updatedAt).toLocaleString() : '已登录。点击“立即同步”创建或读取云端预设。' : '尚未登录；本机设置仍可正常使用。');
     } catch (error) { if (selectedProvider !== provider) return; show(error.message); }
     updateControls();
-    document.dispatchEvent(new Event('navi-sync-account-change'));
+    if(!busy)document.dispatchEvent(new Event('navi-sync-account-change'));
     return {authenticated:!!account,configured};
 }
 for (const button of panel.querySelectorAll('[data-sync-provider]')) button.onclick = async () => {
@@ -299,7 +320,7 @@ for (const button of panel.querySelectorAll('[data-sync-provider]')) button.oncl
         if(state?.configured && !state.authenticated) {
             location.href=providers[provider].endpoint+'?action=login';
         }
-    } finally {authenticating=false;updateControls();}
+    } finally {authenticating=false;updateControls();document.dispatchEvent(new Event('navi-sync-account-change'));}
 };
 login.onclick = () => { localStorage.setItem('navi_sync_provider',provider); location.href = providers[provider].endpoint+'?action=login'; };
 logout.onclick = async () => {
@@ -327,7 +348,7 @@ document.getElementById('export-data-btn').onclick = () => {
         const anchor = document.createElement('a'); anchor.href = url;
         anchor.download = `baipin_nav_backup_${new Date().toISOString().slice(0,10)}.json`;
         anchor.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
-        show(simplified()?'完整预设已导出；若已启用日历凭据加密同步，也包含相应密文。':'完整預設已匯出；若已啟用日曆憑證加密同步，亦包含對應密文。');
+        show(simplified()?'完整预设已导出；如已连接 iCloud／Canvas 日历，也包含加密后的登录状态。':'完整預設已匯出；如已連接 iCloud／Canvas 日曆，亦包含加密後的登入狀態。');
     } catch (error) { show(error.message); }
 };
 document.getElementById('import-data-btn').onclick = () => document.getElementById('import-file-input').click();
