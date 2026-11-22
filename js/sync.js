@@ -1,5 +1,5 @@
-import {PRESET_KEYS,COOKIE_KEYS,sanitizePreset} from './preset-schema.js?v=server-v3';
-import {removeCloudCalendarVault} from './preset-vault-removal.js?v=remove-v1';
+import {PRESET_KEYS,COOKIE_KEYS,sanitizePreset} from './preset-schema.js?v=server-v4';
+import {removeCloudCalendarVault} from './preset-vault-removal.js?v=remove-v2';
 
 const dialog = document.getElementById('data-manage-dialog');
 const panel = document.getElementById('preset-sync-panel');

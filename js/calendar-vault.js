@@ -1,4 +1,5 @@
-import {VAULT_KEY,validateVault} from './calendar-vault-crypto.js?v=server-v3';
+import {validateVault} from './calendar-vault-format.js';
+const VAULT_KEY='navi_calendar_vault';
 export function installCalendarVault({api,t,node,button,connections,reload}){
  let working=false,queued=false,queuedRestore=false,lastError='';const captured=new Set(),queuedProviders=new Set();
  const empty=()=>({version:2,algorithm:'AES-256-GCM-SERVER',accounts:{}});
