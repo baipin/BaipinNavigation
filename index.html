@@ -527,6 +527,15 @@
         .world-weather-card img { object-fit:contain; vertical-align:middle; background:#486b91; border-radius:12px; padding:4px; margin-right:12px; }
         .world-weather-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
         .world-weather-heading h3 { margin:0; }
+        .world-weather-day { display:flex; align-items:center; gap:8px; margin:12px 0; font-size:.85rem; line-height:1.6; }
+        .world-weather-day img { width:30px; height:30px; margin:0; flex:none; }
+        #home-world-weather { border-top:1px solid rgba(128,128,128,.2); margin-top:16px; padding-top:8px; }
+        #home-world-weather[hidden] { display:none; }
+        .home-world-weather-row { display:flex; align-items:center; flex-wrap:wrap; gap:4px 8px; padding:6px 0; font-size:.75rem; line-height:1.5; }
+        .home-world-weather-row strong { font-size:.8rem; }
+        .home-world-weather-row > span { display:inline-flex; align-items:center; gap:6px; min-width:0; overflow-wrap:anywhere; }
+        .home-world-weather-row img { width:28px; height:28px; object-fit:contain; }
+        .regional-temperature-map { max-height:460px; }
         .world-weather-card small { opacity:.65; overflow-wrap:anywhere; }
         .weather-extra-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; min-height:200px; padding:24px; text-align:center; }
         .weather-extra-loading mdui-circular-progress { width:40px; height:40px; }
@@ -953,7 +962,7 @@
         <mdui-button slot="action" variant="filled" id="settings-reset-confirm">恢复默认设置</mdui-button>
     </mdui-dialog>
     <script src="js/weather-warning-dialog.js?v=material-table-v3"></script>
-    <script type="module" src="js/weather-extra.js?v=extra-weather-loading-v2"></script>
+    <script type="module" src="js/weather-extra.js?v=weather-map-pins-v3"></script>
     <script src="js/aqhi-detail.js?v=aqhi-map-v1"></script>
     <script src="js/weather-detail.js?v=weather-extra-v7"></script>
     <script src="js/aed-wait.js?v=wait-colors-v2"></script>
@@ -4182,6 +4191,6 @@ function setBackgroundToCookie(value) {
     <script src="js/app-info.js?v=local-greeting-title-v2"></script>
     <script src="js/settings.js?v=material-tabs-v2"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
-    <script type="module" src="js/sync.js?v=weather-cities-v2"></script>
+    <script type="module" src="js/sync.js?v=weather-pins-v3"></script>
 </body>
 </html>

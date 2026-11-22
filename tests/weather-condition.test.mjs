@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {weatherCondition} from '../js/weather-condition.js';
+assert.equal(weatherCondition(0).text,'晴天');
+assert.equal(weatherCondition(61).text,'小雨');
+assert.equal(weatherCondition(71).text,'小雪');
+assert.equal(weatherCondition(45,false).text,'霧');
+assert.equal(weatherCondition(82,false).text,'強驟雨');
+assert.equal(weatherCondition(95).text,'雷暴');
+assert.equal(weatherCondition(71).icon,70);
+for(const code of [undefined,999])assert.equal(weatherCondition(code).text,'天气暂不可用');
+console.log('PASS: daily weather descriptions, simplified/traditional Chinese and unknown conditions.');
