@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import {parseRadar,parseSatellite,rainfallCandidates} from '../api/weather-imagery.js';
 const context={window:{}};vm.runInNewContext(fs.readFileSync(new URL('../js/aed-wait.js',import.meta.url),'utf8'),context);
 const level=context.window.naviWaitLevel;
-for(const [text,want] of [['18 分鐘','short'],['0.5 小時','short'],['1 小時','medium'],['2 小時 59 分鐘','medium'],['3 小時','long'],['超過 7.5 小時','long'],['--','unknown'],['服務暫停','unknown']])assert.equal(level(text),want,text);
+for(const [text,want] of [['18 分鐘','short'],['0.5 小時','short'],['1 小時','short'],['2 小時 59 分鐘','medium'],['3 小時','long'],['超過 7.5 小時','long'],['--','unknown'],['服務暫停','unknown']])assert.equal(level(text),want,text);
 const radar=parseRadar({radar:{range0:{image:['picture[0][0]="rad_256_png/2d256nradar_202611220048.jpg";','picture[0][1]="rad_256_png/2d256nradar_202611220054.jpg";','picture[0][2]="https://evil.test/image.jpg";']}}});
 assert.equal(radar.length,2);assert.equal(radar.at(-1).time,'202611220054');
 assert.throws(()=>parseRadar({radar:{range0:{image:['alert(1)']}}}));

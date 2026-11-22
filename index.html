@@ -855,7 +855,7 @@
         </mdui-tab-panel>
         <mdui-tab-panel slot="panel" value="background" class="settings-panel" data-settings-panel="background">
             <h3 data-settings-text="backgroundTitle">首页背景</h3>
-            <div class="settings-districts"><label><span data-camera-source-label>背景来源</span><select id="background-camera-source"><option value="photo">照片／默认背景</option><option value="hko">天文台天气摄影机</option><option value="traffic">交通快拍图像</option><option value="webcast">交通直播首帧</option><option value="webcast-live">交通直播视频</option></select></label></div>
+            <div class="settings-districts"><label><span data-camera-source-label>背景来源</span><select id="background-camera-source"><option value="photo">照片／默认背景</option><option value="bing">Bing 每日图片</option><option value="hko">天文台天气摄影机</option><option value="traffic">交通快拍图像</option><option value="webcast">交通直播首帧</option><option value="webcast-live">交通直播视频</option></select></label></div>
             <div class="settings-background-actions">
                 <mdui-button variant="tonal" id="random-bg-btn" icon="image" data-settings-text="random">从 Unsplash 获取随机背景</mdui-button>
                 <mdui-button variant="outlined" id="reset-bg-btn" icon="restore" data-settings-text="reset">恢复默认背景</mdui-button>
@@ -920,7 +920,7 @@
     </mdui-dialog>
     <script src="js/weather-warning-dialog.js?v=material-table-v3"></script>
     <script src="js/weather-detail.js?v=weather-rainfall-v5"></script>
-    <script src="js/aed-wait.js?v=wait-colors-v1"></script>
+    <script src="js/aed-wait.js?v=wait-colors-v2"></script>
     <script src="js/weather-upgrades.js?v=warning-details-v1"></script>
     <script>
         /* ==================== 原有代码完全保留 ==================== */
@@ -4145,7 +4145,7 @@ function setBackgroundToCookie(value) {
     </script>
     <script src="js/app-info.js?v=local-greeting-title-v2"></script>
     <script src="js/settings.js?v=material-tabs-v2"></script>
-    <script type="module" src="js/camera-background.js?v=camera-selection-progress-v8"></script>
+    <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
     <script type="module" src="js/sync.js?v=camera-background-v1"></script>
 </body>
 </html>

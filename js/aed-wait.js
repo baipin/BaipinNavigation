@@ -10,7 +10,7 @@ function waitMinutes(value) {
 }
 function waitLevel(value) {
     const minutes=waitMinutes(value);
-    return minutes===null?'unknown':minutes<60?'short':minutes<180?'medium':'long';
+    return minutes===null?'unknown':minutes<=60?'short':minutes<180?'medium':'long';
 }
 
 window.naviWaitLevel=waitLevel;
