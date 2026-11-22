@@ -1,0 +1,52 @@
+import {VAULT_KEY,validateVault,createVault,unlockVault,encryptVault} from './calendar-vault-crypto.js';
+export function installCalendarVault({api,t,node,button,passwordField,connections,reload}){
+ let unlocked=null,working=false,generation=0;
+ const names={icloud:'iCloud',canvas:'Canvas'};
+ const dialog=node('mdui-dialog');dialog.id='calendar-vault-dialog';dialog.setAttribute('close-on-overlay-click','');const title=node('div');title.slot='headline';const content=node('div');content.className='calendar-vault-content';const close=button('');close.slot='action';close.onclick=()=>dialog.open=false;dialog.append(title,content,close);document.body.append(dialog);
+ const message=node('p');message.className='calendar-provider-notice';message.setAttribute('role','status');
+ function envelope(){const raw=localStorage.getItem(VAULT_KEY);return raw?validateVault(JSON.parse(raw)):null;}
+ function changed(){document.dispatchEvent(new Event('navi-calendar-vault-change'));}
+ function lock(){generation++;unlocked=null;changed();}
+ function status(){try{return unlocked?t('已解锁，仅本页有效','已解鎖，僅本頁有效'):envelope()?t('已加密，等待解锁','已加密，等待解鎖'):t('未启用','未啟用');}catch{return t('备份格式不正确','備份格式不正確');}}
+ async function persist(accounts){if(!unlocked)throw Error(t('请先解锁日历备份','請先解鎖日曆備份'));const current=generation,key=unlocked.key,salt=unlocked.salt;const value=await encryptVault(accounts,key,salt);if(current!==generation)throw Error(t('日历备份已锁定，请重试','日曆備份已鎖定，請重試'));localStorage.setItem(VAULT_KEY,JSON.stringify(value));unlocked.accounts=accounts;changed();}
+ async function collect(){const accounts={...unlocked.accounts},errors=[];for(const provider of Object.keys(names)){const state=connections()[provider];if(!state?.authenticated||!state?.calendarAuthorized)continue;try{const result=await api(provider,'calendar-vault-export',{});accounts[provider]={name:state.user?.name||state.user?.email||provider,account:state.user?.email||state.user?.id||'',credentials:result.credentials};}catch(error){errors.push(names[provider]+'：'+error.message);}}await persist(accounts);return errors;}
+ async function restore(){const errors=[];for(const [provider,record]of Object.entries(unlocked.accounts)){try{await api(provider,'connect',record.credentials);}catch(error){errors.push(names[provider]+'：'+error.message);}}await reload();return errors;}
+ async function run(action){if(working)return;working=true;close.disabled=true;dialog.setAttribute('aria-busy','true');for(const el of content.querySelectorAll('mdui-button,input,mdui-button-icon,mdui-checkbox'))el.disabled=true;message.textContent=t('正在处理加密日历备份…','正在處理加密日曆備份…');try{const text=await action();render();message.textContent=text||t('已完成；开启预设自动同步或点击「立即同步」将密文同步到云端。','已完成；開啟預設自動同步或點擊「立即同步」將密文同步到雲端。');}catch(error){render();const translated={'加密日历备份格式不正确':'加密日曆備份格式不正確','日历账号备份格式不正确':'日曆帳戶備份格式不正確','iCloud 备份格式不正确':'iCloud 備份格式不正確','Canvas 备份格式不正确':'Canvas 備份格式不正確','日历账号备份过大':'日曆帳戶備份過大','请使用 12 至 256 个字符的独立加密密码':'請使用 12 至 256 個字符的獨立加密密碼','加密密码不正确，或日历备份已损坏':'加密密碼不正確，或日曆備份已損壞'};message.textContent=t(error.message,translated[error.message]||error.message);}finally{working=false;close.disabled=false;dialog.removeAttribute('aria-busy');}}
+ function render(){title.textContent=t('日历账号加密同步','日曆帳戶加密同步');close.textContent=t('关闭','關閉');content.replaceChildren();
+  content.append(node('p',t('是否同步日历凭据由你选择。预设备份仍包含书签、搜索引擎、RSS、CITY FEED、背景等全部原有设置；这些普通设置沿用原有存储方式。主动设置独立密码后，iCloud App 专用密码及 Canvas 令牌会额外加密，再随 Google／GitHub／Microsoft 预设登录同步及 JSON 导出保存。Google／Microsoft OAuth 令牌不纳入此备份。','是否同步日曆憑證由你選擇。預設備份仍包含書籤、搜尋引擎、RSS、CITY FEED、背景等全部原有設定；這些一般設定沿用原有儲存方式。主動設定獨立密碼後，iCloud App 專用密碼及 Canvas 權杖會額外加密，再隨 Google／GitHub／Microsoft 預設登入同步及 JSON 匯出儲存。Google／Microsoft OAuth 權杖不納入此備份。')));
+  const state=node('strong',status());content.append(state);
+  content.append(node('small',t('采用 AES-256-GCM 和 PBKDF2-SHA256（600,000 次）。加密密码不会发送到服务器或保存到预设；刷新或锁定后需重新输入。忘记密码无法找回，请使用至少 12 个字符的独立长密码。','採用 AES-256-GCM 和 PBKDF2-SHA256（600,000 次）。加密密碼不會傳送至伺服器或儲存至預設；重新整理或鎖定後需重新輸入。忘記密碼無法找回，請使用至少 12 個字符的獨立長密碼。')));
+  content.append(node('small',t('不启用时，日历凭据只保留在本机加密登录会话，不随预设导出或同步。','不啟用時，日曆憑證只保留在本機加密登入工作階段，不隨預設匯出或同步。')));
+  let saved;try{saved=envelope();}catch(error){content.append(node('p',error.message));content.append(message);return;}
+  if(unlocked){
+   content.append(node('small',t('加密只能降低备份泄露的风险，不能防止已解锁设备上的恶意脚本或浏览器扩展；请保管备份和独立密码。','加密只能降低備份外洩的風險，不能防止已解鎖裝置上的惡意程式碼或瀏覽器擴充功能；請保管備份及獨立密碼。')));
+   const list=node('div');list.className='calendar-vault-account-list';for(const [provider,record]of Object.entries(unlocked.accounts)){const row=node('p');row.append(node('strong',names[provider]),document.createTextNode(' · '+record.name+' · '+record.account));list.append(row);}if(!list.childElementCount)list.append(node('p',t('尚未保存账号；先连接 iCloud 或 Canvas，再点击更新备份。','尚未儲存帳戶；先連接 iCloud 或 Canvas，再點擊更新備份。')));content.append(list);
+   const update=button(t('更新已连接的日历账号','更新已連接的日曆帳戶'),'cloud_upload');update.onclick=()=>run(async()=>{const errors=await collect();return errors.length?errors.join('；'):undefined;});
+   const restoreButton=button(t('恢复日历连接','還原日曆連接'),'settings_backup_restore');restoreButton.disabled=!Object.keys(unlocked.accounts).length;restoreButton.onclick=()=>run(async()=>{const errors=await restore();return errors.length?errors.join('；'):t('已恢复日历连接。','已還原日曆連接。');});
+   const lockButton=button(t('锁定加密备份','鎖定加密備份'),'lock');lockButton.onclick=()=>{lock();render();message.textContent=t('已锁定。现有日历连接保留。','已鎖定。現有日曆連接保留。');};content.append(update,restoreButton,lockButton);
+  }else{
+   const form=node('form');form.className='calendar-icloud-connect';const password=node('input');password.type='password';password.minLength=12;password.maxLength=256;password.required=true;password.autocomplete='off';password.placeholder=t(saved?'加密密码':'设置独立加密密码（至少 12 个字符）',saved?'加密密碼':'設定獨立加密密碼（至少 12 個字符）');password.setAttribute('aria-label',password.placeholder);form.append(passwordField(password));
+   let confirm;if(!saved){confirm=node('input');confirm.type='password';confirm.minLength=12;confirm.maxLength=256;confirm.required=true;confirm.autocomplete='off';confirm.placeholder=t('再次输入加密密码','再次輸入加密密碼');confirm.setAttribute('aria-label',confirm.placeholder);form.append(passwordField(confirm));}
+   const consent=node('mdui-checkbox',t(saved?'解锁后恢复备份中的 iCloud／Canvas 连接，可能替换本机对应账号':'同意将已连接 iCloud／Canvas 的凭据加密后加入预设同步与导出',saved?'解鎖後還原備份中的 iCloud／Canvas 連接，可能取代本機對應帳戶':'同意將已連接 iCloud／Canvas 的憑證加密後加入預設同步與匯出'));consent.id='calendar-vault-consent';form.append(consent);
+   const submit=button(t(saved?'解锁并恢复连接':'启用加密同步',saved?'解鎖並還原連接':'啟用加密同步'),saved?'lock_open':'lock');submit.type='submit';submit.variant='tonal';form.append(submit);
+   form.onsubmit=e=>{e.preventDefault();if(!form.reportValidity())return;if(!consent.checked){message.textContent=t('请先勾选确认上述操作。','請先勾選確認上述操作。');return;}let value=password.value,again=confirm?.value;password.value='';if(confirm)confirm.value='';run(async()=>{if(confirm&&value!==again)throw Error(t('两次加密密码不一致','兩次加密密碼不一致'));const current=generation;const result=saved?await unlockVault(saved,value):await createVault(value);value=again='';if(current!==generation)throw Error(t('备份已改变，请重新打开','備份已改變，請重新開啟'));unlocked=result;
+     if(!saved){localStorage.setItem(VAULT_KEY,JSON.stringify(result.envelope));changed();const errors=await collect();return errors.length?errors.join('；'):undefined;}
+     changed();const errors=await restore();return errors.length?errors.join('；'):t('已解锁并恢复日历连接。','已解鎖並還原日曆連接。');});};content.append(form);
+  }
+  content.append(node('small',t('已解锁时，新连接或更换 iCloud／Canvas 会自动更新本机加密备份。退出日历只退出本机，已保存的加密备份保留。需要先同步云端预设，才能在其他设备解锁恢复。','已解鎖時，新連接或更換 iCloud／Canvas 會自動更新本機加密備份。登出日曆只登出本機，已儲存的加密備份保留。需要先同步雲端預設，才能在其他裝置解鎖還原。')));
+  if(saved){const erase=node('mdui-checkbox',t('我确认移除本机的日历凭据加密备份；再次同步会更新云端，日历连接保留','我確認移除本機的日曆憑證加密備份；再次同步會更新雲端，日曆連接保留'));const remove=button(t('停用日历凭据同步','停用日曆憑證同步'),'lock_reset');remove.disabled=true;erase.addEventListener('change',()=>remove.disabled=!erase.checked);remove.onclick=()=>{if(!erase.checked||working)return;localStorage.removeItem(VAULT_KEY);lock();render();message.textContent=t('本机加密备份已移除。请同步预设以更新云端；其他设备及旧 JSON 备份中的密文需分别移除。','本機加密備份已移除。請同步預設以更新雲端；其他裝置及舊 JSON 備份中的密文需分別移除。');};content.append(erase,remove);}
+  content.append(message);
+ }
+ function open(){message.textContent='';render();dialog.open=true;}
+ function section(){const host=node('section');host.className='calendar-account-section calendar-vault-section';host.append(node('strong',t('日历账号加密同步','日曆帳戶加密同步')),node('small',status()));const entry=button(t('管理加密备份','管理加密備份'),'lock');entry.onclick=()=>{document.getElementById('calendar-accounts-dialog').open=false;setTimeout(open,200);};host.append(entry);return host;}
+ async function capture(provider){if(!unlocked||working||!names[provider])return;try{const state=connections()[provider];if(!state?.authenticated)return;const result=await api(provider,'calendar-vault-export',{});if(!unlocked)return;await persist({...unlocked.accounts,[provider]:{name:state.user.name||state.user.email||provider,account:state.user.email||state.user.id||'',credentials:result.credentials}});}catch{document.dispatchEvent(new CustomEvent('navi-calendar-vault-error',{detail:{provider,message:t('日历已连接，但加密备份未更新，请在加密同步中重新保存。','日曆已連接，但加密備份未更新，請在加密同步中重新儲存。')}}));}}
+ document.addEventListener('navi-calendar-vault-change',()=>{const el=document.getElementById('settings-calendar-vault-status');if(el)el.textContent=status();});
+ window.addEventListener('pagehide',lock);window.addEventListener('pageshow',()=>{if(dialog.open)render();});
+ window.addEventListener('storage',event=>{if(event.key===VAULT_KEY){lock();if(dialog.open)render();}});
+ dialog.addEventListener('closed',()=>{for(const input of content.querySelectorAll('input'))input.value='';});
+ new MutationObserver(()=>{if(dialog.open&&!working)render();changed();}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+ window.naviOpenCalendarVault=open;
+ document.querySelector('[data-open-calendar-vault]')?.addEventListener('click',()=>{document.getElementById('data-manage-dialog').open=false;setTimeout(open,200);});
+ const settingsButton=document.querySelector('[data-open-calendar-vault]');function settingsLabels(){if(settingsButton)settingsButton.textContent=t('日历账号加密同步','日曆帳戶加密同步');changed();}new MutationObserver(settingsLabels).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});settingsLabels();
+ return {section,capture};
+}

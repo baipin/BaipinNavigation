@@ -57,8 +57,8 @@ export function createCanvasHandler(dependencies={}){
   res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');
   const url=new URL(req.url,'https://localhost'),action=url.searchParams.get('action')||req.query?.action||'status',secret=key();
   try{
-   if(!['status','connect','disconnect','calendar-list','calendar-events'].includes(action))throw new CalendarError(404,'Canvas 在本站仅支持读取日历与作业截止日期');
-   const post=['connect','disconnect'].includes(action);if(req.method!==(post?'POST':'GET'))throw new CalendarError(405,'请求方法不支持');if(post&&req.headers.origin!=='https://123.baipon.com')throw new CalendarError(403,'请求来源不正确');
+   if(!['status','connect','disconnect','calendar-list','calendar-events','calendar-vault-export'].includes(action))throw new CalendarError(404,'Canvas 在本站仅支持读取日历与作业截止日期');
+   const post=['connect','disconnect','calendar-vault-export'].includes(action);if(req.method!==(post?'POST':'GET'))throw new CalendarError(405,'请求方法不支持');if(post&&req.headers.origin!=='https://123.baipon.com')throw new CalendarError(403,'请求来源不正确');
    if(action==='disconnect'){storeSession(res,COOKIE,null,secret);return res.status(200).json({ok:true});}
    const configured=typeof secret==='string'&&secret.length>=32;if(!configured){if(action==='status')return res.status(200).json({configured:false,authenticated:false});throw new CalendarError(503,'请先配置 CANVAS_SESSION_KEY（至少 32 个随机字符）');}
    if(action==='connect'){
@@ -70,6 +70,7 @@ export function createCanvasHandler(dependencies={}){
     phase='session';storeSession(res,COOKIE,data,secret);return res.status(200).json({authenticated:true,calendarAuthorized:true,user:data.user});
    }
    const data=readSession(req,COOKIE,secret);if(action==='status')return res.status(200).json({configured:true,authenticated:!!data,calendarAuthorized:!!data,user:data?.user||null});if(!data)throw new CalendarError(401,'请先连接学校 Canvas');
+   if(action==='calendar-vault-export')return res.status(200).json({credentials:{origin:data.origin,token:data.token}});
    if(action==='calendar-list'){
     const listing=await pages(data,'/api/v1/courses?enrollment_state=active&per_page=100',call);
     return res.status(200).json({calendars:listing.rows.filter(x=>/^\d+$/.test(String(x.id))&&x.name&&x.workflow_state!=='deleted').slice(0,100).map(x=>({id:'course_'+x.id,name:clean(x.name,200),writable:false})),truncated:listing.truncated||listing.rows.length>100});

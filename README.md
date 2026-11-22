@@ -138,3 +138,12 @@ CITY FEED 股票与指数卡片加入最近交易日的真实 5 分钟价格走�
 日历新增：iCloud App 专用密码和 Canvas 令牌输入框使用本地 Material visibility / visibility_off 按钮，默认隐藏，点击才显示，切换不会提交表单。星期日及香港公众假期在月历标红，选中时仍保持红色；假期来自政府 1823 公开 JSON，先载入本地 2025–2027 官方快照（`data/hk-public-holidays.json`，2026-11-22 获取）再尝试在线更新，不加入用户日程列表。
 
 日历在页面可见且日程完成载入后，逐个用 Material Snackbar 提醒设备本地日期的今天／明天事件（含 Canvas Due），非当前月／跨月时另查这两天；关闭后当前页面不重复弹出。每个事件可单独勾选「不再提示（两天）」：只存 SHA-256 摘要名称的 `navi_cal_hide_*` Cookie，Max-Age=172800、SameSite=Lax、正式 HTTPS 下 Secure，不保存标题、描述或凭证，不参与预设导入导出和同步。事件时间更改会生成新的摘要。此为页面内提醒，需要打开本站并连接日历，不是后台推送服务。测试：`node tests/calendar-extras.test.mjs`。
+
+
+## 可选的日历凭据加密同步
+
+完整预设备份仍包含所有原有设置，一般预设不因本功能全部加密。用户在设置「日历账号加密同步」主动设置独立密码并确认后，现有 iCloud App 专用密码／Canvas 令牌会经同源 POST `calendar-vault-export` 从本机会话取回浏览器，以 Web Crypto AES-256-GCM 加密（PBKDF2-SHA256 600000 次，随机 16 字节盐、每次新 12 字节 IV），仅密文 `navi_calendar_vault` 纳入统一 PRESET_KEYS。Google／GitHub／Microsoft 预设同步、完整 JSON 导入导出、恢复默认与撤销复用现有流程。独立密码不传服务器、不落存储，非可导出密钥及解密凭据只在当前页面内存；锁定、刷新或跨标签页密文更新后需重新解锁。未启用时无凭据导出。Google／Microsoft OAuth 令牌始终不纳入此备份。
+
+另一设备载入完整预设后，用同一独立密码并确认，恢复 iCloud／Canvas 连接（可能替换本机对应账号），走原有 connect 重新验证，凭据失效时明确报错。已解锁状态新增或切换账号会更新密文；退出日历只退出本机，不删除用户同意保存的密文。停用会移除本机密文，下次预设同步更新云端；其他设备和旧 JSON 的副本需分别移除。忘记密码无法找回，建议使用独立长密码。本功能降低静态备份泄露风险，不防护已解锁页面的 XSS／恶意扩展；服务器在正常连接请求中仍临时处理日历凭据。无需新增环境变量。
+
+测试：`node tests/calendar-vault.test.mjs`（密码、篡改、nonce 唯一、不可导出密钥、完整预设往返、只收密文），`node tests/canvas.test.mjs`／`node tests/icloud.test.mjs`（凭据导出需要已登录同源 POST、响应 no-store、无权请求拒绝）。

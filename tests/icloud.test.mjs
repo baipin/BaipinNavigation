@@ -11,6 +11,7 @@ try{
  result=await call('connect',{body:{email:'test@example.test',password:'aaaa-bbbb-cccc-dddd'},origin:'https://evil.test'});assert.equal(result.code,403);
  result=await call('connect',{body:{email:'test@example.test',password:'aaaa-bbbb-cccc-dddd'}});assert.equal(result.code,200);const cookie=result.headers['Set-Cookie'].map(x=>x.split(';')[0]).join('; ');assert.ok(!cookie.includes('aaaa-bbbb'));
  result=await call('status',{cookie});assert.equal(result.body.user.email,'test@example.test');assert.ok(!JSON.stringify(result.body).includes('password'));
+ result=await call('calendar-vault-export',{cookie,method:'POST',body:{}});assert.equal(result.body.credentials.password,'aaaa-bbbb-cccc-dddd');assert.equal(result.headers['Cache-Control'],'no-store');assert.equal((await call('calendar-vault-export',{cookie,method:'GET'})).code,405);assert.equal((await call('calendar-vault-export',{method:'POST',body:{}})).code,401);assert.equal((await call('calendar-vault-export',{cookie,method:'POST',body:{},origin:'https://evil.test'})).code,403);
  result=await call('calendar-list',{cookie});assert.equal(result.body.calendars[0].writable,true);const id=result.body.calendars[0].id;
  result=await call('calendar-events',{cookie,params:'&calendar='+id+'&start=2026-11-01&end=2026-12-01'});assert.equal(result.body.events[0].title,'Test');const event=result.body.events[0];
  const updated={title:'Changed',allDay:false,start:'2026-11-22T02:00:00.000Z',end:'2026-11-22T03:00:00.000Z'};

@@ -301,7 +301,7 @@ document.getElementById('export-data-btn').onclick = () => {
         const anchor = document.createElement('a'); anchor.href = url;
         anchor.download = `baipin_nav_backup_${new Date().toISOString().slice(0,10)}.json`;
         anchor.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
-        show('预设已导出，包含 CITY FEED 自选股票和显示设置。');
+        show(simplified()?'完整预设已导出；若已启用日历凭据加密同步，也包含相应密文。':'完整預設已匯出；若已啟用日曆憑證加密同步，亦包含對應密文。');
     } catch (error) { show(error.message); }
 };
 document.getElementById('import-data-btn').onclick = () => document.getElementById('import-file-input').click();

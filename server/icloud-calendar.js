@@ -49,7 +49,7 @@ function newEvent(value){const root=new ICAL.Component(['vcalendar',[],[]]);root
 export default async function icloudHandler(req,res){
  res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');const url=new URL(req.url,'https://localhost'),action=url.searchParams.get('action')||req.query?.action||'status',secret=key(),origin='https://123.baipon.com';
  try{
-  const post=['connect','disconnect','calendar-save','calendar-delete'].includes(action);if(req.method!==(post?'POST':'GET'))throw new CalendarError(405,'请求方法不支持');if(post&&req.headers.origin!==origin)throw new CalendarError(403,'请求来源不正确');
+  const post=['connect','disconnect','calendar-save','calendar-delete','calendar-vault-export'].includes(action);if(req.method!==(post?'POST':'GET'))throw new CalendarError(405,'请求方法不支持');if(post&&req.headers.origin!==origin)throw new CalendarError(403,'请求来源不正确');
   if(action==='disconnect'){storeSession(res,COOKIE,null,secret);return res.status(200).json({ok:true});}
   const configured=typeof secret==='string'&&secret.length>=32;if(!configured){if(action==='status')return res.status(200).json({configured:false,authenticated:false});throw new CalendarError(503,'请先配置 ICLOUD_SESSION_KEY');}
   if(action==='connect'){
@@ -57,6 +57,7 @@ export default async function icloudHandler(req,res){
    const data={email:body.email,password:body.password,expires:Date.now()+30*86400000};data.home=await discover(data);await list(data);storeSession(res,COOKIE,data,secret);return res.status(200).json({authenticated:true,user:{email:data.email,name:data.email},calendarAuthorized:true});
   }
   const data=readSession(req,COOKIE,secret);if(action==='status')return res.status(200).json({configured:true,authenticated:!!data,user:data?{email:data.email,name:data.email}:null,calendarAuthorized:!!data});if(!data)throw new CalendarError(401,'请先连接 iCloud 日历');
+  if(action==='calendar-vault-export')return res.status(200).json({credentials:{email:data.email,password:data.password}});
   if(action==='calendar-list')return res.status(200).json({calendars:await list(data)});
   if(action==='calendar-events'){
    const range=calendarRange(url),calendar=resource(url.searchParams.get('calendar'),data.home);const compact=iso=>iso.replace(/[-:]/g,'').replace(/\.\d{3}/,'');const result=await dav(data,calendar,{method:'REPORT',headers:{Depth:'1','Content-Type':'application/xml'},body:'<?xml version="1.0"?><c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav"><d:prop><d:getetag/><c:calendar-data/></d:prop><c:filter><c:comp-filter name="VCALENDAR"><c:comp-filter name="VEVENT"><c:time-range start="'+compact(range.start)+'" end="'+compact(range.end)+'"/></c:comp-filter></c:comp-filter></c:filter></c:calendar-query>'});
