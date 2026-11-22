@@ -11,7 +11,7 @@
     <title>百品导航 - 客制化高自由度网址导航</title>
     <meta property="og:title" content="百品导航 - 客制化高自由度网址导航">
     <meta name="twitter:title" content="百品导航 - 客制化高自由度网址导航">
-    <meta name="description" content="百品导航是无需登录即可使用的个人导航与香港资讯首页，支持书签、搜索、RSS、天气、交通、市场资讯及可选的 Google Drive／GitHub Gist 多端预设同步。">
+    <meta name="description" content="百品导航是无需登录即可使用的个人导航与香港资讯首页，支持书签、搜索、RSS、天气、交通、市场资讯及可选的 Google Drive／GitHub Gist／Microsoft OneDrive 多端预设同步。">
     <link rel="canonical" href="https://123.baipon.com/">
     <link rel="icon" type="image/png" href="img/logo.png">
    
@@ -527,6 +527,11 @@
         .world-weather-card img { object-fit:contain; vertical-align:middle; background:#486b91; border-radius:12px; padding:4px; margin-right:12px; }
         .world-weather-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
         .world-weather-heading h3 { margin:0; }
+        .world-weather-grid .world-weather-card { display:flex; flex-direction:column; }
+        .world-weather-body { flex:1; }
+        .world-weather-pin { display:flex; justify-content:flex-end; border-top:1px solid rgba(128,128,128,.18); margin-top:16px; padding-top:8px; }
+        .world-weather-pin mdui-checkbox { font-size:.8rem; }
+        [data-sync-provider] img,[data-sync-login] img { width:20px; height:20px; object-fit:contain; }
         .world-weather-day { display:flex; align-items:center; gap:8px; margin:12px 0; font-size:.85rem; line-height:1.6; }
         .world-weather-day img { width:30px; height:30px; margin:0; flex:none; }
         #home-world-weather { border-top:1px solid rgba(128,128,128,.2); margin-top:16px; padding-top:8px; }
@@ -919,12 +924,13 @@
                 <div class="preset-sync-actions" role="group" aria-label="选择同步服务" style="margin-top:12px;">
                     <mdui-button variant="tonal" data-sync-provider="google" aria-pressed="true">Google 登录</mdui-button>
                     <mdui-button variant="outlined" data-sync-provider="github" aria-pressed="false">GitHub 登录</mdui-button>
+                    <mdui-button variant="outlined" data-sync-provider="microsoft" aria-pressed="false">Microsoft 登录</mdui-button>
                 </div>
                 <div data-sync-details hidden>
                 <p data-sync-account>使用同一 Google 账号同步多个设备</p>
                 <p class="preset-sync-hint" data-sync-storage>预设保存在你的 Google Drive 应用专用空间。</p>
                 <p class="preset-sync-hint" data-sync-github-warning hidden>Secret Gist 不是真正私有存储，知道链接的人可以读取预设。GitHub 的 gist 权限允许访问账号下的 Gist；本站仅定位并读写标记为本站预设的 Secret Gist，不申请仓库或私人邮箱权限。</p>
-                <p class="preset-sync-hint">同步包括书签、搜索引擎、RSS、CITY FEED 自选股票与显示配置、语言、天气地区、主题、照片及摄影机背景。两个服务独立保存预设，切换服务不会自动复制或合并账号。</p>
+                <p class="preset-sync-hint">同步包括书签、搜索引擎、RSS、CITY FEED 自选股票与显示配置、语言、天气地区、主题、照片及摄影机背景。各服务独立保存预设，切换服务不会自动复制或合并账号。</p>
                 <div class="preset-sync-actions">
                     <mdui-button variant="outlined" icon="login" data-sync-login>使用 Google 登录</mdui-button>
                     <mdui-button variant="tonal" icon="sync" data-sync-now disabled>立即同步</mdui-button>
@@ -962,7 +968,7 @@
         <mdui-button slot="action" variant="filled" id="settings-reset-confirm">恢复默认设置</mdui-button>
     </mdui-dialog>
     <script src="js/weather-warning-dialog.js?v=material-table-v3"></script>
-    <script type="module" src="js/weather-extra.js?v=weather-map-pins-v3"></script>
+    <script type="module" src="js/weather-extra.js?v=weather-pin-footer-v1"></script>
     <script src="js/aqhi-detail.js?v=aqhi-map-v1"></script>
     <script src="js/weather-detail.js?v=weather-extra-v7"></script>
     <script src="js/aed-wait.js?v=wait-colors-v2"></script>
@@ -4158,7 +4164,7 @@ function setBackgroundToCookie(value) {
             <div class="footer-brand"><img src="/img/logo.png" alt=""><h1 id="app-name" data-app-info="name">百品导航</h1></div>
             <p class="app-purpose" data-app-info="purpose">一站式个人导航与香港资讯首页</p>
             <div class="footer-description">
-                <p data-app-info="features">管理快捷书签、切换搜索引擎、订阅 RSS 新闻，查看香港天气、交通及市场资讯，并自定义首页布局与偏好；支持通过 Google Drive 或 GitHub Secret Gist 在设备间同步个人预设。</p>
+                <p data-app-info="features">管理快捷书签、切换搜索引擎、订阅 RSS 新闻，查看香港天气、交通及市场资讯，并自定义首页布局与偏好；支持通过 Google Drive、GitHub Secret Gist 或 Microsoft OneDrive 在设备间同步个人预设。</p>
                 <p data-app-info="access">无需登录即可使用导航、搜索、资讯和本机设置。</p>
             </div>
             <div class="footer-bottom">
@@ -4188,9 +4194,9 @@ function setBackgroundToCookie(value) {
             (window.adsbygoogle=window.adsbygoogle || []).push({});
         })();
     </script>
-    <script src="js/app-info.js?v=local-greeting-title-v2"></script>
+    <script src="js/app-info.js?v=microsoft-sync-v1"></script>
     <script src="js/settings.js?v=material-tabs-v2"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
-    <script type="module" src="js/sync.js?v=weather-pins-v3"></script>
+    <script type="module" src="js/sync.js?v=microsoft-login-v1"></script>
 </body>
 </html>

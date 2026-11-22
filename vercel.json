@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/microsoft/callback",
+      "destination": "/api/sync?provider=microsoft&action=callback"
+    },
+    {
+      "source": "/api/microsoft",
+      "destination": "/api/sync?provider=microsoft"
+    }
+  ]
+}

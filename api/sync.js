@@ -1,3 +1,4 @@
+import microsoftHandler from '../server/microsoft-sync.js';
 import {createCipheriv,createDecipheriv,createHash,randomBytes,timingSafeEqual} from 'node:crypto';
 import {sanitizePreset,MAX_PRESET_BYTES} from '../js/preset-schema.js';
 
@@ -91,6 +92,8 @@ async function writeCloud(data,body) {
     return {revision:payload.revision,updatedAt:payload.updatedAt};
 }
 export default async function handler(req,res) {
+    const route=new URL(req.url,'https://localhost');
+    if(route.pathname==='/api/microsoft' || route.pathname==='/api/microsoft/callback' || route.searchParams.get('provider')==='microsoft' || req.query?.provider==='microsoft')return microsoftHandler(req,res);
     res.setHeader('Cache-Control','no-store, max-age=0');
     res.setHeader('Referrer-Policy','no-referrer');
     const url = new URL(req.url,'https://localhost');
