@@ -581,6 +581,11 @@
         :is(#calendar-accounts-dialog,#calendar-event-dialog,#calendar-delete-dialog)::part(panel) { width:min(620px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); background:rgb(var(--mdui-color-surface-container-high)); }
         #calendar-delete-dialog { z-index:2700; }
         .calendar-account-section { display:grid; gap:8px; padding:16px 0; border-bottom:1px solid rgba(128,128,128,.2); }
+        .calendar-provider-notice { display:flex; align-items:center; gap:12px; padding:12px 8px 12px 16px; margin:4px 0 8px; border-radius:12px; background:rgb(var(--mdui-color-secondary-container)); color:rgb(var(--mdui-color-on-secondary-container)); box-shadow:0 2px 6px rgba(0,0,0,.12); font-size:.85rem; line-height:1.6; }
+        .calendar-provider-notice[data-kind="error"] { background:rgb(var(--mdui-color-error-container)); color:rgb(var(--mdui-color-on-error-container)); }
+        .calendar-provider-notice>span:nth-child(2) { flex:1; min-width:0; overflow-wrap:anywhere; }
+        .calendar-provider-notice>.material-icons { font-size:22px; flex:none; }
+        .calendar-provider-notice mdui-button-icon { color:inherit; width:32px; height:32px; flex:none; }
         .calendar-provider-heading { display:flex; align-items:center; gap:10px; }
         .calendar-provider-heading img { width:24px; height:24px; object-fit:contain; flex:none; }
         .settings-calendar-section { margin-top:20px; padding-top:20px; border-top:1px solid rgba(128,128,128,.2); }
@@ -592,6 +597,15 @@
         .calendar-icloud-help p { margin:8px 0 0; }
         .calendar-icloud-help a { color:inherit; text-underline-offset:3px; overflow-wrap:anywhere; }
         .calendar-icloud-help .material-icons { font-size:1em; vertical-align:-.12em; margin-inline-start:.2em; }
+        .calendar-body,.calendar-month,.calendar-list-panel,.calendar-event-form,.calendar-event-form label,.calendar-icloud-connect { min-width:0; max-width:100%; }
+        :is(.calendar-event-form,.calendar-icloud-connect) :is(input,select,textarea) { min-width:0; max-width:100%; }
+        @media(max-width:900px) {
+            /* iOS zooms focused fields below 16px; keep controls readable without changing viewport scaling. */
+            :is(#calendar-event-dialog,#calendar-accounts-dialog) :is(input,select,textarea) { font-size:16px; }
+            .calendar-month-heading { flex-wrap:wrap; }
+            .calendar-month-heading [data-calendar-month] { min-width:0; }
+            .calendar-month-heading [data-calendar-today] { min-width:0; padding-inline:12px; }
+        }
         .calendar-event-form,.calendar-icloud-connect { display:grid; gap:16px; }
         .calendar-event-form label { display:grid; gap:8px; font-size:.85rem; }
         :is(.calendar-event-form,.calendar-icloud-connect) :is(input,select,textarea) { width:100%; box-sizing:border-box; padding:12px; border:1px solid rgba(128,128,128,.45); border-radius:12px; background:transparent; color:inherit; font:inherit; color-scheme:light; }
@@ -4271,6 +4285,6 @@ function setBackgroundToCookie(value) {
     <script src="js/settings.js?v=calendar-settings-v4"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
     <script type="module" src="js/sync.js?v=calendar-permissions-v3"></script>
-    <script type="module" src="js/calendar.js?v=calendar-disconnect-v4"></script>
+    <script type="module" src="js/calendar.js?v=calendar-provider-notice-v5"></script>
 </body>
 </html>
