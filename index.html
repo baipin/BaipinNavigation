@@ -528,6 +528,9 @@
         .world-weather-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
         .world-weather-heading h3 { margin:0; }
         .world-weather-card small { opacity:.65; overflow-wrap:anywhere; }
+        .weather-extra-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; min-height:200px; padding:24px; text-align:center; }
+        .weather-extra-loading mdui-circular-progress { width:40px; height:40px; }
+        .weather-extra-loading p { margin:0; opacity:.75; }
         .cyclone-detail { margin:16px 0 24px; line-height:1.7; }
         .cyclone-track { display:block; max-width:100%; max-height:60dvh; object-fit:contain; margin:16px auto; border-radius:12px; }
         .aqhi-map-layout { display:grid; grid-template-columns:minmax(0,2fr) minmax(220px,1fr); gap:16px; margin:16px 0; }
@@ -950,7 +953,7 @@
         <mdui-button slot="action" variant="filled" id="settings-reset-confirm">恢复默认设置</mdui-button>
     </mdui-dialog>
     <script src="js/weather-warning-dialog.js?v=material-table-v3"></script>
-    <script type="module" src="js/weather-extra.js?v=extra-weather-v1"></script>
+    <script type="module" src="js/weather-extra.js?v=extra-weather-loading-v2"></script>
     <script src="js/aqhi-detail.js?v=aqhi-map-v1"></script>
     <script src="js/weather-detail.js?v=weather-extra-v7"></script>
     <script src="js/aed-wait.js?v=wait-colors-v2"></script>

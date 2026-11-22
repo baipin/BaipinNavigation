@@ -22,13 +22,13 @@ import {normalizeCities} from './weather-cities.js';
   }));
  }
  async function regional(panel,current){
-  const data=await get('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang='+(sc()?'sc':'tc'));if(current!==revisions.regional)return;
+  const data=await get('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang='+(sc()?'sc':'tc'));if(current!==revisions.regional)return;panel.replaceChildren();
   panel.append(node('h3',t('各区实时气温','各區實時氣溫')),node('p',t('更新时间：','更新時間：')+data.updateTime+' · 香港天文台'));
   const grid=node('div');grid.className='regional-temperature-grid';for(const row of data.temperature?.data || []){const card=node('article');card.className='world-weather-card';card.append(node('h3',row.place),node('strong',row.value+'°C'));grid.append(card);}panel.append(grid);
  }
  function plain(html){const doc=new DOMParser().parseFromString(html,'text/html');doc.querySelectorAll('script,style,iframe,object').forEach(x=>x.remove());return doc;}
  async function cyclone(panel,current){
-  const data=await get('/api/tropical-cyclones');if(current!==revisions.cyclone)return;panel.append(node('h3',t('热带气旋路径及详情','熱帶氣旋路徑及詳情')));
+  const data=await get('/api/tropical-cyclones');if(current!==revisions.cyclone)return;panel.replaceChildren();panel.append(node('h3',t('热带气旋路径及详情','熱帶氣旋路徑及詳情')));
   if(!data.storms?.length)panel.append(node('p',t('现在暂无热带气旋信息，当有热带气旋进入北纬7至36度，东经100至140度的范围，或在此范围内形成，天文台会在两小时内发放首次的热带气旋路径图。','現在暫無熱帶氣旋資訊，當有熱帶氣旋進入北緯7至36度，東經100至140度的範圍，或在此範圍內形成，天文台會在兩小時內發放首次的熱帶氣旋路徑圖。')));
   for(const storm of data.storms || []){const card=node('section');card.className='cyclone-detail';card.append(node('h3',storm.name),node('p',storm.time));
    const m=storm.time.match(/(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日\s*(\d{1,2})\s*時/);if(m){const stamp=Date.parse(m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0')+'T'+m[4].padStart(2,'0')+':00:00+08:00');if(Date.now()-stamp>24*3600000)card.append(node('p',t('以下为天文台最近提供的资料，已超过 24 小时，不能视为当前气旋状态。','以下為天文台最近提供的資料，已超過 24 小時，不能視為目前氣旋狀態。')));}
@@ -39,5 +39,15 @@ import {normalizeCities} from './weather-cities.js';
   }
   const link=node('a',t('香港天文台热带气旋路径资讯','香港天文台熱帶氣旋路徑資訊'));link.href='https://www.hko.gov.hk/'+(sc()?'sc':'tc')+'/wxinfo/currwx/tc_fixarea.htm';link.target='_blank';link.rel='noopener noreferrer';panel.append(link);
  }
- window.naviLoadWeatherExtra=async(type,panel)=>{const current=(revisions[type] || 0)+1;revisions[type]=current;panel.replaceChildren();if(type!=='world')panel.textContent=t('正在读取资料…','正在讀取資料…');try{if(type==='world')await world(panel,current);else {panel.replaceChildren();await (type==='regional'?regional:cyclone)(panel,current);}}catch{if(current===revisions[type])panel.textContent=t('资料暂时无法取得，请刷新重试。','資料暫時無法取得，請重新整理。');}};
+ window.naviLoadWeatherExtra=async(type,panel)=>{
+  const current=(revisions[type] || 0)+1;revisions[type]=current;panel.replaceChildren();panel.setAttribute('aria-busy','true');
+  if(type!=='world'){
+   const loading=node('div');loading.className='weather-extra-loading';loading.setAttribute('role','status');loading.setAttribute('aria-live','polite');
+   const spinner=node('mdui-circular-progress');spinner.setAttribute('aria-hidden','true');
+   loading.append(spinner,node('p',type==='cyclone'?t('正在获取热带气旋路径资料…','正在取得熱帶氣旋路徑資料…'):t('正在读取资料…','正在讀取資料…')));panel.append(loading);
+  }
+  try{if(type==='world')await world(panel,current);else await (type==='regional'?regional:cyclone)(panel,current);}
+  catch{if(current===revisions[type])panel.textContent=t('资料暂时无法取得，请刷新重试。','資料暫時無法取得，請重新整理。');}
+  finally{if(current===revisions[type])panel.setAttribute('aria-busy','false');}
+ };
 })();
