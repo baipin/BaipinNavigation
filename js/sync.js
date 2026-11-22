@@ -88,7 +88,7 @@ function applyLanguage() {
     updateProviderText();
     renderFooterAccount();
     for (const link of document.querySelectorAll('[data-site-legal]')) {
-        link.textContent = link.dataset.siteLegal === 'privacy' ? (simplified()?'隐私政策':'隱私政策') : (simplified()?'服务条款':'服務條款');
+        link.textContent = link.dataset.siteLegal === 'privacy' ? (simplified()?'隐私政策':'私隱政策') : (simplified()?'服务条款':'服務條款');
         link.href = '/'+link.dataset.siteLegal+'.html?lang='+(simplified()?'sc':'tc');
     }
 }
