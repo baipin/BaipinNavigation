@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {calendarDayKey,occursOn,upcomingDays,holidayDates,upcomingEvents,reminderCookieName,hideReminderCookie} from '../js/calendar-model.js';
+import {sanitizePreset} from '../js/preset-schema.js';
+const now=new Date(2026,10,30,23,59),range=upcomingDays(now);assert.equal(range.today,'2026-11-30');assert.equal(range.tomorrow,'2026-12-01');assert.equal(calendarDayKey(new Date(range.end)),'2026-12-02');
+const timed={provider:'canvas',calendar:'course_42',id:'assignment_7',start:new Date(2026,11,1,0,30).toISOString(),end:new Date(2026,11,1,0,30,0,1).toISOString(),allDay:false,title:'Private title'};
+const today={...timed,id:'g7',provider:'google',start:'2026-11-30',end:'2026-12-01',allDay:true},yesterday={...today,id:'old',start:'2026-11-29',end:'2026-11-30'};
+assert.equal(occursOn(today,'2026-12-01'),false);assert.equal(occursOn(timed,'2026-12-01'),true);assert.equal(occursOn(yesterday,range.today),false);assert.equal(upcomingEvents([timed,today,yesterday,timed],now).length,2);
+const holidays=holidayDates(JSON.parse(fs.readFileSync(new URL('../data/hk-public-holidays.json',import.meta.url),'utf8')));assert.equal(holidays.get('2026-12-25'),'聖誕節');assert.ok(holidays.has('2027-01-01'));assert.equal(holidayDates({vcalendar:[{vevent:[{dtstart:['bad'],summary:'bad'}]}]}).size,0);
+const key=await reminderCookieName(timed);assert.match(key,/^navi_cal_hide_[a-f0-9]{32}$/);assert.ok(!key.includes('assignment'));assert.equal(await reminderCookieName({...timed,title:'renamed'}),key);assert.notEqual(await reminderCookieName({...timed,id:'other'}),key);assert.notEqual(await reminderCookieName({...timed,start:new Date(2026,11,1,1).toISOString()}),key);
+globalThis.location={protocol:'https:'};const cookie=hideReminderCookie(key);assert.ok(cookie.includes('Max-Age=172800'));assert.ok(cookie.endsWith('; Secure'));assert.ok(!cookie.includes('Private title'));assert.throws(()=>hideReminderCookie('unsafe;name'));
+const preset=sanitizePreset({localStorage:{[key]:'1',navi_calendar_preferences:JSON.stringify({canvas:{account:'7',calendars:['course_42']}})}});assert.equal(preset.localStorage[key],undefined);assert.ok(!JSON.stringify(preset).includes('Private title'));
+console.log('PASS: today/tomorrow month boundaries, local time and all-day end exclusion, due events, official holiday dates, per-event hashes, two-day Secure cookies, no reminder export.');

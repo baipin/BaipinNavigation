@@ -133,3 +133,8 @@ CITY FEED 股票与指数卡片加入最近交易日的真实 5 分钟价格走�
 使用 `CANVAS_SESSION_KEY`（至少 32 个随机字符），未设置时沿用已有 `ICLOUD_SESSION_KEY` 或 `GOOGLE_KEY`。凭证放在最长 30 天的独立 AES-GCM 加密 HttpOnly Secure Cookie 中，学校服务端撤销／到期仍会使连接失效。学校域名仅允许 HTTPS 443，DNS 解析为公开 IPv4 并固定该地址建立 TLS 连接，阻止内网／元数据地址、重定向和跨域分页，令牌只发送到用户指定学校。每次读取限定月份，前端最多 4 本日历并发；每五分钟更新。
 
 测试：`node tests/canvas.test.mjs`（模拟学校 API，连接／只读／课程选择兼容的预设／Due 时区与零时长／分页／DNS 与令牌泄露防护），真实学校令牌需用户自行连接验证。
+
+
+日历新增：iCloud App 专用密码和 Canvas 令牌输入框使用本地 Material visibility / visibility_off 按钮，默认隐藏，点击才显示，切换不会提交表单。星期日及香港公众假期在月历标红，选中时仍保持红色；假期来自政府 1823 公开 JSON，先载入本地 2025–2027 官方快照（`data/hk-public-holidays.json`，2026-11-22 获取）再尝试在线更新，不加入用户日程列表。
+
+日历在页面可见且日程完成载入后，逐个用 Material Snackbar 提醒设备本地日期的今天／明天事件（含 Canvas Due），非当前月／跨月时另查这两天；关闭后当前页面不重复弹出。每个事件可单独勾选「不再提示（两天）」：只存 SHA-256 摘要名称的 `navi_cal_hide_*` Cookie，Max-Age=172800、SameSite=Lax、正式 HTTPS 下 Secure，不保存标题、描述或凭证，不参与预设导入导出和同步。事件时间更改会生成新的摘要。此为页面内提醒，需要打开本站并连接日历，不是后台推送服务。测试：`node tests/calendar-extras.test.mjs`。
