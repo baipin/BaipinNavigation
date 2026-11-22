@@ -203,6 +203,11 @@ function showConflict(cloud) {
 async function sync(automatic=false) {
     if (busy || !account || pending) return;
     if (automatic && (editing()||localStorage.getItem('navi_cloud_clear_hold')==='1')) return;
+    if(!automatic){
+        localStorage.removeItem('navi_cloud_clear_hold');localStorage.removeItem('navi_calendar_cloud_disabled');
+        await window.naviPrepareCalendarSync?.();
+        if(busy||!account||pending)return;
+    }
     busy = true; updateControls();
     if (!automatic) show('正在检查两端预设…');
     try {
@@ -458,6 +463,7 @@ resetUndo.onclick=()=> {
 };
 const result = new URL(location.href).searchParams.get('sync');
 if (result) {
+    if(result==='connected'){localStorage.removeItem('navi_cloud_clear_hold');localStorage.removeItem('navi_calendar_cloud_disabled');}
     localStorage.setItem('navi_sync_provider',provider);
     const messages = {connected:'Google 登录成功。点击“立即同步”选择云端或本机预设。',cancelled:'已取消 Google 授权，本机预设不受影响。','state-error':'登录验证已过期，请从本站重新登录。','login-error':'Google 登录失败，请检查回调地址、Drive API 及 OAuth 配置。','permission-error':'请允许本站访问 Google Drive 应用预设空间后重新登录。'};
     if (provider === 'github') Object.assign(messages,{connected:'GitHub 登录成功。点击“立即同步”选择云端或本机预设。',cancelled:'已取消 GitHub 授权，本机预设不受影响。','login-error':'GitHub 登录失败，请检查回调地址及 OAuth App 配置。','permission-error':'请允许本站的 GitHub gist 权限后重新登录。'});
