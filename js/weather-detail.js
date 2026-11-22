@@ -3,15 +3,15 @@
     const dialog=document.createElement('mdui-dialog');dialog.id='weather-detail-dialog';dialog.setAttribute('close-on-overlay-click','');
     dialog.innerHTML=`<div slot="headline" class="weather-detail-headline"><span data-wd="title"></span><mdui-button-icon icon="close" data-weather-close-top aria-label="关闭"></mdui-button-icon></div>
       <mdui-tabs value="forecast" id="weather-detail-tabs" aria-label="天气详情分类">
-        <mdui-tab value="forecast" data-wd="forecastTab"></mdui-tab><mdui-tab value="radar" data-wd="radarTab"></mdui-tab><mdui-tab value="satellite" data-wd="satelliteTab"></mdui-tab><mdui-tab value="rainfall" data-wd="rainfallTab"></mdui-tab>
+        <mdui-tab value="forecast" data-wd="forecastTab"></mdui-tab><mdui-tab value="radar" data-wd="radarTab"></mdui-tab><mdui-tab value="satellite" data-wd="satelliteTab"></mdui-tab><mdui-tab value="rainfall" data-wd="rainfallTab"></mdui-tab><mdui-tab value="aqhi" data-wd="aqhiTab"></mdui-tab>
         <mdui-tab-panel slot="panel" value="forecast"><div class="weather-detail-overview"><section data-weather-narrative aria-live="polite"></section><section><h3 data-wd="nineDays"></h3><p data-weather-outlook></p><div class="weather-forecast-grid" data-weather-days></div><div class="weather-day-details" data-weather-day-details aria-live="polite"></div></section></div><p class="weather-detail-meta" data-weather-updated></p></mdui-tab-panel>
         <mdui-tab-panel slot="panel" value="radar"><figure class="weather-imagery" data-imagery="radar"><figcaption data-wd="radarCaption"></figcaption><p role="status"></p><img hidden><a target="_blank" rel="noopener noreferrer" data-weather-original></a></figure></mdui-tab-panel>
         <mdui-tab-panel slot="panel" value="satellite"><figure class="weather-imagery" data-imagery="satellite"><figcaption data-wd="satelliteCaption"></figcaption><p role="status"></p><img hidden><a target="_blank" rel="noopener noreferrer" data-weather-original></a></figure></mdui-tab-panel>
-      <mdui-tab-panel slot="panel" value="rainfall"><figure class="weather-imagery" data-imagery="rainfall"><figcaption data-wd="rainfallCaption"></figcaption><p role="status"></p><img hidden><a target="_blank" rel="noopener noreferrer" data-weather-original></a></figure></mdui-tab-panel></mdui-tabs><mdui-button slot="action" variant="text" icon="refresh" data-weather-refresh></mdui-button><mdui-button slot="action" variant="text" data-weather-close></mdui-button>`;
+      <mdui-tab-panel slot="panel" value="rainfall"><figure class="weather-imagery" data-imagery="rainfall"><figcaption data-wd="rainfallCaption"></figcaption><p role="status"></p><img hidden><a target="_blank" rel="noopener noreferrer" data-weather-original></a></figure></mdui-tab-panel><mdui-tab-panel slot="panel" value="aqhi"><div data-aqhi-detail></div></mdui-tab-panel></mdui-tabs><mdui-button slot="action" variant="text" icon="refresh" data-weather-refresh></mdui-button><mdui-button slot="action" variant="text" data-weather-close></mdui-button>`;
     document.body.append(dialog);
     const button=document.getElementById('weather-detail-btn'),tabs=dialog.querySelector('mdui-tabs');
     let revision=0,controller=null,forecastRows=[],selected=0,imagery={},imageRequests={},refreshTimer=null;
-    const labels={rainfallTab:['分区雨量','分區雨量'],rainfallCaption:['分区雨量示意图 · 过去一小时','分區雨量示意圖 · 過去一小時'],title:['香港天气详情','香港天氣詳情'],forecastTab:['天气预报','天氣預報'],radarTab:['雷达图','雷達圖'],satelliteTab:['卫星图','衛星圖'],nineDays:['九天天气预报','九天天氣預報'],radarCaption:['天气雷达 · 256 公里范围 · 3 公里高','天氣雷達 · 256 公里範圍 · 3 公里高'],satelliteCaption:['气象卫星 · 红外云图（Himawari-8/9）','氣象衛星 · 紅外雲圖（Himawari-8/9）']};
+    const labels={aqhiTab:['空气质素','空氣質素'],rainfallTab:['分区雨量','分區雨量'],rainfallCaption:['分区雨量示意图 · 过去一小时','分區雨量示意圖 · 過去一小時'],title:['香港天气详情','香港天氣詳情'],forecastTab:['天气预报','天氣預報'],radarTab:['雷达图','雷達圖'],satelliteTab:['卫星图','衛星圖'],nineDays:['九天天气预报','九天天氣預報'],radarCaption:['天气雷达 · 256 公里范围 · 3 公里高','天氣雷達 · 256 公里範圍 · 3 公里高'],satelliteCaption:['气象卫星 · 红外云图（Himawari-8/9）','氣象衛星 · 紅外雲圖（Himawari-8/9）']};
     const el=tag=>document.createElement(tag);
     function paragraph(parent,text){const p=el('p');p.textContent=text || '--';parent.append(p);return p;}
     function section(parent,heading,text){const h=el('h3');h.textContent=heading;parent.append(h);paragraph(parent,text);}
@@ -79,6 +79,7 @@
         dialog.querySelector('[data-weather-updated]').textContent=t('本港预报更新：','本港預報更新：')+timestamp(flw?.updateTime)+' · '+t('九天预报更新：','九天預報更新：')+timestamp(fnd?.updateTime)+' · 香港天文台';
     }
     async function loadImagery(type,force=false){
+        if(type==='aqhi'){await window.naviLoadAqhiDetail(dialog.querySelector('[data-aqhi-detail]'),force);return;}
         if(imagery[type] && !force)return;
         const box=dialog.querySelector('[data-imagery="'+type+'"]'),status=box.querySelector('[role="status"]'),img=box.querySelector('img'),request=(imageRequests[type] || 0)+1;imageRequests[type]=request;
         status.textContent=t('正在载入图像…','正在載入圖像…');

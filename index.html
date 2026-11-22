@@ -515,6 +515,22 @@
         .weather-detail-warnings button { display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid rgba(128,128,128,.22); border-radius:16px; background:rgba(128,128,128,.06); color:inherit; font:inherit; cursor:pointer; }
         .weather-detail-warnings button:hover { background:rgba(128,128,128,.15); }
         .weather-detail-warnings img { width:42px; height:42px; object-fit:contain; }
+        .aqhi-map-layout { display:grid; grid-template-columns:minmax(0,2fr) minmax(220px,1fr); gap:16px; margin:16px 0; }
+        .aqhi-distribution-map { width:100%; background:rgba(112,177,206,.12); border:1px solid rgba(128,128,128,.2); border-radius:20px; }
+        .aqhi-map-land { fill:rgba(128,128,128,.2); stroke:rgba(128,128,128,.6); stroke-width:1; }
+        .aqhi-distribution-map g { cursor:pointer; }
+        .aqhi-distribution-map g > circle,.aqhi-distribution-map g > rect { stroke:#fff; stroke-width:2; }
+        .aqhi-distribution-map g[aria-pressed="true"] > circle,.aqhi-distribution-map g[aria-pressed="true"] > rect,.aqhi-distribution-map g:focus > circle,.aqhi-distribution-map g:focus > rect { stroke:rgb(var(--mdui-color-primary)); stroke-width:5; }
+        .aqhi-distribution-map text { fill:white; font:700 12px Arial,sans-serif; pointer-events:none; }
+        .aqhi-map-legend { display:flex; flex-wrap:wrap; gap:12px; font-size:.8rem; }
+        .aqhi-map-legend span { display:inline-flex; gap:6px; align-items:center; }
+        .aqhi-map-legend i { width:12px; height:12px; border-radius:50%; }
+        .aqhi-station-detail { padding:20px; border-radius:20px; background:rgba(128,128,128,.07); }
+        .aqhi-detail-value { display:block; font-size:2rem; }
+        .aqhi-station-button { border:0; padding:8px 0; color:inherit; background:transparent; font:inherit; text-align:left; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+        .aqhi-row-selected { background:rgba(var(--mdui-color-primary),.09); }
+        .aqhi-source { display:inline-block; margin-top:16px; color:inherit; }
+        @media(max-width:760px) { .aqhi-map-layout { grid-template-columns:minmax(0,1fr); } }
         .weather-detail-meta { font-size:.75rem; opacity:.65; line-height:1.6; }
         .weather-imagery { margin:0; text-align:center; min-width:0; }
         .weather-imagery figcaption { font-weight:600; margin-bottom:12px; }
@@ -919,7 +935,8 @@
         <mdui-button slot="action" variant="filled" id="settings-reset-confirm">恢复默认设置</mdui-button>
     </mdui-dialog>
     <script src="js/weather-warning-dialog.js?v=material-table-v3"></script>
-    <script src="js/weather-detail.js?v=weather-rainfall-v5"></script>
+    <script src="js/aqhi-detail.js?v=aqhi-map-v1"></script>
+    <script src="js/weather-detail.js?v=weather-aqhi-v6"></script>
     <script src="js/aed-wait.js?v=wait-colors-v2"></script>
     <script src="js/weather-upgrades.js?v=warning-details-v1"></script>
     <script>
