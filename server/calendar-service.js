@@ -15,7 +15,7 @@ export function validateEvent(value){
 }
 function boundedId(value){if(typeof value!=='string'||!value||value.length>2048||/[\x00-\x1f]/.test(value))throw new CalendarError(400,'日历标识不正确');return encodeURIComponent(value);}
 export async function calendarApi(provider,data,action,req,res,url){
- if(!calendarGranted(provider,data.scopes))throw new CalendarError(403,'请先授权日历读写权限');
+ if(data.calendarDisconnected||!calendarGranted(provider,data.scopes))throw new CalendarError(403,'请先授权日历读写权限');
  const base=provider==='google'?'https://www.googleapis.com/calendar/v3':'https://graph.microsoft.com/v1.0';
  const call=async(path,options={})=>{const response=await fetch(base+path,{...options,redirect:'error',signal:AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+data.accessToken,...(provider==='microsoft'?{Prefer:'outlook.timezone="UTC", outlook.body-content-type="text"'}:{}),...options.headers}});if(response.status===401)throw new CalendarError(401,'日历授权已失效，请重新登录');if(response.status===409||response.status===412)throw new CalendarError(409,'日程已被其他设备修改，请刷新后重试');if(response.status===403)throw new CalendarError(403,'日历权限不足或日历不可编辑');if(response.status===404)throw new CalendarError(404,'日历或日程已不存在，请刷新');if(!response.ok)throw new CalendarError(502,'日历服务暂时不可用，请稍后重试');return response;};
  const calendarPath=id=>provider==='google'?'/calendars/'+boundedId(id):'/me/calendars/'+boundedId(id);

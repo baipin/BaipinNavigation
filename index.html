@@ -581,6 +581,9 @@
         :is(#calendar-accounts-dialog,#calendar-event-dialog,#calendar-delete-dialog)::part(panel) { width:min(620px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); background:rgb(var(--mdui-color-surface-container-high)); }
         #calendar-delete-dialog { z-index:2700; }
         .calendar-account-section { display:grid; gap:8px; padding:16px 0; border-bottom:1px solid rgba(128,128,128,.2); }
+        .calendar-provider-heading { display:flex; align-items:center; gap:10px; }
+        .calendar-provider-heading img { width:24px; height:24px; object-fit:contain; flex:none; }
+        .settings-calendar-section { margin-top:20px; padding-top:20px; border-top:1px solid rgba(128,128,128,.2); }
         .calendar-account-section h3,.calendar-account-section p { margin:0; }
         .calendar-account-section small { font-size:.75rem; opacity:.7; line-height:1.6; }
         :is(#calendar-event-dialog,#calendar-accounts-dialog,#calendar-delete-dialog) [hidden] { display:none !important; }
@@ -985,7 +988,6 @@
             <p id="background-camera-status" role="status" aria-live="polite"></p>
         </mdui-tab-panel>
         <mdui-tab-panel slot="panel" value="sync" class="settings-panel" data-settings-panel="sync"><div class="settings-sync-content">
-            <mdui-button variant="text" icon="calendar_month" data-open-calendar-accounts>日历账号与授权</mdui-button>
             <section id="preset-sync-panel" aria-label="多端预设同步">
                 <strong>多端预设同步</strong>
                 <div class="preset-sync-actions" role="group" aria-label="选择同步服务" style="margin-top:12px;">
@@ -1011,6 +1013,10 @@
                 </div>
                 <p class="preset-sync-hint">首次同步或两端均有修改时，请选择保留哪一端。自动同步在编辑时暂停；退出登录不会删除预设。</p>
                 </div>
+            </section>
+            <section class="settings-calendar-section" aria-labelledby="settings-calendar-heading">
+                <strong id="settings-calendar-heading">日历账号与授权</strong>
+                <div class="preset-sync-actions" style="margin-top:12px;"><mdui-button variant="outlined" icon="calendar_month" data-open-calendar-accounts>日历账号与显示</mdui-button></div>
             </section>
             <mdui-divider></mdui-divider>
             <mdui-button variant="tonal" id="export-data-btn" icon="download">导出预设（JSON）</mdui-button>
@@ -4262,9 +4268,9 @@ function setBackgroundToCookie(value) {
         })();
     </script>
     <script src="js/app-info.js?v=privacy-hk-v2"></script>
-    <script src="js/settings.js?v=calendar-settings-v3"></script>
+    <script src="js/settings.js?v=calendar-settings-v4"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
     <script type="module" src="js/sync.js?v=calendar-permissions-v3"></script>
-    <script type="module" src="js/calendar.js?v=icloud-password-help-v3"></script>
+    <script type="module" src="js/calendar.js?v=calendar-disconnect-v4"></script>
 </body>
 </html>

@@ -14,6 +14,13 @@ try{
   calendar=true;account='other-user';result=await call(provider,'callback',{cookie:authCookies,params});assert.match(result.headers.Location,/account-mismatch/);assert.ok(!result.headers['Set-Cookie'].some(x=>x.startsWith(provider==='google'?'__Host-navi_sync=':'__Host-navi_microsoft0=')));
   account='user7';result=await call(provider,'callback',{cookie:authCookies,params});assert.match(result.headers.Location,/calendar=connected/);const session2=cookieOf(result);result=await call(provider,'status',{cookie:session2});assert.equal(result.body.calendarAuthorized,true);
   result=await call(provider,'calendar-delete',{cookie:session2,method:'POST',origin:'https://evil.test'});assert.equal(result.statusCode,403);
+  result=await call(provider,'calendar-disconnect',{cookie:session2,method:'POST',origin:'https://evil.test'});assert.equal(result.statusCode,403);
+  result=await call(provider,'calendar-disconnect',{cookie:session2,method:'POST'});assert.equal(result.statusCode,200);const disconnected=cookieOf(result);
+  result=await call(provider,'status',{cookie:disconnected});assert.equal(result.body.authenticated,true);assert.equal(result.body.user.id,'user7');assert.equal(result.body.calendarAuthorized,false);
+  const disconnectedCalls=requests.length;result=await call(provider,'calendar-list',{cookie:disconnected});assert.equal(result.statusCode,403);assert.equal(requests.length,disconnectedCalls);
+  result=await call(provider,'login',{cookie:disconnected});const normalUrl=new URL(result.headers.Location);result=await call(provider,'callback',{cookie:disconnected+'; '+cookieOf(result),params:'&code=normal&state='+normalUrl.searchParams.get('state')});const normalSession=cookieOf(result);result=await call(provider,'status',{cookie:normalSession});assert.equal(result.body.authenticated,true);assert.equal(result.body.calendarAuthorized,false);
+  result=await call(provider,'calendar-login',{cookie:normalSession});const reconnectUrl=new URL(result.headers.Location);result=await call(provider,'callback',{cookie:normalSession+'; '+cookieOf(result),params:'&code=reconnect&state='+reconnectUrl.searchParams.get('state')});result=await call(provider,'status',{cookie:cookieOf(result)});assert.equal(result.body.authenticated,true);assert.equal(result.body.calendarAuthorized,true);
+
  }
  console.log('PASS: existing sync accounts detected, calendar scopes requested only on opt-in, login hints, account-mismatch protection, permission flags and calendar write CSRF.');
 }finally{globalThis.fetch=original;for(const[k,v]of Object.entries(previous)){if(v===undefined)delete process.env[k];else process.env[k]=v;}}

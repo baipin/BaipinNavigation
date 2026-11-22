@@ -120,3 +120,5 @@ CITY FEED 股票与指数卡片加入最近交易日的真实 5 分钟价格走�
 日历显示偏好（服务、账号标识、所选日历 ID）纳入预设导入导出、恢复默认和多端同步；日程内容、OAuth 令牌与 iCloud 密码不进入预设。日程只保留页面内存，服务端请求期间临时处理。iCloud 凭证保存在最长 30 天的独立 AES-GCM 加密 HttpOnly Secure Cookie；用 ICLOUD_SESSION_KEY 加密。CalDAV 仅允许 Apple 官方固定主机格式，不接受任意服务器地址，XML 拒绝 DTD/实体声明。Google/Microsoft 和 CalDAV 更新使用 ETag 冲突检查；iCloud 重复日程修改/删除只影响本次，含邀请的 iCloud 日程在本站只读。
 
 测试：`node tests/calendar.test.mjs`、`node tests/calendar-oauth.test.mjs`、`node tests/icloud.test.mjs`，并运行原有 sync/microsoft/github 测试。测试均使用模拟服务；真实授权仍需提供商权限和应用配置。
+
+日历对话框的 Google/Microsoft 退出仅停用当前设备的日历连接，预设同步会话和自动同步状态保留；服务器会阻止已停用连接的日历读写，普通预设重新登录不会自动重新连接日历，需用户再次点击日历授权。iCloud 断开仍只清除其独立会话。

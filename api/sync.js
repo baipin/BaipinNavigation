@@ -109,7 +109,7 @@ export default async function handler(req,res) {
             if (action === 'status') return res.status(200).json({configured:false,authenticated:false,redirectUri:settings.redirect});
             throw new SyncError(503,'服务器未配置 GOOGLE_KEY');
         }
-        const post = ['push','logout','calendar-save','calendar-delete'].includes(action);
+        const post = ['push','logout','calendar-save','calendar-delete','calendar-disconnect'].includes(action);
         if (req.method !== (post?'POST':'GET')) { res.setHeader('Allow',post?'POST':'GET'); throw new SyncError(405,'请求方法不支持'); }
         if (post && req.headers.origin !== origin) throw new SyncError(403,'请求来源不正确');
         if (['login','calendar-login'].includes(action)) {
@@ -136,12 +136,12 @@ export default async function handler(req,res) {
             if(saved.accountId && info.sub!==saved.accountId)return finish('account-mismatch');
             const scopes=String(result.scope || '').split(' ');if(saved.calendar&&!calendarGranted('google',scopes))return finish('permission-error');
             const previous=unseal(sessionValue(req)),refreshToken=result.refresh_token || (previous?.user.id===info.sub?previous.refreshToken:null);if(!refreshToken)return finish('permission-error');
-            const sessionData = {scopes,user:{id:info.sub,name:info.name || info.email,email:info.email,avatar:avatarUrl(info.picture)},accessToken:result.access_token,refreshToken,accessExpires:Date.now()+Number(result.expires_in || 3600)*1000,expires:Date.now()+30*86400000};
+            const sessionData = {scopes,calendarDisconnected:saved.calendar?false:previous?.user.id===info.sub&&previous.calendarDisconnected===true,user:{id:info.sub,name:info.name || info.email,email:info.email,avatar:avatarUrl(info.picture)},accessToken:result.access_token,refreshToken,accessExpires:Date.now()+Number(result.expires_in || 3600)*1000,expires:Date.now()+30*86400000};
             saveSession(res,sessionData);
             return finish('connected');
         }
         if (action === 'logout') { saveSession(res,null); return res.status(200).json({ok:true}); }
-        if (!['status','pull','push','calendar-list','calendar-events','calendar-save','calendar-delete'].includes(action)) throw new SyncError(404,'接口不存在');
+        if (!['status','pull','push','calendar-list','calendar-events','calendar-save','calendar-delete','calendar-disconnect'].includes(action)) throw new SyncError(404,'接口不存在');
         let data;
         try { data = await session(req,res); }
         catch (error) {
@@ -154,8 +154,9 @@ export default async function handler(req,res) {
                 try {const response=await google('https://openidconnect.googleapis.com/v1/userinfo',{headers:{Authorization:`Bearer ${data.accessToken}`}});if(response.ok)data.user.avatar=avatarUrl((await response.json()).picture);}catch{}
                 saveSession(res,data);
             }
-            return res.status(200).json({configured:true,authenticated:true,user:data.user,calendarAuthorized:calendarGranted('google',data.scopes),redirectUri:settings.redirect});
+            return res.status(200).json({configured:true,authenticated:true,user:data.user,calendarAuthorized:!data.calendarDisconnected&&calendarGranted('google',data.scopes),redirectUri:settings.redirect});
         }
+        if(action==='calendar-disconnect'){data.calendarDisconnected=true;saveSession(res,data);return res.status(200).json({ok:true});}
         if(action.startsWith('calendar-'))return await calendarApi('google',data,action,req,res,url);
         if (action === 'pull') {
             const cloud = await readCloud(data);

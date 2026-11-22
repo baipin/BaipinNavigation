@@ -19,6 +19,8 @@
         document.getElementById('settings-rain-region').setAttribute('aria-label',labels.rain);
         document.getElementById('settings-aqhi-region').setAttribute('aria-label',labels.aqhi);
         document.getElementById('settings-current-engine').setAttribute('aria-label',labels.engine);
+        document.getElementById('settings-calendar-heading').textContent=sc?'日历账号与授权':'日曆帳戶與授權';
+        document.querySelector('[data-open-calendar-accounts]').textContent=sc?'日历账号与显示':'日曆帳戶與顯示';
         document.getElementById('settings-calendar').textContent=sc?'日历账号与显示':'日曆帳戶與顯示';
         refreshDistricts();refreshEngines();
     }
