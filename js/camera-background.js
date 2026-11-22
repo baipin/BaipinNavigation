@@ -80,13 +80,14 @@ async function updateBackground(candidate=choice,persist=false) {
         if(newPlayer){newPlayer.video.className='webcast-live-background';activePlayer=newPlayer;newPlayer=null;}
         updateAttribution();renderSelection();showStatus(t('已设为背景：','已設為背景：')+name(currentCamera()));
     } catch(error) {
-        if(current===revision && error.name!=='AbortError'){failed=true;showStatus(t('图像暂时无法取得，已保留原背景。请稍后重试。','圖像暫時無法取得，已保留原背景。請稍後重試。'));}
+        if(current===revision && error.name!=='AbortError'){window.naviBackgroundStartup?.fallback();failed=true;showStatus(t('图像暂时无法取得，已保留原背景。请稍后重试。','圖像暫時無法取得，已保留原背景。請稍後重試。'));}
     } finally {
         newPlayer?.destroy();if(owned && !transferred && url)URL.revokeObjectURL(url);
         if(current===revision){pending=false;pendingChoice=null;pendingController=null;renderSelection();schedule();}
     }
 }
 function stopCamera() {
+    window.naviBackgroundStartup?.fallback();
     revision++;pendingController?.abort();pendingController=null;stopLivePlayer();
     if(backgroundBlobUrl){URL.revokeObjectURL(backgroundBlobUrl);backgroundBlobUrl=null;}
     clearTimeout(timer);timer=null;choice=null;lastUpdate=null;failed=false;pending=false;pendingChoice=null;
@@ -181,7 +182,7 @@ render();
 const initialize=async()=>{
     if(!choice)return;
     try {await loadCatalog();if(choice.source==='bing')await loadBing();render();updateBackground();}
-    catch {showStatus(t('摄影机背景暂时无法载入，已保留照片背景。','攝影機背景暫時無法載入，已保留照片背景。'));}
+    catch {window.naviBackgroundStartup?.fallback();showStatus(t('摄影机背景暂时无法载入，已保留照片背景。','攝影機背景暫時無法載入，已保留照片背景。'));}
 };
-if(document.readyState==='complete')initialize();
-else window.addEventListener('load',initialize,{once:true});
+// Module scripts run after parsing; do not wait for ads and other unrelated assets.
+initialize();

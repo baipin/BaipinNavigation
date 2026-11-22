@@ -5,7 +5,7 @@
 
 <!DOCTYPE html>
 <html lang="zh-CN" class="mdui-theme-light">
-<head>
+<head><script src="/js/background-startup.js?v=first-paint-v1"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>百品导航 - 客制化高自由度网址导航</title>
@@ -46,7 +46,7 @@
             --text-main: #ffffff;
         }
         html, body { margin: 0; padding: 0; min-height: 100vh; background: transparent !important; color: var(--text-main); }
-        body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('img/home.jpg') center/cover no-repeat; z-index: -2; }
+        body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--navi-wallpaper,url('img/home.jpg')) center/cover no-repeat; z-index: -2; }
         .app-bar {
             position: fixed; top: 0; left: 0; right: 0; height: var(--nav-height);
             z-index: 2000; display: flex; align-items: center; padding: 0 5%;
@@ -1896,6 +1896,7 @@ document.getElementById('random-bg-btn').onclick = async () => {
 };
 
 function applyBackground(url, photoInfo = null) {
+    window.naviBackgroundStartup?.ready(url);
     // 不再判断 bgElement，直接通过 style 标签覆盖伪元素样式
     const styleId = 'custom-bg-style';
     let style = document.getElementById(styleId);
@@ -1958,6 +1959,9 @@ function updateAttributionFooter(info) {
 }
 
         function loadSavedBackground() {
+    if(window.naviBackgroundStartup?.pending)return;
+    document.documentElement.style.removeProperty('--navi-wallpaper');
+    document.documentElement.style.removeProperty('--legal-wallpaper');
     const cookies = document.cookie.split(';');
     let savedValue = null;
     for (let cookie of cookies) {
@@ -2016,6 +2020,8 @@ function setBackgroundToCookie(value) {
                 const oldStyle = document.getElementById('custom-bg-style');
                 if (oldStyle) oldStyle.remove();
                 document.body.style.backgroundImage = '';
+                document.documentElement.style.removeProperty('--navi-wallpaper');
+                document.documentElement.style.removeProperty('--legal-wallpaper');
                 clearBackgroundCookie();
             
                 updateAttributionFooter({ isDefault:true });
@@ -4349,7 +4355,7 @@ function setBackgroundToCookie(value) {
     </script>
     <script src="js/app-info.js?v=feishu-history-v3"></script>
     <script src="js/settings.js?v=calendar-settings-v6"></script>
-    <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
+    <script type="module" src="js/camera-background.js?v=first-paint-v10"></script>
     <script type="module" src="js/sync.js?v=feishu-doubao-label-v15"></script>
     <script type="module" src="js/calendar.js?v=calendar-feishu-v31"></script>
 </body>

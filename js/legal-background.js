@@ -4,7 +4,7 @@ export function installLegalBackground({document:doc=document,window:win=window,
  let catalog=null,player=null,owned=null,controller=null,timer=null,revision=0,current=null,credit=null,stopped=false;
  const simple=()=>doc.documentElement.lang==='zh-CN',t=(s,c)=>simple()?s:c;
  const footer=doc.getElementById('legal-photo-credit');
- function image(url){doc.documentElement.style.setProperty('--legal-wallpaper','url('+JSON.stringify(url)+')');}
+ function image(url){win.naviBackgroundStartup?.ready(url);doc.documentElement.style.setProperty('--legal-wallpaper','url('+JSON.stringify(url)+')');}
  function stopPlayer(){player?.destroy();player=null;}
  function release(){if(owned){URL.revokeObjectURL(owned);owned=null;}}
  function link(label,url){const a=doc.createElement('a');a.textContent=label;a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;}
@@ -20,6 +20,7 @@ export function installLegalBackground({document:doc=document,window:win=window,
   footer.append(link((source==='hko'?t('香港天文台','香港天文台'):t('运输署','運輸署'))+' · '+name,source==='hko'?'https://www.hko.gov.hk/'+(simple()?'sc':'tc')+'/wxinfo/ts/index_webcam.htm':source.startsWith('webcast')?'https://www.hkemobility.gov.hk/'+(simple()?'sc':'tc')+'/traffic-information/live/webcast':'https://www.hkemobility.gov.hk/'));
  }
  function photo(){
+  if(win.naviBackgroundStartup?.pending)return;
   let saved=null;try{const raw=doc.cookie.split(';').map(x=>x.trim()).find(x=>x.startsWith('homepage_bg='))?.slice(12);if(raw){const decoded=decodeURIComponent(raw);try{saved=JSON.parse(decoded);}catch{saved={url:decoded};}const url=new URL(saved.url);if(['https:','http:'].includes(url.protocol)){image(url.href);credit=saved.info?.isDefault?null:{type:'photo',info:saved.info};renderCredit();return;}}}catch{}
   doc.documentElement.style.removeProperty('--legal-wallpaper');credit=null;renderCredit();
  }
@@ -45,10 +46,10 @@ export function installLegalBackground({document:doc=document,window:win=window,
    }
    if(generation!==revision||signal.aborted||stopped)return;
    image(url);stopPlayer();release();owned=nextOwned;nextOwned=null;player=nextPlayer;nextPlayer=null;if(player)player.video.className='webcast-live-background';credit=nextCredit;renderCredit();schedule();
-  }catch{if(generation===revision&&!stopped&&!abort.signal.aborted)schedule(true);}
+  }catch{if(generation===revision&&!stopped&&!abort.signal.aborted){if(win.naviBackgroundStartup?.pending){win.naviBackgroundStartup.fallback();renderCredit();}else if(!credit)photo();schedule(true);}}
   finally{nextPlayer?.destroy();if(nextOwned)URL.revokeObjectURL(nextOwned);if(controller===abort)controller=null;}
  }
- function select(){revision++;controller?.abort();clearTimer(timer);stopPlayer();release();photo();try{current=parseCameraPreference(storage.getItem(CAMERA_BACKGROUND_KEY));}catch{current=null;}if(current)void update();}
+ function select(){revision++;controller?.abort();clearTimer(timer);stopPlayer();release();try{current=parseCameraPreference(storage.getItem(CAMERA_BACKGROUND_KEY));}catch{current=null;}if(current){if(!win.naviBackgroundStartup)photo();void update();}else{if(win.naviBackgroundStartup)win.naviBackgroundStartup.pending=false;photo();}}
  const visibility=()=>{if(doc.visibilityState==='hidden'){revision++;controller?.abort();clearTimer(timer);stopPlayer();}else if(current?.refresh)void update();};
  const changed=event=>{if(event.key===CAMERA_BACKGROUND_KEY||event.key===null)select();};
  const language=()=>{renderCredit();if(current?.source==='bing')void update();};
