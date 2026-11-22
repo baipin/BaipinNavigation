@@ -115,6 +115,10 @@
             }
             .app-bar.search-open #header-search-close { display:inline-flex; }
             .header-search-host .search-container { padding-right:2px; }
+            .app-bar.search-open .header-search-host { justify-content:flex-end; }
+            .hero-search-slot .search-container.mobile-search-promoted { position:fixed; top:calc((var(--nav-height) - 44px)/2); left:5%; width:calc(90% - 48px); max-width:none; height:44px; padding:0 8px; z-index:2001; box-shadow:none; transform-origin:top left; }
+            .mobile-search-promoted .search-input { padding:10px 8px; font-size:16px; }
+
         }
 
         @media(prefers-reduced-motion:reduce) {
@@ -1224,7 +1228,7 @@
             if (searchCloseAnimation) { searchCloseAnimation.cancel(); searchCloseAnimation=null; }
             const finish = () => {
                 appBar.classList.remove('search-open','search-closing');
-                if(searchPromoted){searchPromoted=false;appBar.classList.toggle('search-docked',searchDocked);if(!searchDocked)heroSearchSlot.appendChild(searchBox);}
+                if(searchPromoted){searchPromoted=false;searchBox.classList.remove('mobile-search-promoted');appBar.classList.toggle('search-docked',searchDocked);}
                 mobileSearchToggle.setAttribute('aria-expanded','false');
                 if (returnFocus && searchDocked) mobileSearchToggle.focus();else if(returnFocus)searchInput.blur();
             };
@@ -1243,30 +1247,27 @@
             closeHeaderSearch(false);
             const dock = searchDocked;
             appBar.classList.toggle('search-docked', dock);
-            if (dock) headerSearchHost.insertBefore(searchBox,document.getElementById('header-search-close'));
-            else heroSearchSlot.appendChild(searchBox);
+            if (dock && !mobileSearchMedia.matches) {if(searchBox.parentElement!==headerSearchHost)headerSearchHost.insertBefore(searchBox,document.getElementById('header-search-close'));}
+            else if(searchBox.parentElement!==heroSearchSlot)heroSearchSlot.appendChild(searchBox);
         }
-        mobileSearchToggle.onclick = () => {
-            if(searchCloseAnimation) {searchCloseAnimation.cancel();searchCloseAnimation=null;}
-            appBar.classList.remove('search-closing');
-            appBar.classList.add('search-open');
-            mobileSearchToggle.setAttribute('aria-expanded', 'true');
-            searchInput.focus();
-        };
+        mobileSearchToggle.onclick = () => promoteMobileSearch();
         function promoteMobileSearch() {
             if(!mobileSearchMedia.matches || appBar.classList.contains('search-open'))return;
+            if(searchCloseAnimation){searchCloseAnimation.cancel();searchCloseAnimation=null;}
+            appBar.classList.remove('search-closing');
             const from=searchBox.getBoundingClientRect();
             searchPromoted=true;appBar.classList.add('search-docked','search-open');
-            headerSearchHost.insertBefore(searchBox,document.getElementById('header-search-close'));
+            // Keep the focused input in its original DOM position: reparenting interrupts mobile IMEs.
+            searchBox.classList.add('mobile-search-promoted');
             mobileSearchToggle.setAttribute('aria-expanded','true');
-            if(!matchMedia('(prefers-reduced-motion:reduce)').matches){
+            if(from.bottom>64 && from.top<innerHeight && !matchMedia('(prefers-reduced-motion:reduce)').matches){
                 const to=searchBox.getBoundingClientRect();
                 searchBox.animate([{transform:`translate(${from.left-to.left}px,${from.top-to.top}px) scale(${from.width/to.width},${from.height/to.height})`},{transform:'none'}],{duration:300,easing:'cubic-bezier(.2,0,0,1)'});
             }
             searchInput.focus({preventScroll:true});
         }
         searchInput.addEventListener('focus',promoteMobileSearch);
-        searchInput.addEventListener('pointerdown',event=>{if(mobileSearchMedia.matches && !appBar.classList.contains('search-open')){event.preventDefault();promoteMobileSearch();}});
+        searchInput.addEventListener('pointerdown',()=>{if(mobileSearchMedia.matches)promoteMobileSearch();});
         document.getElementById('header-search-close').onclick = () => closeHeaderSearch(true,true);
         searchInput.addEventListener('keydown', event => {
             if (event.key === 'Escape' && mobileSearchMedia.matches && appBar.classList.contains('search-open')) {
