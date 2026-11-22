@@ -226,6 +226,39 @@
     }
     const boardObserver = new ResizeObserver(()=>requestAnimationFrame(fitBoard));
     board.querySelectorAll('.city-feed-board-grid').forEach(grid=>boardObserver.observe(grid));
+    const trendCache=new Map(),trendQueue=new Map();let trendActive=0;
+    function paintTrend(slot,market){
+        const data=trendCache.get(market.symbol)?.data,face=slot.querySelector('.city-feed-face:not(.city-feed-outgoing)');
+        if(!face || face.dataset.market!==market.id)return;
+        face.querySelector('.city-feed-trend')?.remove();
+        if(!data || data.points.length<2)return;
+        const points=data.points,min=Math.min(...points.map(p=>p.value)),max=Math.max(...points.map(p=>p.value)),start=points[0].time,end=points.at(-1).time;
+        const coords=points.map(p=>[(p.time-start)/(end-start || 1)*300,52-(p.value-min)/(max-min || 1)*44]);
+        if(max===min)coords.forEach(p=>p[1]=30);
+        const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('city-feed-trend');svg.setAttribute('viewBox','0 0 300 60');svg.setAttribute('preserveAspectRatio','none');svg.setAttribute('aria-hidden','true');
+        const line=coords.map((p,i)=>(i?'L':'M')+p.map(n=>n.toFixed(2)).join(',')).join(' ');
+        const area=document.createElementNS(svg.namespaceURI,'path');area.setAttribute('d',line+' L300,60 L0,60 Z');area.setAttribute('class','city-feed-trend-area');
+        const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',line);path.setAttribute('class','city-feed-trend-line');svg.append(area,path);face.prepend(svg);
+        slot.title=slot.title.replace(/ · (?:最近交易日走势|最近交易日走勢).*$/,'');
+        slot.title+=' · '+text('最近交易日走势 ','最近交易日走勢 ')+data.date+' ('+data.zone+')';
+    }
+    function requestTrend(slot,market){
+        if(!market.symbol)return;
+        paintTrend(slot,market);
+        const cached=trendCache.get(market.symbol);if(cached && Date.now()-cached.time<300000)return;
+        if(!trendQueue.has(market.symbol))trendQueue.set(market.symbol,{market,slots:new Set()});
+        trendQueue.get(market.symbol).slots.add(slot);drainTrends();
+    }
+    function drainTrends(){
+        for(const [symbol,job] of trendQueue){
+            if(trendActive>=3)break;if(job.running)continue;job.running=true;trendActive++;
+            fetch('/api/market-trend?symbol='+encodeURIComponent(symbol),{signal:AbortSignal.timeout(12000)}).then(r=>{if(!r.ok)throw Error('trend');return r.json();}).then(data=>{
+                if(data.symbol!==symbol || !Array.isArray(data.points) || data.points.length<2 || data.points.length>400 || data.points.some(p=>!Number.isFinite(p.time)||!Number.isFinite(p.value)||p.value<=0))throw Error('trend');
+                data.points.sort((a,b)=>a.time-b.time);trendCache.set(symbol,{time:Date.now(),data});
+                for(const slot of job.slots){slot.title=slot.title.replace(/ · (?:最近交易日走势|最近交易日走勢).*$/,'');paintTrend(slot,job.market);}
+            }).catch(()=>{trendCache.set(symbol,{time:Date.now(),data:trendCache.get(symbol)?.data});}).finally(()=>{trendActive--;trendQueue.delete(symbol);drainTrends();});
+        }
+    }
     const timers = new WeakMap();
     function renderQuote(slot, market) {
         const quote = state.get(market.id);
@@ -234,7 +267,7 @@
         const price = quote?.price || '--';
         const change = quote?.change || (quote?.failed ? text('不可用','不可用') : text('读取中','讀取中'));
         const signature = [market.id,name,price,change,quote?.stale].join('|');
-        if (slot.dataset.signature === signature) return;
+        if (slot.dataset.signature === signature) {requestTrend(slot,market);return;}
         slot.dataset.signature = signature;
         clearTimeout(timers.get(slot));
         slot.querySelectorAll('.city-feed-outgoing').forEach((node) => node.remove());
@@ -242,6 +275,7 @@
         const face = document.createElement('div');
         face.className = 'city-feed-face';
         face.dataset.direction = quote?.direction || 'flat';
+        face.dataset.market=market.id;
         [ ['city-feed-name',name], ['city-feed-price',price], ['city-feed-change',change] ].forEach(([className,value]) => {
             const span = document.createElement('span');
             span.className = className;
@@ -255,6 +289,7 @@
             face.classList.add('city-feed-incoming');
         }
         slot.append(face);
+        requestTrend(slot,market);
         timers.set(slot, setTimeout(() => { previous?.remove(); face.classList.remove('city-feed-incoming'); }, 650));
     }
     function renderMarkets() {
