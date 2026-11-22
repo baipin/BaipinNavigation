@@ -1,0 +1,341 @@
+{
+  "basis": "Git author dates in Asia/Hong_Kong (UTC+8)",
+  "entries": [
+    {
+      "date": "2026-11-22",
+      "commit": "2057c2965efc603abf6dafaa270175c7dff440a0",
+      "sc": {
+        "title": "飞书快捷登录、预设同步与日历",
+        "description": "加入飞书云空间完整预设同步、云端清除和独立日历授权，普通日程可新增、编辑和删除。"
+      },
+      "tc": {
+        "title": "飛書快捷登入、預設同步與日曆",
+        "description": "加入飛書雲空間完整預設同步、雲端清除及獨立日曆授權，一般日程可新增、編輯及刪除。"
+      }
+    },
+    {
+      "date": "2026-11-22",
+      "commit": "ce5d99def232e8cc3242749a2f85429991d63112",
+      "sc": {
+        "title": "农历、节气与假期详情",
+        "description": "日历日期下显示公众假期、节气或农历，选中日期可查看完整文字详情。"
+      },
+      "tc": {
+        "title": "農曆、節氣與假期詳情",
+        "description": "日曆日期下顯示公眾假期、節氣或農曆，選取日期可查看完整文字詳情。"
+      }
+    },
+    {
+      "date": "2026-11-22",
+      "commit": "9a84fba737000b2efd829aa49e296086696ed093",
+      "sc": {
+        "title": "清除云端预设",
+        "description": "登录后可清除当前账号的云端预设，并选择重新上传、本机恢复初始设置或完全退出本站。"
+      },
+      "tc": {
+        "title": "清除雲端預設",
+        "description": "登入後可清除目前帳戶的雲端預設，並選擇重新上傳、本機還原初始設定或完全登出本站。"
+      }
+    },
+    {
+      "date": "2026-11-22",
+      "commit": "40749e6c88ab9cc8641992239dc914626c9ca401",
+      "sc": {
+        "title": "日历登录状态默认加密同步",
+        "description": "iCloud／Canvas 登录状态默认由服务器加密后随完整预设保存，登录同步账号后自动恢复尚未连接的日历。"
+      },
+      "tc": {
+        "title": "日曆登入狀態預設加密同步",
+        "description": "iCloud／Canvas 登入狀態預設由伺服器加密後隨完整預設儲存，登入同步帳戶後自動還原尚未連接的日曆。"
+      }
+    },
+    {
+      "date": "2026-11-22",
+      "commit": "1e17923a16ba2aeb8b9273aa992ee32b79965809",
+      "sc": {
+        "title": "日程提醒与公众假期标记",
+        "description": "增加今天／明天日程的 Snackbar 提醒、单事件不再提示，以及星期日和香港公众假期的红色标记。"
+      },
+      "tc": {
+        "title": "日程提醒與公眾假期標記",
+        "description": "加入今天／明天日程的 Snackbar 提醒、單一事件不再提示，以及星期日和香港公眾假期的紅色標記。"
+      }
+    },
+    {
+      "date": "2026-11-22",
+      "commit": "5112c12d87533f99781598d41bb73dba5066d2f2",
+      "sc": {
+        "title": "Canvas 课程与作业截止日期",
+        "description": "连接学校 Canvas，按课程读取日历事件及作业 Due；显示内容为只读。"
+      },
+      "tc": {
+        "title": "Canvas 課程與作業截止日期",
+        "description": "連接學校 Canvas，按課程讀取日曆事件及作業 Due；顯示內容為唯讀。"
+      }
+    },
+    {
+      "date": "2026-11-22",
+      "commit": "4864a2c405b411fc9db310d0e99b43f50a4712aa",
+      "sc": {
+        "title": "首页日历与多账户日程",
+        "description": "加入 Google、Microsoft 和 iCloud 日历，支持月份浏览及有权限日程的新增、编辑、删除。"
+      },
+      "tc": {
+        "title": "首頁日曆與多帳戶日程",
+        "description": "加入 Google、Microsoft 及 iCloud 日曆，支援月份瀏覽及有權限日程的新增、編輯、刪除。"
+      }
+    },
+    {
+      "date": "2026-11-22",
+      "commit": "4fc29729f97cd4b73d82b5e9b897349c330ee475",
+      "sc": {
+        "title": "Microsoft OneDrive 预设同步",
+        "description": "加入 Microsoft 登录与 OneDrive 应用文件夹同步，并为登录按钮配置服务图标。"
+      },
+      "tc": {
+        "title": "Microsoft OneDrive 預設同步",
+        "description": "加入 Microsoft 登入與 OneDrive 應用程式資料夾同步，並為登入按鈕配置服務圖示。"
+      }
+    },
+    {
+      "date": "2026-11-22",
+      "commit": "d5943558d068a67834068372c3c51c7fa7958eb6",
+      "sc": {
+        "title": "气旋路径、分区气温与世界天气",
+        "description": "天气详情加入热带气旋路径、分区气温及可自行搜索、添加的世界城市天气；随后支持将城市天气贴在首页。"
+      },
+      "tc": {
+        "title": "氣旋路徑、分區氣溫與世界天氣",
+        "description": "天氣詳情加入熱帶氣旋路徑、分區氣溫及可自行搜尋、新增的世界城市天氣；其後支援將城市天氣貼在首頁。"
+      }
+    },
+    {
+      "date": "2026-11-22",
+      "commit": "7d4e16779006e87660226e4d91b4a0651844e8af",
+      "sc": {
+        "title": "分区空气质素详情",
+        "description": "增加 AQHI 站点分布图及各站详细空气质素健康风险。"
+      },
+      "tc": {
+        "title": "分區空氣質素詳情",
+        "description": "加入 AQHI 站點分布圖及各站詳細空氣質素健康風險。"
+      }
+    },
+    {
+      "date": "2026-11-22",
+      "commit": "e39cc8a9bf8f9f783aa20b2f259ad1eb9836edbf",
+      "sc": {
+        "title": "行情走势背景",
+        "description": "CITY FEED 的股票及指数板块加入最近交易日的真实走势图背景。"
+      },
+      "tc": {
+        "title": "行情走勢背景",
+        "description": "CITY FEED 的股票及指數板塊加入最近交易日的真實走勢圖背景。"
+      }
+    },
+    {
+      "date": "2026-11-22",
+      "commit": "a09f42e3411b50990e1de87449a5f9183b7e0cdf",
+      "sc": {
+        "title": "Bing 每日背景",
+        "description": "背景来源加入 Bing 每日图片。"
+      },
+      "tc": {
+        "title": "Bing 每日背景",
+        "description": "背景來源加入 Bing 每日圖片。"
+      }
+    },
+    {
+      "date": "2026-11-22",
+      "commit": "333b5ca6afe38fabe3d09b8d3695aaedf5b8c43f",
+      "sc": {
+        "title": "详细天气对话框",
+        "description": "加入详细天气、九天预报、雷达和卫星图；急症室轮候时间增加长短颜色提示。"
+      },
+      "tc": {
+        "title": "詳細天氣對話框",
+        "description": "加入詳細天氣、九天預報、雷達及衛星圖；急症室輪候時間加入長短顏色提示。"
+      }
+    },
+    {
+      "date": "2026-11-22",
+      "commit": "1fbffd095b1f6843dea110ff249a520f6691baa9",
+      "sc": {
+        "title": "交通直播背景",
+        "description": "背景选项加入交通直播首帧和视频，并采用磨砂玻璃页脚。"
+      },
+      "tc": {
+        "title": "交通直播背景",
+        "description": "背景選項加入交通直播首幀及影片，並採用磨砂玻璃頁尾。"
+      }
+    },
+    {
+      "date": "2026-11-22",
+      "commit": "e7aa063b1e0bb3cbd8b7143a202173213e8da2fa",
+      "sc": {
+        "title": "天气及交通摄影机背景",
+        "description": "加入天文台天气摄影机与交通快拍背景，并提供地点缩略图选择。"
+      },
+      "tc": {
+        "title": "天氣及交通攝影機背景",
+        "description": "加入天文台天氣攝影機及交通快拍背景，並提供地點縮圖選擇。"
+      }
+    },
+    {
+      "date": "2026-11-21",
+      "commit": "46ecc13b3c23dcabf1758bd60ce34932b73d330a",
+      "sc": {
+        "title": "恢复默认设置与天气警告详情",
+        "description": "加入可撤销的本机默认设置恢复，以及天气警告详情和当日警告记录。"
+      },
+      "tc": {
+        "title": "還原預設設定與天氣警告詳情",
+        "description": "加入可復原的本機預設設定還原，以及天氣警告詳情和當日警告記錄。"
+      }
+    },
+    {
+      "date": "2026-11-21",
+      "commit": "38c48f4e9b810f728af9c9a172a8063cf6dd122d",
+      "sc": {
+        "title": "统一设置与账号页脚",
+        "description": "将外观、背景及登录备份配置整合到设置对话框，页脚增加账号与同步时间。"
+      },
+      "tc": {
+        "title": "統一設定與帳戶頁尾",
+        "description": "將外觀、背景及登入備份設定整合至設定對話框，頁尾加入帳戶與同步時間。"
+      }
+    },
+    {
+      "date": "2026-11-21",
+      "commit": "5550e8a1c3361a73127e18102959026a34d4dfe1",
+      "sc": {
+        "title": "GitHub Secret Gist 预设同步",
+        "description": "加入 GitHub 快捷登录，使用账号下的 Secret Gist 在设备间保存和同步完整预设。"
+      },
+      "tc": {
+        "title": "GitHub Secret Gist 預設同步",
+        "description": "加入 GitHub 快捷登入，使用帳戶下的 Secret Gist 在裝置間儲存及同步完整預設。"
+      }
+    },
+    {
+      "date": "2026-11-21",
+      "commit": "475f13c75ede23e3b9daa082aadbc9e2017a2758",
+      "sc": {
+        "title": "Google Drive 同步与站点政策",
+        "description": "加入 Google 登录及 Drive 应用专用空间预设同步，并提供简繁体隐私政策和服务条款。"
+      },
+      "tc": {
+        "title": "Google Drive 同步與站點政策",
+        "description": "加入 Google 登入及 Drive 應用專用空間預設同步，並提供簡繁體私隱政策和服務條款。"
+      }
+    },
+    {
+      "date": "2026-11-21",
+      "commit": "c35a83b779218f118fdcdcc1ee3934995df82f90",
+      "sc": {
+        "title": "自适应顶栏搜索",
+        "description": "搜索框离开视野后，电脑顶栏出现搜索框；手机顶栏提供搜索入口。"
+      },
+      "tc": {
+        "title": "自適應頂欄搜尋",
+        "description": "搜尋框離開視野後，電腦頂欄顯示搜尋框；手機頂欄提供搜尋入口。"
+      }
+    },
+    {
+      "date": "2026-11-21",
+      "commit": "586de8e46f6921be10866ce2d6ef8114c2282007",
+      "sc": {
+        "title": "跑马速度自定义",
+        "description": "CITY FEED 跑马文字可自行调速，速度配置纳入完整预设的导入、导出及同步。"
+      },
+      "tc": {
+        "title": "跑馬速度自訂",
+        "description": "CITY FEED 跑馬文字可自行調速，速度設定納入完整預設的匯入、匯出及同步。"
+      }
+    },
+    {
+      "date": "2026-11-20",
+      "commit": "4b3fec8012892c82bf84dd15929adc1b3de60687",
+      "sc": {
+        "title": "CITY FEED 自选与全屏大屏",
+        "description": "完善全屏时钟、全球天气与行车时间翻牌，加入自选股票和备份支持。"
+      },
+      "tc": {
+        "title": "CITY FEED 自選與全屏大屏",
+        "description": "完善全屏時鐘、全球天氣及行車時間翻牌，加入自選股票及備份支援。"
+      }
+    },
+    {
+      "date": "2026-11-20",
+      "commit": "a5c2d54239c98eaca7206869457ab071b65837d0",
+      "sc": {
+        "title": "全球天气与行情翻牌",
+        "description": "CITY FEED 加入全球城市天气、全屏模式及动态轮播行情。"
+      },
+      "tc": {
+        "title": "全球天氣與行情翻牌",
+        "description": "CITY FEED 加入全球城市天氣、全屏模式及動態輪播行情。"
+      }
+    },
+    {
+      "date": "2026-11-20",
+      "commit": "027c884eafc7b3ed17ecb02241fecfaca691578a",
+      "sc": {
+        "title": "CITY FEED 与天气小工具升级",
+        "description": "加入独立行情数据、指数与汇率展示，天气小工具增加警告图标及 AQHI 地区选择，并调整移动端布局。"
+      },
+      "tc": {
+        "title": "CITY FEED 與天氣小工具升級",
+        "description": "加入獨立行情資料、指數及匯率顯示，天氣小工具加入警告圖示及 AQHI 地區選擇，並調整流動版佈局。"
+      }
+    },
+    {
+      "date": "2026-09-23",
+      "commit": "9189fc5749f237b18ece0b5f1d441b26819cd272",
+      "sc": {
+        "title": "机场航班资讯",
+        "description": "加入 FlightAware 机场航班资料及缓存更新，随后完善抵达／出发分栏。"
+      },
+      "tc": {
+        "title": "機場航班資訊",
+        "description": "加入 FlightAware 機場航班資料及快取更新，其後完善抵達／出發分欄。"
+      }
+    },
+    {
+      "date": "2026-09-22",
+      "commit": "3b5a7eebb09332703c2ef1be07d2b53cdb7ad227",
+      "sc": {
+        "title": "香港实时资讯面板",
+        "description": "加入行车时间、港铁、巴士到站、急症室等候、公众假期和陆路口岸轮候等资讯。"
+      },
+      "tc": {
+        "title": "香港即時資訊面板",
+        "description": "加入行車時間、港鐵、巴士到站、急症室等候、公眾假期及陸路口岸輪候等資訊。"
+      }
+    },
+    {
+      "date": "2026-04-19",
+      "commit": "08861d103bb2a1ecda3e5e8b5db1279163ce3bf7",
+      "sc": {
+        "title": "Unsplash 背景图片接口",
+        "description": "加入 Unsplash 图片获取的接口记录，后续持续完善背景设置和作者署名。"
+      },
+      "tc": {
+        "title": "Unsplash 背景圖片介面",
+        "description": "加入 Unsplash 圖片取得的介面記錄，其後持續完善背景設定及作者署名。"
+      }
+    },
+    {
+      "date": "2026-04-19",
+      "commit": "04bf1261b7f3bb74c5a2ef727256481e34229787",
+      "sc": {
+        "title": "导航基础功能",
+        "description": "项目最早可追溯的首页界面包含快捷书签、自定义搜索引擎、RSS 新闻、天文台天气及深浅色主题等功能。"
+      },
+      "tc": {
+        "title": "導航基礎功能",
+        "description": "專案最早可追溯的首頁介面包含快捷書籤、自訂搜尋引擎、RSS 新聞、天文台天氣及深淺色主題等功能。"
+      }
+    }
+  ]
+}

@@ -140,7 +140,7 @@ function renderLoginButton(button,id,text){
     let label=button.querySelector('[data-provider-label]');
     if(!label){const icon=document.createElement('img');icon.src='/img/login-'+id+(id==='feishu'?'.ico':'.svg');icon.alt='';icon.slot='icon';icon.width=20;icon.height=20;label=document.createElement('span');label.dataset.providerLabel='';button.replaceChildren(icon,label);}
     const icon=button.querySelector('img[slot="icon"]');if(icon)icon.src='/img/login-'+id+(id==='feishu'?'.ico':'.svg');
-    label.textContent=translate(text);
+    label.textContent=id==='feishu'?(simplified()?'飞书/豆包 登录':'飛書/豆包 登入'):translate(text);
 }
 function updateProviderText() {
     providers.feishu.name=simplified()?'飞书':'飛書';

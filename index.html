@@ -11,7 +11,7 @@
     <title>百品导航 - 客制化高自由度网址导航</title>
     <meta property="og:title" content="百品导航 - 客制化高自由度网址导航">
     <meta name="twitter:title" content="百品导航 - 客制化高自由度网址导航">
-    <meta name="description" content="百品导航是无需登录即可使用的个人导航与香港资讯首页，支持书签、搜索、RSS、天气、交通、市场资讯及可选的 Google Drive／GitHub Gist／Microsoft OneDrive 多端预设同步。">
+    <meta name="description" content="百品导航是无需登录即可使用的个人导航与香港资讯首页，支持书签、搜索、RSS、天气、交通、市场资讯及可选的 Google Drive／GitHub Gist／Microsoft OneDrive／飞书云空间 多端预设同步。">
     <link rel="canonical" href="https://123.baipon.com/">
     <link rel="icon" type="image/png" href="img/logo.png">
    
@@ -1068,7 +1068,7 @@
                     <mdui-button variant="tonal" data-sync-provider="google" aria-pressed="true">Google 登录</mdui-button>
                     <mdui-button variant="outlined" data-sync-provider="github" aria-pressed="false">GitHub 登录</mdui-button>
                     <mdui-button variant="outlined" data-sync-provider="microsoft" aria-pressed="false">Microsoft 登录</mdui-button>
-                    <mdui-button variant="outlined" data-sync-provider="feishu" aria-pressed="false">飞书登录</mdui-button>
+                    <mdui-button variant="outlined" data-sync-provider="feishu" aria-pressed="false">飞书/豆包 登录</mdui-button>
                 </div>
                 <div data-sync-details hidden>
                 <p data-sync-account>使用同一 Google 账号同步多个设备</p>
@@ -4316,13 +4316,14 @@ function setBackgroundToCookie(value) {
             <div class="footer-brand"><img src="/img/logo.png" alt=""><h1 id="app-name" data-app-info="name">百品导航</h1></div>
             <p class="app-purpose" data-app-info="purpose">一站式个人导航与香港资讯首页</p>
             <div class="footer-description">
-                <p data-app-info="features">管理快捷书签、切换搜索引擎、订阅 RSS 新闻，查看香港天气、交通及市场资讯，并自定义首页布局与偏好；支持通过 Google Drive、GitHub Secret Gist 或 Microsoft OneDrive 在设备间同步个人预设。</p>
+                <p data-app-info="features">管理快捷书签、切换搜索引擎、订阅 RSS 新闻，查看香港天气、交通、市场资讯及日历，并自定义首页布局与偏好；支持通过 Google Drive、GitHub Secret Gist、Microsoft OneDrive 或飞书云空间在设备间同步个人预设，也可另行授权连接 Google、Microsoft、飞书、iCloud 或学校 Canvas 日历。</p>
                 <p data-app-info="access">无需登录即可使用导航、搜索、资讯和本机设置。</p>
             </div>
             <div class="footer-bottom">
             <nav aria-label="应用信息与政策">
                 <a href="/privacy.html" data-app-policy="privacy" data-app-info="privacy">隐私政策</a>
                 <a href="/terms.html" data-app-policy="terms" data-app-info="terms">服务条款</a>
+                <a href="/history.html" data-app-policy="history" data-app-info="history">版本历程</a>
                 <a href="https://www.baipon.com" target="_blank" rel="noopener noreferrer" data-app-info="projects">其他项目</a>
             </nav>
             <div id="footer-account" hidden>
@@ -4346,10 +4347,10 @@ function setBackgroundToCookie(value) {
             (window.adsbygoogle=window.adsbygoogle || []).push({});
         })();
     </script>
-    <script src="js/app-info.js?v=privacy-hk-v2"></script>
+    <script src="js/app-info.js?v=feishu-history-v3"></script>
     <script src="js/settings.js?v=calendar-settings-v6"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
-    <script type="module" src="js/sync.js?v=feishu-logout-v14"></script>
+    <script type="module" src="js/sync.js?v=feishu-doubao-label-v15"></script>
     <script type="module" src="js/calendar.js?v=calendar-feishu-v31"></script>
 </body>
 </html>
