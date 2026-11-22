@@ -72,7 +72,7 @@ async function readCloud(data) {
     if(!file || file.truncated || typeof file.content!=='string' || Buffer.byteLength(file.content)>MAX_PRESET_BYTES+4096) throw new AuthError(400,'GitHub 预设文件不完整或过大');
     const payload=JSON.parse(file.content);
     if(typeof payload.revision!=='string' || !Number.isFinite(Date.parse(payload.updatedAt))) throw new AuthError(400,'GitHub 预设版本格式不正确');
-    return {exists:true,id:gist.id,etag:response.headers.get('etag'),revision:payload.revision,updatedAt:payload.updatedAt,preset:sanitizePreset(payload.preset),storageUrl:'https://gist.github.com/'+gist.id};
+    return {exists:true,id:gist.id,onlyPreset:Object.keys(gist.files||{}).length===1,etag:response.headers.get('etag'),revision:payload.revision,updatedAt:payload.updatedAt,preset:sanitizePreset(payload.preset),storageUrl:'https://gist.github.com/'+gist.id};
 }
 async function writeCloud(data,body) {
     const preset=sanitizePreset(body.preset),current=await readCloud(data);
@@ -138,14 +138,14 @@ export default async function handler(req,res) {
             }
             return res.status(200).json({configured:true,authenticated:true,provider:'github',user:data.user,redirectUri:config.redirect});
         }
-        if(action==='pull') {const cloud=await readCloud(data);delete cloud.id;delete cloud.etag;return res.status(200).json(cloud);}
+        if(action==='pull') {const cloud=await readCloud(data);delete cloud.id;delete cloud.etag;delete cloud.onlyPreset;return res.status(200).json(cloud);}
         if(action==='clear'){
             const body=clearBody(req),current=await readCloud(data);
             if(!current.exists)return res.status(200).json({ok:true});
             if(body.revision!==current.revision)throw new AuthError(409,'云端预设已改变，请重新确认清除');
             const headers={'Content-Type':'application/json',...(current.etag&&!current.etag.startsWith('W/')?{'If-Match':current.etag}:{})};
             // Keep any unrelated files a user may have added to the same Gist.
-            await api(data.accessToken,'/gists/'+current.id,{method:'PATCH',headers,body:JSON.stringify({files:{[FILE]:null}})});
+            await api(data.accessToken,'/gists/'+current.id,current.onlyPreset?{method:'DELETE',headers}:{method:'PATCH',headers,body:JSON.stringify({files:{[FILE]:null}})});
             if((await readCloud(data)).exists)throw new AuthError(409,'仍有其他版本的云端预设，请重新确认清除');
             return res.status(200).json({ok:true});
         }

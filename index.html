@@ -552,20 +552,20 @@
         .home-world-weather-row img { width:28px; height:28px; object-fit:contain; }
         .regional-temperature-map { max-height:460px; }
         .world-weather-card small { opacity:.65; overflow-wrap:anywhere; }
-        #main-container > #home-calendar { flex:none; margin-top:24px; padding:20px 0 0; border:0; border-top:1px solid rgba(128,128,128,.16); border-radius:0; background:transparent; backdrop-filter:none; }
+        #main-container > #home-calendar { flex:none; margin-top:16px; padding:14px 0 0; border:0; border-top:1px solid rgba(128,128,128,.16); border-radius:0; background:transparent; backdrop-filter:none; }
         #main-container > #home-calendar .calendar-body { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); align-items:start; gap:24px; }
-        #main-container > #home-calendar .calendar-day { min-height:62px; }
-        #main-container > #home-calendar .calendar-agenda { margin-top:16px; max-height:510px; }
+        #main-container > #home-calendar .calendar-day { min-height:46px; }
+        #main-container > #home-calendar .calendar-agenda { margin-top:10px; max-height:410px; }
         @media(min-width:901px) and (max-width:1100px) { #main-container > #home-calendar .calendar-body { grid-template-columns:minmax(0,1fr); gap:0; } }
         .calendar-card-heading,.calendar-month-heading { display:flex; align-items:center; justify-content:space-between; gap:4px; }
         .calendar-card-heading>strong { font-size:.8rem; opacity:.75; }
         .calendar-card-heading>div { display:flex; }
         #home-calendar mdui-button-icon { color:inherit; width:32px; height:32px; }
-        .calendar-month-heading { margin:10px 0; font-size:.85rem; }
+        .calendar-month-heading { margin:6px 0; font-size:.85rem; }
         .calendar-month-heading [data-calendar-month] { flex:1; text-align:center; }
         .calendar-month-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; text-align:center; }
-        .calendar-weekday { font-size:.7rem; opacity:.6; padding:6px 0; }
-        .calendar-day { position:relative; min-width:0; min-height:54px; padding:7px 2px 10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border:0; border-radius:12px; background:transparent; color:inherit; font:inherit; font-size:.8rem; cursor:pointer; transition:background .15s; }
+        .calendar-weekday { font-size:.7rem; opacity:.6; padding:3px 0; }
+        .calendar-day { position:relative; min-width:0; min-height:44px; padding:4px 2px 8px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; border:0; border-radius:12px; background:transparent; color:inherit; font:inherit; font-size:.8rem; cursor:pointer; transition:background .15s; }
         .calendar-day-number { font-size:.85rem; line-height:1.2; }
         .calendar-day-subtitle { display:block; width:100%; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:.62rem; line-height:1.4; opacity:.8; }
         .calendar-term-day:not(.calendar-red-day):not([aria-pressed="true"]) .calendar-day-subtitle { color:rgb(var(--mdui-color-primary)); opacity:1; }
@@ -4348,6 +4348,6 @@ function setBackgroundToCookie(value) {
     <script src="js/settings.js?v=calendar-settings-v6"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
     <script type="module" src="js/sync.js?v=cloud-clear-links-v12"></script>
-    <script type="module" src="js/calendar.js?v=calendar-almanac-v28"></script>
+    <script type="module" src="js/calendar.js?v=calendar-almanac-v29"></script>
 </body>
 </html>

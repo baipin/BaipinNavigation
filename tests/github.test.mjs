@@ -6,11 +6,11 @@ const oldFetch=globalThis.fetch,oldNow=Date.now;
 const oldId=process.env.GITHUB_CLIENT_ID,oldKey=process.env.GITHUB_KEY;
 process.env.GITHUB_CLIENT_ID='local-test-client';process.env.GITHUB_KEY='local-test-only-secret';
 const origin='https://123.baipon.com';
-let now=oldNow(),cloud=null,version=0,reject=false,scopes='gist',tokenCalls=0,refreshes=0,expectedChallenge='';
+let now=oldNow(),cloud=null,version=0,reject=false,scopes='gist',tokenCalls=0,refreshes=0,expectedChallenge='',extraFile=false,deletedGists=0,removedPresetFiles=0;
 Date.now=()=>now;
 const preset=sanitizePreset({localStorage:{navi_city_stocks:JSON.stringify({ids:['aapl'],symbols:['MSFT']}),navi_city_feed:JSON.stringify({rss:['a'],speed:72}),navi_camera_background:JSON.stringify({source:'traffic',id:'H429F',refresh:false})},cookies:{}});
 const json=(data,headers={})=>new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json',...headers}});
-const gist=()=>({id:'abc123',public:false,owner:{id:7},description:'Baipin Navigation preset sync (v1)',files:{'baipin-navigation-presets-v1.json':{content:JSON.stringify(cloud),truncated:false}}});
+const gist=()=>({id:'abc123',public:false,owner:{id:7},description:'Baipin Navigation preset sync (v1)',files:{...(extraFile?{'personal.txt':{content:'keep me'}}:{}),'baipin-navigation-presets-v1.json':{content:JSON.stringify(cloud),truncated:false}}});
 globalThis.fetch=async(url,options={})=>{
     url=String(url);
     if(url==='https://github.com/login/oauth/access_token') {
@@ -23,12 +23,13 @@ globalThis.fetch=async(url,options={})=>{
     assert.equal(options.headers.Authorization,'Bearer fake-github-access');
     if(url.endsWith('/user')) return json({id:7,login:'test-user',name:'测试用户',email:'not-stored@example.test',avatar_url:'https://avatars.githubusercontent.com/u/7?v=4'});
     if(url.includes('/gists?')) return json(cloud?[gist()]:[]);
+    if(options.method==='DELETE'){assert.equal(extraFile,false,'must preserve unrelated Gist files');assert.equal(options.headers['If-Match'],'"gist-'+version+'"');if(reject)return new Response('',{status:412});deletedGists++;cloud=null;return new Response(null,{status:204});}
     if(options.method==='POST' || options.method==='PATCH') {
         if(reject) return new Response('',{status:412});
         const body=JSON.parse(options.body);
         if(options.method==='POST') assert.equal(body.public,false);
         else assert.equal(options.headers['If-Match'],'"gist-'+version+'"');
-        if(body.files['baipin-navigation-presets-v1.json']===null){cloud=null;return json({id:'abc123',files:{'unrelated.txt':{content:'keep'}}});}
+        if(body.files['baipin-navigation-presets-v1.json']===null){assert.equal(extraFile,true,'GitHub rejects deletion of the only Gist file');removedPresetFiles++;cloud=null;return json({id:'abc123',files:{'unrelated.txt':{content:'keep'}}});}
         cloud=JSON.parse(body.files['baipin-navigation-presets-v1.json'].content);version++;
         return json(gist());
     }
@@ -75,6 +76,13 @@ try {
     assert.equal((await call('clear',{method:'POST',cookie,body:{confirm:true,revision:'stale'}})).statusCode,409);assert.ok(cloud);
     assert.equal((await call('clear',{method:'POST',cookie,body:{confirm:true,revision:toDelete.body.revision}})).statusCode,200);assert.equal(cloud,null);
     assert.equal((await call('clear',{method:'POST',cookie,body:{confirm:true,revision:null}})).statusCode,200);
+    assert.equal(deletedGists,1);assert.equal(removedPresetFiles,0);
+    extraFile=true;
+    await call('push',{method:'POST',cookie,body:{preset,revision:null}});
+    const mixed=await call('pull',{cookie});
+    assert.equal((await call('clear',{method:'POST',cookie,body:{confirm:true,revision:mixed.body.revision}})).statusCode,200);
+    assert.equal(deletedGists,1);assert.equal(removedPresetFiles,1);extraFile=false;
+
     result=await call('logout',{method:'POST',cookie,body:{}});assert.match(result.headers['Set-Cookie'][0],/Max-Age=0/);
     now+=31*86400000;result=await call('pull',{cookie});assert.equal(result.statusCode,401);
     delete process.env.GITHUB_KEY;result=await call('status');assert.equal(result.body.configured,false);
