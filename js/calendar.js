@@ -1,6 +1,11 @@
 const sc=()=>document.documentElement.lang==='zh-CN',t=(s,c)=>sc()?s:c;
 const endpoints={google:'/api/sync',microsoft:'/api/microsoft',icloud:'/api/icloud'},names={google:'Google',microsoft:'Microsoft',icloud:'iCloud'};
 const card=document.getElementById('home-calendar'),monthLabel=card.querySelector('[data-calendar-month]'),grid=card.querySelector('[data-calendar-grid]'),agenda=card.querySelector('[data-calendar-agenda]'),status=card.querySelector('[data-calendar-status]');
+// Move the same widget so its state and controls survive breakpoint changes.
+const calendarHome=document.createComment('calendar sidebar position');card.before(calendarHome);
+const desktopCalendar=matchMedia('(min-width:901px)');
+function placeCalendar(){const ad=document.getElementById('quick-access-ad');if(desktopCalendar.matches&&ad)ad.before(card);else calendarHome.after(card);}
+desktopCalendar.addEventListener('change',placeCalendar);placeCalendar();
 const node=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
 function button(label,icon){const e=node('mdui-button',label);e.variant='text';if(icon)e.icon=icon;return e;}
 const dayKey=date=>date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');

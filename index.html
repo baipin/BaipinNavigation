@@ -552,6 +552,11 @@
         .home-world-weather-row img { width:28px; height:28px; object-fit:contain; }
         .regional-temperature-map { max-height:460px; }
         .world-weather-card small { opacity:.65; overflow-wrap:anywhere; }
+        #main-container > #home-calendar { flex:none; margin-top:24px; padding:20px 0 0; border:0; border-top:1px solid rgba(128,128,128,.16); border-radius:0; background:transparent; backdrop-filter:none; }
+        #main-container > #home-calendar .calendar-body { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); align-items:start; gap:24px; }
+        #main-container > #home-calendar .calendar-day { aspect-ratio:1.2; max-height:42px; }
+        #main-container > #home-calendar .calendar-agenda { margin-top:16px; max-height:320px; }
+        @media(min-width:901px) and (max-width:1100px) { #main-container > #home-calendar .calendar-body { grid-template-columns:minmax(0,1fr); gap:0; } }
         .calendar-card-heading,.calendar-month-heading { display:flex; align-items:center; justify-content:space-between; gap:4px; }
         .calendar-card-heading>strong { font-size:.8rem; opacity:.75; }
         .calendar-card-heading>div { display:flex; }
@@ -802,8 +807,8 @@
 
             <section class="card-glass" id="home-calendar" aria-label="日历" aria-busy="true">
                 <div class="calendar-card-heading"><strong data-calendar-title>日历</strong><div><mdui-button-icon icon="refresh" data-calendar-refresh aria-label="刷新日历"></mdui-button-icon><mdui-button-icon icon="manage_accounts" data-calendar-accounts aria-label="日历账号与显示"></mdui-button-icon><mdui-button-icon icon="add" data-calendar-add aria-label="新增日程"></mdui-button-icon></div></div>
-                <div class="calendar-month-heading"><mdui-button-icon icon="chevron_left" data-calendar-prev aria-label="上个月"></mdui-button-icon><strong data-calendar-month></strong><mdui-button-icon icon="chevron_right" data-calendar-next aria-label="下个月"></mdui-button-icon><mdui-button variant="text" data-calendar-today>今天</mdui-button></div>
-                <div class="calendar-month-grid" data-calendar-grid></div><div class="calendar-agenda" data-calendar-agenda></div><small class="calendar-hint" data-calendar-status role="status">正在载入日历…</small>
+                <div class="calendar-body"><div class="calendar-month"><div class="calendar-month-heading"><mdui-button-icon icon="chevron_left" data-calendar-prev aria-label="上个月"></mdui-button-icon><strong data-calendar-month></strong><mdui-button-icon icon="chevron_right" data-calendar-next aria-label="下个月"></mdui-button-icon><mdui-button variant="text" data-calendar-today>今天</mdui-button></div>
+                <div class="calendar-month-grid" data-calendar-grid></div></div><div class="calendar-list-panel"><div class="calendar-agenda" data-calendar-agenda></div><small class="calendar-hint" data-calendar-status role="status">正在载入日历…</small></div></div>
             </section>
 
             <!-- 侧栏容器：香港新闻标题滚动 -->
@@ -4255,6 +4260,6 @@ function setBackgroundToCookie(value) {
     <script src="js/settings.js?v=calendar-settings-v3"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
     <script type="module" src="js/sync.js?v=calendar-permissions-v3"></script>
-    <script type="module" src="js/calendar.js?v=calendar-v1"></script>
+    <script type="module" src="js/calendar.js?v=desktop-calendar-v2"></script>
 </body>
 </html>
