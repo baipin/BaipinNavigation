@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {createVault,unlockVault,encryptVault,validateVault,validateVaultAccounts,VAULT_KEY} from '../js/calendar-vault-crypto.js';
+import {createVault,unlockVault,encryptVault,validateVault,validateVaultAccounts,VAULT_KEY,calendarRestoreTargets} from '../js/calendar-vault-crypto.js';
 import {sanitizePreset,PRESET_KEYS} from '../js/preset-schema.js';
 const password='独立 strong passphrase 2026!';
 const accounts={icloud:{name:'Test',account:'test@example.test',credentials:{email:'test@example.test',password:'aaaa-bbbb-cccc-dddd'}},canvas:{name:'Student',account:'https://school.instructure.com',credentials:{origin:'https://school.instructure.com',token:'12345~fake-token'}}};
@@ -12,3 +12,9 @@ const updated=await encryptVault(accounts,first.key,first.salt);assert.notEqual(
 const full={localStorage:{bp_v7:JSON.stringify([{name:'Bookmark',url:'https://example.test',icon:'star'}]),custom_rss:JSON.stringify(['https://rss.example.test']),navi_calendar_preferences:JSON.stringify({canvas:{account:'7',calendars:['course_42']}}),[VAULT_KEY]:JSON.stringify(first.envelope)}};
 const roundtrip=sanitizePreset(JSON.parse(JSON.stringify(sanitizePreset(full))));assert.equal(roundtrip.localStorage[VAULT_KEY],JSON.stringify(first.envelope));assert.ok(roundtrip.localStorage.bp_v7.includes('Bookmark'));assert.ok(roundtrip.localStorage.custom_rss.includes('rss.example.test'));assert.ok(!JSON.stringify(roundtrip).includes('fake-token'));assert.ok(!JSON.stringify(roundtrip).includes(password));assert.ok(PRESET_KEYS.includes(VAULT_KEY));assert.equal(sanitizePreset({localStorage:{}}).localStorage[VAULT_KEY],null);assert.throws(()=>sanitizePreset({localStorage:{[VAULT_KEY]:JSON.stringify(accounts)}}));
 console.log('PASS: independent passphrase, PBKDF2 600k, nonextractable AES-GCM key, salt/nonce uniqueness, authentication tamper rejection, credential allowlist, full preset roundtrip includes only encrypted calendar credentials, reset compatibility.');
+
+assert.deepEqual(calendarRestoreTargets(accounts,{icloud:{authenticated:true,calendarAuthorized:true}}).map(x=>x[0]),['canvas']);
+assert.deepEqual(calendarRestoreTargets(accounts,{icloud:{authenticated:true,calendarAuthorized:true},canvas:{authenticated:true,calendarAuthorized:true}}),[]);
+assert.equal(calendarRestoreTargets(accounts,{}).length,2);
+assert.equal(calendarRestoreTargets(accounts,{icloud:{authenticated:true,calendarAuthorized:false}}).length,2);
+console.log('PASS: restoring backups preserves connected calendars and only connects missing local sessions.');
