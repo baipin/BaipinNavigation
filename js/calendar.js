@@ -1,3 +1,4 @@
+import {dayAlmanac,parseSolarTerms} from './calendar-almanac.js?v=almanac-v1';
 import {calendarDayKey,occursOn,upcomingDays,holidayDates,upcomingEvents,reminderIdentity,reminderCookieName,hideReminderCookie} from './calendar-model.js?v=reminders-v1';
 import {calendarRequest} from './calendar-request.js?v=canvas-transport-v1';
 const sc=()=>document.documentElement.lang==='zh-CN',t=(s,c)=>sc()?s:c;
@@ -13,7 +14,14 @@ function button(label,icon){const e=node('mdui-button',label);e.variant='text';i
 const providerIcon=provider=>'/img/'+(provider==='icloud'?'calendar-icloud.svg':provider==='canvas'?'calendar-canvas.svg?v=official-v2':'login-'+provider+'.svg');
 const dayKey=calendarDayKey;
 let selected=dayKey(new Date()),month=new Date(new Date().getFullYear(),new Date().getMonth(),1),connections={},sources=[],events=[],revision=0,busy=false,editing=null,lastUpdated=null,loadErrors=[];
-let holidays=new Map();
+let holidays=new Map(),solarTerms={};const almanacYears=new Set();
+async function loadAlmanacYear(year){if(almanacYears.has(year))return;almanacYears.add(year);try{
+ const local=await fetch('/data/calendar/'+year+'.json');let terms;
+ if(local.ok)terms=(await local.json()).terms;
+ else{const response=await fetch('https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T'+year+'c.txt',{signal:AbortSignal.timeout(8000)});if(!response.ok)return;terms=parseSolarTerms(await response.text());}
+ if(terms&&Object.keys(terms).length===24){Object.assign(solarTerms,terms);draw();}
+ }catch{}}
+
 let calendarVault=null;
 const providerNotices=new Map();let switchingIcloud=false,switchingCanvas=false;
 let preferences={};try{preferences=JSON.parse(localStorage.getItem('navi_calendar_preferences'))||{};}catch{}
@@ -44,16 +52,27 @@ async function queueReminders(loaded,generation){const rows=upcomingEvents(loade
 reminderMuted.addEventListener('change',()=>{if(!activeReminder)return;document.cookie=reminderMuted.checked?hideReminderCookie(activeReminder.cookie):activeReminder.cookie+'=; Path=/; Max-Age=0; SameSite=Lax';});
 reminderClose.onclick=()=>reminderBar.open=false;reminderView.onclick=()=>{if(!activeReminder)return;const event=activeReminder.event;reminderBar.open=false;openEvent(event);};reminderBar.addEventListener('closed',()=>{activeReminder=null;nextReminder();});
 for(const dialog of [accountsDialog,eventDialog,deleteDialog]){dialog.addEventListener('open',()=>{if(activeReminder)reminderBar.open=false;});dialog.addEventListener('closed',nextReminder);}
-async function loadHolidays(){try{const response=await fetch('/data/hk-public-holidays.json');if(response.ok){holidays=holidayDates(await response.json());draw();}}catch{}try{const response=await fetch('https://www.1823.gov.hk/common/ical/tc.json',{signal:AbortSignal.timeout(8000)});if(response.ok){const dates=holidayDates(await response.json());if(dates.size){holidays=dates;draw();}}}catch{}}
+async function loadHolidays(){try{const response=await fetch('/data/hk-public-holidays.json');if(response.ok){holidays=holidayDates(await response.json());draw();}}catch{}try{const response=await fetch('https://www.1823.gov.hk/common/ical/tc.json',{signal:AbortSignal.timeout(8000)});if(response.ok){const dates=holidayDates(await response.json());if(dates.size){holidays=new Map([...holidays,...dates]);draw();}}}catch{}}
 function api(provider,action,body,params={}){return calendarRequest(endpoints[provider],provider,action,body,params,t);}
 function savePreferences(){localStorage.setItem('navi_calendar_preferences',JSON.stringify(preferences));}
 function accountId(provider){return connections[provider]?.user?.id||connections[provider]?.user?.email||'';}
 function sourceSelected(source){const p=preferences[source.provider];return p?.account===accountId(source.provider)&&p.calendars.includes(source.id);}
 function draw(){
- monthLabel.textContent=month.toLocaleDateString(sc()?'zh-CN':'zh-HK',{year:'numeric',month:'long'});grid.replaceChildren();const locale=sc()?['日','一','二','三','四','五','六']:['日','一','二','三','四','五','六'];for(const name of locale){const e=node('span',name);e.className='calendar-weekday'+(name==='日'?' calendar-red-day':'');grid.append(e);}
+ void loadAlmanacYear(month.getFullYear());monthLabel.textContent=month.toLocaleDateString(sc()?'zh-CN':'zh-HK',{year:'numeric',month:'long'});grid.replaceChildren();const locale=sc()?['日','一','二','三','四','五','六']:['日','一','二','三','四','五','六'];for(const name of locale){const e=node('span',name);e.className='calendar-weekday'+(name==='日'?' calendar-red-day':'');grid.append(e);}
  const first=new Date(month.getFullYear(),month.getMonth(),1),count=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();for(let i=0;i<first.getDay();i++){const blank=node('span');blank.setAttribute('aria-hidden','true');grid.append(blank);}
- for(let day=1;day<=count;day++){const key=dayKey(new Date(month.getFullYear(),month.getMonth(),day)),b=node('button',String(day));b.type='button';b.className='calendar-day';const holiday=holidays.get(key),sunday=new Date(key+'T12:00:00').getDay()===0;if(holiday||sunday)b.classList.add('calendar-red-day');b.setAttribute('aria-label',key+(holiday?' · '+holiday:''));if(holiday)b.title=holiday;b.setAttribute('aria-pressed',String(selected===key));if(key===dayKey(new Date()))b.setAttribute('aria-current','date');if(events.some(e=>occurs(e,key)))b.classList.add('has-events');b.onclick=()=>{selected=key;draw();};grid.append(b);}
- agenda.replaceChildren();const label=node('strong',new Date(selected+'T12:00:00').toLocaleDateString(sc()?'zh-CN':'zh-HK',{month:'long',day:'numeric',weekday:'short'}));agenda.append(label);
+ for(let day=1;day<=count;day++){
+  const key=dayKey(new Date(month.getFullYear(),month.getMonth(),day)),info=dayAlmanac(key,holidays,solarTerms,sc()),b=node('button');b.type='button';b.className='calendar-day';const sunday=new Date(key+'T12:00:00').getDay()===0;
+  if(info.holiday||sunday)b.classList.add('calendar-red-day');if(info.term)b.classList.add('calendar-term-day');
+  const number=node('span',String(day));number.className='calendar-day-number';const subtitle=node('small',info.subtitle);subtitle.className='calendar-day-subtitle';b.append(number,subtitle);
+  const description=[key,info.holiday,info.term,t('农历','農曆')+' '+info.lunar.full].filter(Boolean).join(' · ');b.setAttribute('aria-label',description);b.title=description;b.setAttribute('aria-pressed',String(selected===key));if(key===dayKey(new Date()))b.setAttribute('aria-current','date');if(events.some(e=>occurs(e,key)))b.classList.add('has-events');b.onclick=()=>{selected=key;draw();};grid.append(b);
+ }
+ agenda.replaceChildren();const label=node('strong',new Date(selected+'T12:00:00').toLocaleDateString(sc()?'zh-CN':'zh-HK',{year:'numeric',month:'long',day:'numeric',weekday:'long'}));agenda.append(label);
+ const info=dayAlmanac(selected,holidays,solarTerms,sc()),details=node('div');details.className='calendar-date-details';
+ details.append(node('p',t('农历：','農曆：')+info.lunar.full));
+ if(info.holiday){const holiday=node('p',t('香港公众假期：','香港公眾假期：')+info.holiday);holiday.className='calendar-holiday-detail';details.append(holiday);}
+ else if(new Date(selected+'T12:00:00').getDay()===0)details.append(node('p',t('星期日','星期日')));
+ if(info.term){const term=node('p');term.append(node('strong',t('节气：','節氣：')+info.term));details.append(term,node('p',info.termDescription));}
+ const eventsTitle=node('strong',t('当日日程','當日日程'));eventsTitle.className='calendar-day-events-heading';agenda.append(details,eventsTitle);
  const daily=events.filter(e=>occurs(e,selected)).sort((a,b)=>String(a.start).localeCompare(String(b.start)));
  if(!daily.length)agenda.append(node('p',t('当天暂无日程','當天暫無日程')));
  for(const event of daily){const b=node('button');b.type='button';b.className='calendar-agenda-event';const time=event.allDay?t('全天','全日'):new Date(event.start).toLocaleTimeString(sc()?'zh-CN':'zh-HK',{hour:'2-digit',minute:'2-digit',hour12:false});b.append(node('span',event.due?'Due · '+time:time),node('strong',event.title),node('small',names[event.provider]+' · '+event.calendarName));b.onclick=()=>openEvent(event);agenda.append(b);}
