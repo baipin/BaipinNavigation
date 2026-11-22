@@ -204,7 +204,8 @@
         }
         .link-item:hover { transform: translateY(-5px); background: rgba(128,128,128,0.15); }
         .link-item img, .link-item mdui-icon { width: 32px; height: 32px; margin-bottom: 12px; border-radius: 6px; color: var(--text-main) !important; }
-        .weather-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 15px; background: rgba(128,128,128,0.05); border-radius: 20px; }
+        .weather-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 15px; border-radius: 20px; }
+        .weather-header, .home-world-weather-row { background:rgba(128,128,128,.05); }
         #weather-icon-img { width: 56px; height: 56px; }
         .temp-display { font-size: 2.2rem; font-weight: 900; }
         .hum-display { font-size: 0.85rem; opacity: 0.8; }
@@ -534,9 +535,9 @@
         [data-sync-provider] img,[data-sync-login] img { width:20px; height:20px; object-fit:contain; }
         .world-weather-day { display:flex; align-items:center; gap:8px; margin:12px 0; font-size:.85rem; line-height:1.6; }
         .world-weather-day img { width:30px; height:30px; margin:0; flex:none; }
-        #home-world-weather { border-top:1px solid rgba(128,128,128,.2); margin-top:16px; padding-top:8px; }
+        #home-world-weather { display:grid; gap:8px; border-top:1px solid rgba(128,128,128,.2); margin-top:16px; padding-top:12px; }
         #home-world-weather[hidden] { display:none; }
-        .home-world-weather-row { display:flex; align-items:center; flex-wrap:wrap; gap:4px 8px; padding:6px 0; font-size:.75rem; line-height:1.5; }
+        .home-world-weather-row { display:flex; align-items:center; flex-wrap:wrap; gap:4px 8px; padding:6px 12px; border-radius:14px; min-width:0; font-size:.75rem; line-height:1.5; }
         .home-world-weather-row strong { font-size:.8rem; }
         .home-world-weather-row > span { display:inline-flex; align-items:center; gap:6px; min-width:0; overflow-wrap:anywhere; }
         .home-world-weather-row img { width:28px; height:28px; object-fit:contain; }
