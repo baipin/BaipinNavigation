@@ -256,6 +256,7 @@ async function checkLogin() {
         if (!pending) show(!result.configured ? providers[provider].missing : account ? previous.updatedAt ? '上次同步：'+new Date(previous.updatedAt).toLocaleString() : '已登录。点击“立即同步”创建或读取云端预设。' : '尚未登录；本机设置仍可正常使用。');
     } catch (error) { if (selectedProvider !== provider) return; show(error.message); }
     updateControls();
+    document.dispatchEvent(new Event('navi-sync-account-change'));
     return {authenticated:!!account,configured};
 }
 for (const button of panel.querySelectorAll('[data-sync-provider]')) button.onclick = async () => {
@@ -282,6 +283,7 @@ logout.onclick = async () => {
         await request('logout',{});
         if (account) localStorage.removeItem(autoKey());
         account = null; auto.checked = false; pending = null; choices.hidden = true; detailsRequested=false;
+        document.dispatchEvent(new Event('navi-sync-account-change'));
         updateProviderText();
         document.getElementById('data-manage-btn')?.classList.remove('sync-attention');
         show('已退出此设备的登录，本机与云端预设均保留。');
@@ -364,6 +366,7 @@ if (result) {
 }
 document.getElementById('data-manage-btn')?.addEventListener('click',checkLogin);
 document.addEventListener('navi-settings-sync-open',checkLogin);
+document.addEventListener('navi-calendar-account-change',checkLogin);
 setInterval(()=> { if (auto.checked) sync(true); },30000);
 document.addEventListener('visibilitychange',()=> { if (auto.checked && document.visibilityState === 'visible') sync(true); });
 applyLanguage();

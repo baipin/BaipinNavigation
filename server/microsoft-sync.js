@@ -1,3 +1,4 @@
+import {calendarApi,calendarGranted,CalendarError,MICROSOFT_CALENDAR_SCOPE} from './calendar-service.js';
 import {createCipheriv,createDecipheriv,createHash,randomBytes,timingSafeEqual} from 'node:crypto';
 import {sanitizePreset,MAX_PRESET_BYTES} from '../js/preset-schema.js';
 const SESSION='__Host-navi_microsoft',STATE='__Host-navi_microsoft_oauth';
@@ -33,7 +34,7 @@ function storeSession(res,data){
 }
 const fetchTimed=(url,options={})=>fetch(url,{...options,signal:AbortSignal.timeout(12000)});
 async function exchange(values){
- const config=settings();const response=await fetchTimed('https://login.microsoftonline.com/common/oauth2/v2.0/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({...values,client_id:config.client,client_secret:config.secret,scope:SCOPE})});
+ const config=settings();const response=await fetchTimed('https://login.microsoftonline.com/common/oauth2/v2.0/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({...values,client_id:config.client,client_secret:config.secret,scope:values.scope || SCOPE})});
  if(!response.ok)throw new AuthError(401,'Microsoft 授权已失效，请重新登录');
  const token=await response.json();if(!token.access_token || token.error)throw new AuthError(401,'Microsoft 授权已失效，请重新登录');return token;
 }
@@ -50,7 +51,7 @@ async function session(req,res){
  const data=unseal([0,1,2].map(i=>readCookie(req,SESSION+i)).join(''));
  if(!data)throw new AuthError(401,'请先使用 Microsoft 登录');
  if(data.accessExpires<Date.now()+60000){
-  const token=await exchange({grant_type:'refresh_token',refresh_token:data.refreshToken});
+  const token=await exchange({grant_type:'refresh_token',refresh_token:data.refreshToken,scope:SCOPE+(calendarGranted('microsoft',data.scopes)?' '+MICROSOFT_CALENDAR_SCOPE:'')});
   data.accessToken=token.access_token;data.refreshToken=token.refresh_token || data.refreshToken;data.accessExpires=Date.now()+Number(token.expires_in || 3600)*1000;storeSession(res,data);
  }return data;
 }
@@ -78,32 +79,36 @@ export default async function handler(req,res){
  res.setHeader('Cache-Control','no-store, max-age=0');res.setHeader('Referrer-Policy','no-referrer');
  const url=new URL(req.url,'https://localhost'),action=url.pathname==='/api/microsoft/callback'?'callback':url.searchParams.get('action') || req.query?.action || 'status',config=settings(),origin=new URL(config.redirect).origin;
  try{
-  const post=['push','logout'].includes(action);if(req.method!==(post?'POST':'GET')){res.setHeader('Allow',post?'POST':'GET');throw new AuthError(405,'请求方法不支持');}
+  const post=['push','logout','calendar-save','calendar-delete'].includes(action);if(req.method!==(post?'POST':'GET')){res.setHeader('Allow',post?'POST':'GET');throw new AuthError(405,'请求方法不支持');}
   if(post && req.headers.origin!==origin)throw new AuthError(403,'请求来源不正确');
   if(action==='logout'){storeSession(res,null);setCookie(res,STATE,'',0);return res.status(200).json({ok:true});}
   if(!config.client || !config.secret){if(action==='status')return res.status(200).json({configured:false,authenticated:false,provider:'microsoft',redirectUri:config.redirect});throw new AuthError(503,'服务器未配置 MICROSOFT_CLIENT_ID 和 MICROSOFT_KEY');}
-  if(action==='login'){
+  if(['login','calendar-login'].includes(action)){
    if(req.headers.host!==new URL(origin).host)throw new AuthError(400,'请在正式网站登录同步');
-   const state=randomBytes(24).toString('base64url'),verifier=randomBytes(48).toString('base64url');setCookie(res,STATE,seal({state,verifier,expires:Date.now()+600000}),600);
-   const query=new URLSearchParams({client_id:config.client,redirect_uri:config.redirect,response_type:'code',response_mode:'query',scope:SCOPE,prompt:'select_account',state,code_challenge:createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256'});
+   const existing=unseal([0,1,2].map(i=>readCookie(req,SESSION+i)).join('')),calendar=action==='calendar-login';
+   const state=randomBytes(24).toString('base64url'),verifier=randomBytes(48).toString('base64url');setCookie(res,STATE,seal({state,verifier,calendar,calendarAccess:calendar||calendarGranted('microsoft',existing?.scopes),accountId:calendar?existing?.user.id:null,expires:Date.now()+600000}),600);
+   const query=new URLSearchParams({client_id:config.client,redirect_uri:config.redirect,response_type:'code',response_mode:'query',scope:SCOPE+((calendar || calendarGranted('microsoft',existing?.scopes))?' '+MICROSOFT_CALENDAR_SCOPE:''),...(calendar&&existing?.user.email?{login_hint:existing.user.email}:{}),prompt:calendar?'consent':'select_account',state,code_challenge:createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256'});
    res.statusCode=303;res.setHeader('Location','https://login.microsoftonline.com/common/oauth2/v2.0/authorize?'+query);return res.end();
   }
   if(action==='callback'){
    const saved=unseal(readCookie(req,STATE)),state=url.searchParams.get('state') || '';setCookie(res,STATE,'',0);
    if(!saved || Buffer.byteLength(saved.state)!==Buffer.byteLength(state) || !timingSafeEqual(Buffer.from(saved.state),Buffer.from(state)))return redirect(res,'state-error');
-   if(url.searchParams.has('error'))return redirect(res,'cancelled');if(!url.searchParams.get('code'))return redirect(res,'login-error');
-   const token=await exchange({grant_type:'authorization_code',code:url.searchParams.get('code'),redirect_uri:config.redirect,code_verifier:saved.verifier});
-   const scopes=String(token.scope || '').toLowerCase().split(' ');if(!token.refresh_token || !scopes.some(s=>s==='files.readwrite.appfolder' || s==='https://graph.microsoft.com/files.readwrite.appfolder') || !scopes.some(s=>s==='user.read' || s==='https://graph.microsoft.com/user.read'))return redirect(res,'permission-error');
-   const response=await graph({accessToken:token.access_token},'/me?$select=id,displayName,mail,userPrincipalName');if(response.status===404)return redirect(res,'login-error');
-   const info=await response.json();if(typeof info.id!=='string' || !info.id || info.id.length>128)return redirect(res,'login-error');
-   storeSession(res,{user:{id:info.id,name:String(info.displayName || info.userPrincipalName || 'Microsoft').slice(0,120),email:String(info.mail || info.userPrincipalName || '').slice(0,254),avatar:null},accessToken:token.access_token,refreshToken:token.refresh_token,accessExpires:Date.now()+Number(token.expires_in || 3600)*1000,expires:Date.now()+30*86400000});return redirect(res,'connected');
+   const finish=result=>{if(!saved.calendar)return redirect(res,result);res.statusCode=303;res.setHeader('Location','/?calendar='+result+'&provider=microsoft');return res.end();};
+   if(url.searchParams.has('error'))return finish('cancelled');if(!url.searchParams.get('code'))return finish('login-error');
+   const token=await exchange({grant_type:'authorization_code',code:url.searchParams.get('code'),redirect_uri:config.redirect,code_verifier:saved.verifier,scope:SCOPE+(saved.calendarAccess?' '+MICROSOFT_CALENDAR_SCOPE:'')});
+   const scopes=String(token.scope || '').toLowerCase().split(' ');if(!token.refresh_token || !scopes.some(s=>s==='files.readwrite.appfolder' || s==='https://graph.microsoft.com/files.readwrite.appfolder') || !scopes.some(s=>s==='user.read' || s==='https://graph.microsoft.com/user.read'))return finish('permission-error');
+   const response=await graph({accessToken:token.access_token},'/me?$select=id,displayName,mail,userPrincipalName');if(response.status===404)return finish('login-error');
+   const info=await response.json();if(typeof info.id!=='string' || !info.id || info.id.length>128)return finish('login-error');
+   if(saved.accountId && info.id!==saved.accountId)return finish('account-mismatch');if(saved.calendar&&!calendarGranted('microsoft',scopes))return finish('permission-error');
+   storeSession(res,{scopes,user:{id:info.id,name:String(info.displayName || info.userPrincipalName || 'Microsoft').slice(0,120),email:String(info.mail || info.userPrincipalName || '').slice(0,254),avatar:null},accessToken:token.access_token,refreshToken:token.refresh_token,accessExpires:Date.now()+Number(token.expires_in || 3600)*1000,expires:Date.now()+30*86400000});return finish('connected');
   }
-  if(!['status','pull','push'].includes(action))throw new AuthError(404,'接口不存在');
+  if(!['status','pull','push','calendar-list','calendar-events','calendar-save','calendar-delete'].includes(action))throw new AuthError(404,'接口不存在');
   let data;try{data=await session(req,res);}catch(error){if(action==='status' && error.status===401){storeSession(res,null);return res.status(200).json({configured:true,authenticated:false,provider:'microsoft',redirectUri:config.redirect});}throw error;}
-  if(action==='status')return res.status(200).json({configured:true,authenticated:true,provider:'microsoft',user:data.user,redirectUri:config.redirect});
+  if(action==='status')return res.status(200).json({configured:true,authenticated:true,provider:'microsoft',user:data.user,calendarAuthorized:calendarGranted('microsoft',data.scopes),redirectUri:config.redirect});
+  if(action.startsWith('calendar-'))return await calendarApi('microsoft',data,action,req,res,url);
   if(action==='pull'){const cloud=await readCloud(data);delete cloud.id;delete cloud.etag;return res.status(200).json(cloud);}
   if(!String(req.headers['content-type'] || '').startsWith('application/json'))throw new AuthError(415,'请使用 JSON 请求');
   const raw=typeof req.body==='string'?req.body:JSON.stringify(req.body || {});if(Buffer.byteLength(raw)>MAX_PRESET_BYTES+4096)throw new AuthError(413,'预设文件过大');
   let body;try{body=JSON.parse(raw);sanitizePreset(body.preset);}catch{throw new AuthError(400,'预设格式不正确或文件过大');}return res.status(200).json(await writeCloud(data,body));
- }catch(error){if(action==='callback')return redirect(res,'login-error');return res.status(error.status || 502).json({error:error instanceof AuthError?error.message:'Microsoft 同步暂时不可用，请稍后重试'});}
+ }catch(error){if(action==='callback')return redirect(res,'login-error');return res.status(error.status || 502).json({error:error instanceof AuthError || error instanceof CalendarError?error.message:'Microsoft 同步暂时不可用，请稍后重试'});}
 }

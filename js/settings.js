@@ -19,6 +19,7 @@
         document.getElementById('settings-rain-region').setAttribute('aria-label',labels.rain);
         document.getElementById('settings-aqhi-region').setAttribute('aria-label',labels.aqhi);
         document.getElementById('settings-current-engine').setAttribute('aria-label',labels.engine);
+        document.getElementById('settings-calendar').textContent=sc?'日历账号与显示':'日曆帳戶與顯示';
         refreshDistricts();refreshEngines();
     }
     function select(tab) {
@@ -38,6 +39,8 @@
         dialog.addEventListener('closed',open,{once:true});dialog.open=false;
     }
     document.getElementById('settings-reset').onclick=()=>shortcut(()=>{document.getElementById('settings-reset-dialog').open=true;});
+    document.getElementById('settings-calendar').onclick=()=>shortcut(()=>window.naviOpenCalendarAccounts?.());
+    document.querySelector('[data-open-calendar-accounts]').onclick=()=>shortcut(()=>window.naviOpenCalendarAccounts?.());
     document.getElementById('settings-rss').onclick=()=>shortcut('manage-rss-btn');
     document.getElementById('settings-city-feed').onclick=()=>shortcut('city-feed-stock-settings');
     document.getElementById('settings-bookmarks').onclick=()=>shortcut(()=> {

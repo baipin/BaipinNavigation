@@ -111,3 +111,12 @@ CITY FEED 股票与指数卡片加入最近交易日的真实 5 分钟价格走�
 验证：`node tests/microsoft.test.mjs` 使用模拟 Microsoft 服务检查 OAuth、权限、会话、刷新、文件读写、冲突和异常，不构成真实授权验证。未配置环境变量时界面会显示配置提示，不发起无效登录。
 
 天气卡片的「贴在首页」移到卡片底部的独立紧凑操作栏。Google、GitHub、Microsoft 登录图标为本站 SVG 文件，无外部图标请求。
+
+
+## 日历
+
+首页月历支持 Google Calendar、Microsoft Outlook Calendar 与 iCloud CalDAV，各服务一个账号、多本日历，查看、增加、编辑和确认删除日程，每 5 分钟自动刷新；显示与编辑时间采用设备本地时区，全日日程的结束日期不包含该日。Google/Microsoft 复用预设同步会话，但仅在用户主动点击日历授权时追加日历权限；同账号追加授权会校验账号 ID，避免替换已有账号。iCloud 独立连接，不需要 Apple Developer 或 Apple 登录；App 专用密码由用户在日历连接对话框输入，不作为全站环境变量。
+
+日历显示偏好（服务、账号标识、所选日历 ID）纳入预设导入导出、恢复默认和多端同步；日程内容、OAuth 令牌与 iCloud 密码不进入预设。日程只保留页面内存，服务端请求期间临时处理。iCloud 凭证保存在最长 30 天的独立 AES-GCM 加密 HttpOnly Secure Cookie；用 ICLOUD_SESSION_KEY 加密。CalDAV 仅允许 Apple 官方固定主机格式，不接受任意服务器地址，XML 拒绝 DTD/实体声明。Google/Microsoft 和 CalDAV 更新使用 ETag 冲突检查；iCloud 重复日程修改/删除只影响本次，含邀请的 iCloud 日程在本站只读。
+
+测试：`node tests/calendar.test.mjs`、`node tests/calendar-oauth.test.mjs`、`node tests/icloud.test.mjs`，并运行原有 sync/microsoft/github 测试。测试均使用模拟服务；真实授权仍需提供商权限和应用配置。

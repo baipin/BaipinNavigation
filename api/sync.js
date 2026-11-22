@@ -1,3 +1,5 @@
+import icloudHandler from '../server/icloud-calendar.js';
+import {calendarApi,calendarGranted,CalendarError,GOOGLE_CALENDAR_SCOPE,GOOGLE_CALENDAR_LIST_SCOPE} from '../server/calendar-service.js';
 import microsoftHandler from '../server/microsoft-sync.js';
 import {createCipheriv,createDecipheriv,createHash,randomBytes,timingSafeEqual} from 'node:crypto';
 import {sanitizePreset,MAX_PRESET_BYTES} from '../js/preset-schema.js';
@@ -36,6 +38,8 @@ function cookie(res,name,value,age) {
     const previous = res.getHeader('Set-Cookie') || [];
     res.setHeader('Set-Cookie',[...(Array.isArray(previous)?previous:[previous]),`${name}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${age}`]);
 }
+function sessionValue(req){const values=cookies(req);return (values[SESSION]||'')+(values[SESSION+'_1']||'')+(values[SESSION+'_2']||'');}
+function saveSession(res,data){const value=data?seal(data):'',age=data?Math.max(0,Math.floor((data.expires-Date.now())/1000)):0;if(value.length>10500)throw new SyncError(502,'登录资料过大，请重新登录');for(let i=0;i<3;i++){const part=value.slice(i*3500,(i+1)*3500);cookie(res,SESSION+(i?'_'+i:''),part,part?age:0);}}
 const redirect = (res,url) => { res.statusCode = 303; res.setHeader('Location',url); return res.end(); };
 async function google(url,options={}) {
     return fetch(url,{...options,signal:AbortSignal.timeout(12000)});
@@ -47,13 +51,13 @@ async function token(values) {
     return response.json();
 }
 async function session(req,res) {
-    const data = unseal(cookies(req)[SESSION] || '');
+    const data = unseal(sessionValue(req));
     if (!data) throw new SyncError(401,'请先使用 Google 登录');
     if (data.accessExpires < Date.now()+60000) {
         const renewed = await token({grant_type:'refresh_token',refresh_token:data.refreshToken});
         data.accessToken = renewed.access_token;
         data.accessExpires = Date.now()+Number(renewed.expires_in || 3600)*1000;
-        cookie(res,SESSION,seal(data),Math.max(0,Math.floor((data.expires-Date.now())/1000)));
+        saveSession(res,data);
     }
     return data;
 }
@@ -93,6 +97,7 @@ async function writeCloud(data,body) {
 }
 export default async function handler(req,res) {
     const route=new URL(req.url,'https://localhost');
+    if(route.pathname==='/api/icloud'||route.searchParams.get('provider')==='icloud'||req.query?.provider==='icloud')return icloudHandler(req,res);
     if(route.pathname==='/api/microsoft' || route.pathname==='/api/microsoft/callback' || route.searchParams.get('provider')==='microsoft' || req.query?.provider==='microsoft')return microsoftHandler(req,res);
     res.setHeader('Cache-Control','no-store, max-age=0');
     res.setHeader('Referrer-Policy','no-referrer');
@@ -104,14 +109,15 @@ export default async function handler(req,res) {
             if (action === 'status') return res.status(200).json({configured:false,authenticated:false,redirectUri:settings.redirect});
             throw new SyncError(503,'服务器未配置 GOOGLE_KEY');
         }
-        const post = ['push','logout'].includes(action);
+        const post = ['push','logout','calendar-save','calendar-delete'].includes(action);
         if (req.method !== (post?'POST':'GET')) { res.setHeader('Allow',post?'POST':'GET'); throw new SyncError(405,'请求方法不支持'); }
         if (post && req.headers.origin !== origin) throw new SyncError(403,'请求来源不正确');
-        if (action === 'login') {
+        if (['login','calendar-login'].includes(action)) {
             if (req.headers.host !== new URL(origin).host) throw new SyncError(400,'请在正式网站登录同步');
             const state = randomBytes(24).toString('base64url'), verifier = randomBytes(48).toString('base64url');
-            cookie(res,STATE,seal({state,verifier,expires:Date.now()+600000}),600);
-            const params = new URLSearchParams({client_id:settings.client,redirect_uri:settings.redirect,response_type:'code',scope:SCOPE,access_type:'offline',prompt:'consent select_account',state,code_challenge:createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256'});
+            const existing=unseal(sessionValue(req));const calendar=action==='calendar-login';
+            cookie(res,STATE,seal({state,verifier,calendar,accountId:calendar?existing?.user.id:null,expires:Date.now()+600000}),600);
+            const params = new URLSearchParams({client_id:settings.client,redirect_uri:settings.redirect,response_type:'code',scope:SCOPE+((calendar || calendarGranted('google',existing?.scopes))?' '+GOOGLE_CALENDAR_SCOPE+' '+GOOGLE_CALENDAR_LIST_SCOPE:''),include_granted_scopes:'true',...(calendar && existing?.user.email?{login_hint:existing.user.email}:{}),access_type:'offline',prompt:'consent select_account',state,code_challenge:createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256'});
             return redirect(res,'https://accounts.google.com/o/oauth2/v2/auth?'+params);
         }
         if (action === 'callback') {
@@ -119,34 +125,38 @@ export default async function handler(req,res) {
             cookie(res,STATE,'',0);
             const supplied = url.searchParams.get('state') || '';
             if (!saved || Buffer.byteLength(saved.state) !== Buffer.byteLength(supplied) || !timingSafeEqual(Buffer.from(saved.state),Buffer.from(supplied))) return redirect(res,'/?sync=state-error');
-            if (url.searchParams.has('error')) return redirect(res,'/?sync=cancelled');
-            if (!url.searchParams.get('code')) return redirect(res,'/?sync=login-error');
+            const finish=result=>redirect(res,saved.calendar?'/?calendar='+result+'&provider=google':'/?sync='+result);
+            if (url.searchParams.has('error')) return finish('cancelled');
+            if (!url.searchParams.get('code')) return finish('login-error');
             const result = await token({grant_type:'authorization_code',code:url.searchParams.get('code'),redirect_uri:settings.redirect,code_verifier:saved.verifier});
-            if (!result.refresh_token || !String(result.scope || '').split(' ').includes('https://www.googleapis.com/auth/drive.appdata')) return redirect(res,'/?sync=permission-error');
+            if (!String(result.scope || '').split(' ').includes('https://www.googleapis.com/auth/drive.appdata')) return finish('permission-error');
             const response = await google('https://openidconnect.googleapis.com/v1/userinfo',{headers:{Authorization:`Bearer ${result.access_token}`}});
-            if (!response.ok) return redirect(res,'/?sync=login-error');
+            if (!response.ok) return finish('login-error');
             const info = await response.json();
-            const value = seal({user:{id:info.sub,name:info.name || info.email,email:info.email,avatar:avatarUrl(info.picture)},accessToken:result.access_token,refreshToken:result.refresh_token,accessExpires:Date.now()+Number(result.expires_in || 3600)*1000,expires:Date.now()+30*86400000});
-            if (value.length > 3800) return redirect(res,'/?sync=login-error');
-            cookie(res,SESSION,value,30*86400);
-            return redirect(res,'/?sync=connected');
+            if(saved.accountId && info.sub!==saved.accountId)return finish('account-mismatch');
+            const scopes=String(result.scope || '').split(' ');if(saved.calendar&&!calendarGranted('google',scopes))return finish('permission-error');
+            const previous=unseal(sessionValue(req)),refreshToken=result.refresh_token || (previous?.user.id===info.sub?previous.refreshToken:null);if(!refreshToken)return finish('permission-error');
+            const sessionData = {scopes,user:{id:info.sub,name:info.name || info.email,email:info.email,avatar:avatarUrl(info.picture)},accessToken:result.access_token,refreshToken,accessExpires:Date.now()+Number(result.expires_in || 3600)*1000,expires:Date.now()+30*86400000};
+            saveSession(res,sessionData);
+            return finish('connected');
         }
-        if (action === 'logout') { cookie(res,SESSION,'',0); return res.status(200).json({ok:true}); }
-        if (!['status','pull','push'].includes(action)) throw new SyncError(404,'接口不存在');
+        if (action === 'logout') { saveSession(res,null); return res.status(200).json({ok:true}); }
+        if (!['status','pull','push','calendar-list','calendar-events','calendar-save','calendar-delete'].includes(action)) throw new SyncError(404,'接口不存在');
         let data;
         try { data = await session(req,res); }
         catch (error) {
-            if (action === 'status' && error.status === 401) { cookie(res,SESSION,'',0); return res.status(200).json({configured:true,authenticated:false,redirectUri:settings.redirect}); }
+            if (action === 'status' && error.status === 401) { saveSession(res,null); return res.status(200).json({configured:true,authenticated:false,redirectUri:settings.redirect}); }
             throw error;
         }
         if (action === 'status') {
             if(!Object.prototype.hasOwnProperty.call(data.user,'avatar')) {
                 data.user.avatar=null;
                 try {const response=await google('https://openidconnect.googleapis.com/v1/userinfo',{headers:{Authorization:`Bearer ${data.accessToken}`}});if(response.ok)data.user.avatar=avatarUrl((await response.json()).picture);}catch{}
-                const value=seal(data);if(value.length<=3800)cookie(res,SESSION,value,Math.max(0,Math.floor((data.expires-Date.now())/1000)));
+                saveSession(res,data);
             }
-            return res.status(200).json({configured:true,authenticated:true,user:data.user,redirectUri:settings.redirect});
+            return res.status(200).json({configured:true,authenticated:true,user:data.user,calendarAuthorized:calendarGranted('google',data.scopes),redirectUri:settings.redirect});
         }
+        if(action.startsWith('calendar-'))return await calendarApi('google',data,action,req,res,url);
         if (action === 'pull') {
             const cloud = await readCloud(data);
             delete cloud.id; delete cloud.etag;
@@ -161,6 +171,6 @@ export default async function handler(req,res) {
     } catch (error) {
         // Never include OAuth tokens, the client secret or Google's raw errors in responses/logs.
         if (action === 'callback') return redirect(res,'/?sync=login-error');
-        return res.status(error.status || 502).json({error:error instanceof SyncError ? error.message : '同步服务暂时不可用，请稍后重试'});
+        return res.status(error.status || 502).json({error:error instanceof SyncError || error instanceof CalendarError ? error.message : '同步服务暂时不可用，请稍后重试'});
     }
 }

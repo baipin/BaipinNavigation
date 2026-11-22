@@ -1,0 +1,7 @@
+import {createHash,createCipheriv,createDecipheriv,randomBytes} from 'node:crypto';
+export function seal(value,secret){const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',createHash('sha256').update(secret).digest(),iv);return Buffer.concat([iv,cipher.update(JSON.stringify(value)),cipher.final(),cipher.getAuthTag()]).toString('base64url');}
+export function unseal(value,secret){try{const b=Buffer.from(value,'base64url'),d=createDecipheriv('aes-256-gcm',createHash('sha256').update(secret).digest(),b.subarray(0,12));d.setAuthTag(b.subarray(-16));const data=JSON.parse(Buffer.concat([d.update(b.subarray(12,-16)),d.final()]).toString());return data.expires>Date.now()?data:null;}catch{return null;}}
+export function readCookie(req,name){return(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(name+'='))?.slice(name.length+1)||'';}
+export function setCookie(res,name,value,age,sameSite='Lax'){const p=res.getHeader('Set-Cookie')||[];res.setHeader('Set-Cookie',[...(Array.isArray(p)?p:[p]),`${name}=${value}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=${age}`]);}
+export function storeSession(res,name,data,secret){const value=data?seal(data,secret):'',age=data?Math.max(0,Math.floor((data.expires-Date.now())/1000)):0;if(value.length>10500)throw Error('Session too large');for(let i=0;i<3;i++){const chunk=value.slice(i*3500,(i+1)*3500);setCookie(res,name+i,chunk,chunk?age:0);}}
+export function readSession(req,name,secret){return unseal([0,1,2].map(i=>readCookie(req,name+i)).join(''),secret);}

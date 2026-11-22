@@ -7,6 +7,10 @@
     {
       "source": "/api/microsoft",
       "destination": "/api/sync?provider=microsoft"
+    },
+    {
+      "source": "/api/icloud",
+      "destination": "/api/sync?provider=icloud"
     }
   ]
 }
