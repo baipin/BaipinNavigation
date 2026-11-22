@@ -671,6 +671,11 @@
         @media(max-width:900px) { #calendar-event-dialog .calendar-event-form input,#calendar-vault-dialog input { font-size:16px; } }
         .mdui-theme-dark :is(.calendar-event-form,.calendar-icloud-connect) :is(input,select,textarea) { color-scheme:dark; }
         :is(.calendar-event-form,.calendar-icloud-connect) :is(input,select,textarea):focus { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:1px; }
+        /* Native popup options need opaque colors; the select's transparent field is not inherited by the OS menu. */
+        select { color-scheme:light; }
+        select :is(option,optgroup) { color:#212121; background-color:#fff; color-scheme:light; }
+        .mdui-theme-dark select { color-scheme:dark; }
+        .mdui-theme-dark select :is(option,optgroup) { color:#f5f5f5; background-color:#1e1e23; color-scheme:dark; }
         .weather-extra-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; min-height:200px; padding:24px; text-align:center; }
         .weather-extra-loading mdui-circular-progress { width:40px; height:40px; }
         .weather-extra-loading p { margin:0; opacity:.75; }
