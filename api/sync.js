@@ -56,13 +56,16 @@ async function token(values) {
 async function session(req,res) {
     const data = unseal(sessionValue(req));
     if (!data) throw new SyncError(401,'请先使用 Google 登录');
-    if (data.accessExpires < Date.now()+60000) {
-        const renewed = await token({grant_type:'refresh_token',refresh_token:data.refreshToken});
-        data.accessToken = renewed.access_token;
-        data.accessExpires = Date.now()+Number(renewed.expires_in || 3600)*1000;
-        saveSession(res,data);
-    }
+    if (data.accessExpires < Date.now()+60000) await refreshGoogleSession(data,res);
     return data;
+}
+async function refreshGoogleSession(data,res){
+    const renewed=await token({grant_type:'refresh_token',refresh_token:data.refreshToken});
+    data.accessToken=renewed.access_token;
+    data.refreshToken=renewed.refresh_token||data.refreshToken;
+    data.accessExpires=Date.now()+Number(renewed.expires_in||3600)*1000;
+    if(typeof renewed.scope==='string')data.scopes=renewed.scope.split(/\s+/).filter(Boolean);
+    saveSession(res,data);
 }
 async function drive(data,url,options={}) {
     const response = await google(url,{...options,headers:{Authorization:`Bearer ${data.accessToken}`,...options.headers}});
@@ -174,7 +177,7 @@ export default async function handler(req,res) {
             return res.status(200).json({configured:true,authenticated:true,user:data.user,calendarAuthorized:!data.calendarDisconnected&&calendarGranted('google',data.scopes),redirectUri:settings.redirect});
         }
         if(action==='calendar-disconnect'){data.calendarDisconnected=true;saveSession(res,data);return res.status(200).json({ok:true});}
-        if(action.startsWith('calendar-'))return await calendarApi('google',data,action,req,res,url);
+        if(action.startsWith('calendar-'))return await calendarApi('google',data,action,req,res,url,{refreshAccess:()=>refreshGoogleSession(data,res)});
         if (action === 'pull') {
             const cloud = await readCloud(data);
             delete cloud.id; delete cloud.etag;

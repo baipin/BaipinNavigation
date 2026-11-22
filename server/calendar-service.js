@@ -3,7 +3,18 @@ export const GOOGLE_CALENDAR_SCOPE='https://www.googleapis.com/auth/calendar.eve
 export const GOOGLE_CALENDAR_LIST_SCOPE='https://www.googleapis.com/auth/calendar.calendarlist.readonly';
 export const MICROSOFT_CALENDAR_SCOPE='Calendars.ReadWrite';
 export class CalendarError extends Error {constructor(status,message){super(message);this.status=status;}}
-export function calendarGranted(provider,scopes=[]){const list=scopes.map(x=>x.toLowerCase().replace('https://graph.microsoft.com/',''));return provider==='google'?list.includes(GOOGLE_CALENDAR_SCOPE)&&list.includes(GOOGLE_CALENDAR_LIST_SCOPE):list.includes('calendars.readwrite');}
+export function calendarGranted(provider,scopes=[]){const list=scopes.map(x=>x.toLowerCase().replace('https://graph.microsoft.com/',''));return provider==='google'?list.includes('https://www.googleapis.com/auth/calendar')||(list.includes(GOOGLE_CALENDAR_SCOPE)&&(list.includes(GOOGLE_CALENDAR_LIST_SCOPE)||list.includes('https://www.googleapis.com/auth/calendar.calendarlist'))):list.includes('calendars.readwrite');}
+// Classify only documented reason codes; never expose Google's raw response or credentials.
+export async function googleCalendarFailure(response,writing=false){
+ let payload;try{payload=await response.json();}catch{}
+ const error=payload?.error||{},reasons=new Set([...(error.errors||[]).map(x=>x.reason),...(error.details||[]).map(x=>x.reason)].filter(x=>typeof x==='string').map(x=>x.toLowerCase()));
+ const disabled=['accessnotconfigured','servicedisabled','service_disabled','api_disabled'].some(x=>reasons.has(x));
+ if(disabled)return {status:503,message:'Google Calendar API 尚未启用或被项目禁用。请在此 OAuth 客户端所属的 Google Cloud 项目启用 Google Calendar API，等待生效后刷新日历；仅配置 OAuth 权限范围并不会启用 API。'};
+ if(['ratelimitexceeded','userratelimitexceeded','quotaexceeded','dailylimitexceeded','rate_limit_exceeded','resource_exhausted'].some(x=>reasons.has(x))||response.status===429)return {status:429,message:'Google 日历请求达到限额，请稍后刷新，无需重新授权'};
+ if(['insufficientpermissions','access_token_scope_insufficient'].some(x=>reasons.has(x)))return {status:403,refresh:true,message:'Google 当前登录令牌未获所需日历权限。请在本站「日历账号与显示」重新点击「登入并授权日历」，并允许读取日历列表及读写日程；仅在 Cloud 控制台添加权限不会更新已有登录。'};
+ if(writing&&['forbiddenfornonorganizer','forbidden','requiredaccesslevel'].some(x=>reasons.has(x)))return {status:403,message:'您没有修改此 Google 日历或日程的权限，请选择可编辑日历；受邀日程可能仅允许组织者修改'};
+ return {status:403,message:writing?'Google 拒绝修改此日程，请检查日历共享权限或组织的访问限制':'Google 拒绝读取日历，请检查日历访问权限及组织管理员的应用访问限制'};
+}
 export function calendarRange(url){const start=new Date(url.searchParams.get('start')),end=new Date(url.searchParams.get('end'));if(!Number.isFinite(+start)||!Number.isFinite(+end)||end<=start||end-start>94*86400000)throw new CalendarError(400,'日历查询范围应为 1 至 94 天');return {start:start.toISOString(),end:end.toISOString()};}
 export function calendarBody(req){if(!String(req.headers['content-type']||'').startsWith('application/json'))throw new CalendarError(415,'请使用 JSON 请求');const raw=typeof req.body==='string'?req.body:JSON.stringify(req.body||{});if(Buffer.byteLength(raw)>20000)throw new CalendarError(413,'日程内容过大');try{return JSON.parse(raw);}catch{throw new CalendarError(400,'日程格式不正确');}}
 export function validateEvent(value){
@@ -14,10 +25,26 @@ export function validateEvent(value){
  return {title:value.title.trim(),description:value.description||'',location:value.location||'',start:value.start,end:value.end,allDay:value.allDay};
 }
 function boundedId(value){if(typeof value!=='string'||!value||value.length>2048||/[\x00-\x1f]/.test(value))throw new CalendarError(400,'日历标识不正确');return encodeURIComponent(value);}
-export async function calendarApi(provider,data,action,req,res,url){
+export async function calendarApi(provider,data,action,req,res,url,{refreshAccess}={}){
  if(data.calendarDisconnected||!calendarGranted(provider,data.scopes))throw new CalendarError(403,'请先授权日历读写权限');
  const base=provider==='google'?'https://www.googleapis.com/calendar/v3':'https://graph.microsoft.com/v1.0';
- const call=async(path,options={})=>{const response=await fetch(base+path,{...options,redirect:'error',signal:AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+data.accessToken,...(provider==='microsoft'?{Prefer:'outlook.timezone="UTC", outlook.body-content-type="text"'}:{}),...options.headers}});if(response.status===401)throw new CalendarError(401,'日历授权已失效，请重新登录');if(response.status===409||response.status===412)throw new CalendarError(409,'日程已被其他设备修改，请刷新后重试');if(response.status===403)throw new CalendarError(403,'日历权限不足或日历不可编辑');if(response.status===404)throw new CalendarError(404,'日历或日程已不存在，请刷新');if(!response.ok)throw new CalendarError(502,'日历服务暂时不可用，请稍后重试');return response;};
+ const call=async(path,options={})=>{
+  const writing=!!options.method&&!['GET','HEAD'].includes(options.method);let renewed=false;
+  while(true){
+   const response=await fetch(base+path,{...options,redirect:'error',signal:AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+data.accessToken,...(provider==='microsoft'?{Prefer:'outlook.timezone="UTC", outlook.body-content-type="text"'}:{}),...options.headers}});
+   if(provider==='google'&&[401,403,429].includes(response.status)){
+    const failure=response.status===401?{status:401,refresh:true,message:'Google 日历授权已失效，请重新登录'}:await googleCalendarFailure(response,writing);
+    // Read requests can safely retry once after refreshing the existing grant. Never broaden scopes or replay writes.
+    if(failure.refresh&&!writing&&!renewed&&refreshAccess){renewed=true;await refreshAccess();continue;}
+    throw new CalendarError(failure.status,failure.message);
+   }
+   if(response.status===401)throw new CalendarError(401,'日历授权已失效，请重新登录');
+   if(response.status===409||response.status===412)throw new CalendarError(409,'日程已被其他设备修改，请刷新后重试');
+   if(response.status===403)throw new CalendarError(403,writing?'您没有修改此日历或日程的权限':'日历读取被拒绝，请检查授权及组织的访问限制');
+   if(response.status===404)throw new CalendarError(404,'日历或日程已不存在，请刷新');
+   if(!response.ok)throw new CalendarError(502,'日历服务暂时不可用，请稍后重试');return response;
+  }
+ };
  const calendarPath=id=>provider==='google'?'/calendars/'+boundedId(id):'/me/calendars/'+boundedId(id);
  if(action==='calendar-list'){
   let rows=[],next='',pages=0;do{const path=provider==='google'?'/users/me/calendarList?maxResults=250'+(next?'&pageToken='+encodeURIComponent(next):''):next||'/me/calendars?$top=100&$select=id,name,canEdit,color';const json=await(await call(path)).json();rows.push(...(json.items||json.value||[]));if(provider==='google')next=json.nextPageToken||'';else{next=json['@odata.nextLink']||'';if(next){if(!next.startsWith(base+'/me/calendars?'))throw new CalendarError(502,'日历分页地址不正确');next=next.slice(base.length);}}}while(next&&++pages<5);
