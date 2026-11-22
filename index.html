@@ -534,7 +534,10 @@
         .camera-thumbnail { position:relative; min-width:0; min-height:120px; padding:0; overflow:hidden; border:2px solid transparent; border-radius:12px; background:rgba(128,128,128,.1); color:inherit; text-align:left; font:inherit; cursor:pointer; transition:border-color .15s,background-color .15s; }
         .camera-thumbnail:hover { background:rgba(128,128,128,.2); }
         .camera-thumbnail[aria-pressed="true"] { border-color:rgb(var(--mdui-color-primary)); }
-        .camera-thumbnail[aria-pressed="true"]::after { content:'✓'; position:absolute; top:6px; right:6px; width:24px; height:24px; border-radius:50%; background:rgb(var(--mdui-color-primary)); color:rgb(var(--mdui-color-on-primary)); text-align:center; line-height:24px; }
+        .camera-selection-badge { position:absolute; top:6px; right:6px; width:28px; height:28px; display:grid; place-items:center; border-radius:50%; background:rgb(var(--mdui-color-primary)); color:rgb(var(--mdui-color-on-primary)); box-shadow:0 1px 4px rgba(0,0,0,.2); }
+        .camera-selection-badge[hidden] { display:none; }
+        .camera-selection-badge mdui-icon { font-size:20px; }
+        .camera-selection-badge mdui-circular-progress { width:18px; height:18px; --mdui-color-primary:var(--mdui-color-on-primary); }
         .camera-thumbnail:focus-visible { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:3px; }
         .camera-thumbnail img { display:block; width:100%; height:auto; aspect-ratio:16/9; object-fit:cover; }
         .camera-thumbnail span { display:block; padding:8px; font-size:.78rem; line-height:1.5; overflow-wrap:anywhere; }
@@ -4142,7 +4145,7 @@ function setBackgroundToCookie(value) {
     </script>
     <script src="js/app-info.js?v=local-greeting-title-v2"></script>
     <script src="js/settings.js?v=material-tabs-v2"></script>
-    <script type="module" src="js/camera-background.js?v=traffic-preview-v7"></script>
+    <script type="module" src="js/camera-background.js?v=camera-selection-progress-v8"></script>
     <script type="module" src="js/sync.js?v=camera-background-v1"></script>
 </body>
 </html>

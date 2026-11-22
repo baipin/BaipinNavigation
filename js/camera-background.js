@@ -8,7 +8,7 @@ const loadMore=document.getElementById('background-camera-more');
 const status=document.getElementById('background-camera-status');
 const refreshCheck=document.getElementById('background-camera-refresh');
 const staticActions=document.querySelector('.settings-background-actions');
-let activePlayer=null,pendingController=null,backgroundBlobUrl=null,thumbnailController=null;
+let pendingChoice=null,activePlayer=null,pendingController=null,backgroundBlobUrl=null,thumbnailController=null;
 let catalog=null,loading=null,choice=null,shown=12,timer=null,revision=0,lastUpdate=null,failed=false,pending=false,thumbnailObserver=null;
 const simple=()=>document.documentElement.lang==='zh-CN';
 const t=(sc,tc)=>simple()?sc:tc;
@@ -47,7 +47,7 @@ async function updateBackground(candidate=choice,persist=false) {
     if(!candidate || !cameraRows(candidate.source).some(item=>item.id===candidate.id))return;
     clearTimeout(timer);timer=null;pendingController?.abort();pendingController=new AbortController();
     const signal=pendingController.signal,current=++revision;
-    pending=true;showStatus(t('正在获取摄影机图像…','正在取得攝影機圖像…'));
+    pending=true;pendingChoice=candidate;renderSelection();showStatus(t('正在获取摄影机图像…','正在取得攝影機圖像…'));
     let url=null,owned=false,transferred=false,newPlayer=null,liveSession=null;
     try {
         const item=cameraRows(candidate.source).find(item=>item.id===candidate.id);
@@ -74,18 +74,29 @@ async function updateBackground(candidate=choice,persist=false) {
         if(current===revision && error.name!=='AbortError'){failed=true;showStatus(t('图像暂时无法取得，已保留原背景。请稍后重试。','圖像暫時無法取得，已保留原背景。請稍後重試。'));}
     } finally {
         newPlayer?.destroy();if(owned && !transferred && url)URL.revokeObjectURL(url);
-        if(current===revision){pending=false;pendingController=null;schedule();}
+        if(current===revision){pending=false;pendingChoice=null;pendingController=null;renderSelection();schedule();}
     }
 }
 function stopCamera() {
     revision++;pendingController?.abort();pendingController=null;stopLivePlayer();
     if(backgroundBlobUrl){URL.revokeObjectURL(backgroundBlobUrl);backgroundBlobUrl=null;}
-    clearTimeout(timer);timer=null;choice=null;lastUpdate=null;failed=false;pending=false;
+    clearTimeout(timer);timer=null;choice=null;lastUpdate=null;failed=false;pending=false;pendingChoice=null;
     localStorage.removeItem(CAMERA_BACKGROUND_KEY);sourcePicker.value='photo';render();
 }
 window.naviStopCameraBackground=stopCamera;
 function renderSelection() {
-    gallery.querySelectorAll('button[data-camera]').forEach(button=>{const active=choice?.source===sourcePicker.value && choice.id===button.dataset.camera;button.setAttribute('aria-pressed',String(active));});
+    gallery.querySelectorAll('button[data-camera]').forEach(button=>{
+        const selected=pendingChoice || choice;
+        const active=selected?.source===sourcePicker.value && selected.id===button.dataset.camera;
+        const busy=active && pending && pendingChoice!==null;
+        button.setAttribute('aria-pressed',String(active));button.setAttribute('aria-busy',String(busy));
+        const badge=button.querySelector('.camera-selection-badge');if(!badge)return;
+        badge.hidden=!active;badge.replaceChildren();
+        if(!active)return;
+        badge.setAttribute('aria-label',busy?t('正在加载','正在載入'):t('已选中','已選取'));
+        if(busy){const spinner=document.createElement('mdui-circular-progress');spinner.setAttribute('aria-hidden','true');badge.append(spinner);}
+        else {const check=document.createElement('mdui-icon');check.setAttribute('name','check');check.setAttribute('aria-hidden','true');badge.append(check);}
+    });
     refreshCheck.checked=choice?.refresh!==false;
 }
 function renderGallery() {
@@ -103,7 +114,8 @@ function renderGallery() {
         const image=document.createElement('img');image.width=240;image.height=135;image.alt='';image.decoding='async';image.referrerPolicy='no-referrer';if(sourcePicker.value.startsWith('webcast')){const previews={HK:'H429F',KL:'K202F',TW:'TW120F',TM:'TR116F',BBI:'TR114F'};image.dataset.src=cameraImageUrl('traffic',previews[item.id],true);}else image.dataset.src=cameraImageUrl(sourcePicker.value,item.imageId || item.id,true);
         image.onerror=()=>{image.hidden=true;button.classList.add('camera-image-unavailable');};
         const caption=document.createElement('span');caption.textContent=name(item)+(sourcePicker.value.startsWith('webcast')?t(' · 区域快拍预览',' · 區域快拍預覽'):'');
-        button.append(image,caption);button.onclick=()=>{thumbnailController?.abort();thumbnailObserver?.disconnect();updateBackground({source:sourcePicker.value,id:item.id,refresh:sourcePicker.value==='webcast-live' || refreshCheck.checked},true);};
+        const badge=document.createElement('div');badge.className='camera-selection-badge';badge.hidden=true;
+        button.append(image,caption,badge);button.onclick=()=>{thumbnailController?.abort();thumbnailObserver?.disconnect();updateBackground({source:sourcePicker.value,id:item.id,refresh:sourcePicker.value==='webcast-live' || refreshCheck.checked},true);};
         gallery.append(button);thumbnailObserver.observe(image);
     }
     renderSelection();
@@ -147,7 +159,7 @@ refreshCheck.addEventListener('change',()=>{if(choice){choice={...choice,refresh
 document.getElementById('background-camera-retry').onclick=async()=>{try{await loadCatalog();if(choice)updateBackground();else {renderGallery();showStatus(t('请先点击缩略图选择镜头。','請先點擊縮圖選擇鏡頭。'));}}catch{showStatus(t('镜头目录暂时无法取得。','鏡頭目錄暫時無法取得。'));}};
 new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
 document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState!=='visible'){pendingController?.abort();pendingController=null;revision++;pending=false;stopLivePlayer();schedule();return;}
+    if(document.visibilityState!=='visible'){pendingController?.abort();pendingController=null;revision++;pending=false;pendingChoice=null;renderSelection();stopLivePlayer();schedule();return;}
     if(!pending && choice?.refresh && (choice.source==='webcast-live' || !lastUpdate || Date.now()-lastUpdate.getTime()>=cameraRefreshInterval(choice.source)))updateBackground();
 });
 document.getElementById('data-manage-dialog').addEventListener('closed',()=>{thumbnailController?.abort();thumbnailObserver?.disconnect();});
