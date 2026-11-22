@@ -78,22 +78,27 @@
         dialog.querySelector('[data-weather-outlook]').textContent=fnd?.generalSituation || '';renderDays(Array.isArray(fnd?.weatherForecast)?fnd.weatherForecast.slice(0,9):[]);
         dialog.querySelector('[data-weather-updated]').textContent=t('本港预报更新：','本港預報更新：')+timestamp(flw?.updateTime)+' · '+t('九天预报更新：','九天預報更新：')+timestamp(fnd?.updateTime)+' · 香港天文台';
     }
+    function imageryStatus(box,message,loading=false){
+        const status=box.querySelector('[role="status"]');status.replaceChildren();status.toggleAttribute('data-loading',loading);box.setAttribute('aria-busy',String(loading));
+        if(loading){const spinner=el('mdui-circular-progress');spinner.setAttribute('aria-hidden','true');status.append(spinner);}
+        const label=el('span');label.textContent=message;status.append(label);
+    }
     async function loadImagery(type,force=false){
         if(['cyclone','regional','world'].includes(type)){await window.naviLoadWeatherExtra(type,dialog.querySelector('[data-weather-extra="'+type+'"]'));return;}
         if(type==='aqhi'){await window.naviLoadAqhiDetail(dialog.querySelector('[data-aqhi-detail]'),force);return;}
         if(imagery[type] && !force)return;
-        const box=dialog.querySelector('[data-imagery="'+type+'"]'),status=box.querySelector('[role="status"]'),img=box.querySelector('img'),request=(imageRequests[type] || 0)+1;imageRequests[type]=request;
-        status.textContent=t('正在载入图像…','正在載入圖像…');
+        const box=dialog.querySelector('[data-imagery="'+type+'"]'),img=box.querySelector('img'),request=(imageRequests[type] || 0)+1;imageRequests[type]=request;
+        img.hidden=true;imageryStatus(box,t('正在载入图像…','正在載入圖像…'),true);
         try {
             const r=await fetch('/api/weather-imagery?type='+type,{signal:AbortSignal.timeout(18000),cache:force?'reload':'default'});if(!r.ok)throw new Error('imagery');const data=await r.json();
             if(imageRequests[type]!==request || !dialog.open)return;
             const frame=data.frames?.at(-1),url=new URL(frame?.url);
             if(url.origin!=='https://www.hko.gov.hk' || !url.pathname.startsWith(type==='radar'?'/wxinfo/radars/rad_256_png/':type==='rainfall'?'/wxinfo/rainfall/cokrig_barnes/':'/wxinfo/intersat/satellite/image/images/'))throw new Error('image');
             const raw=frame.time,iso=raw.slice(0,4)+'-'+raw.slice(4,6)+'-'+raw.slice(6,8)+'T'+raw.slice(8,10)+':'+raw.slice(10,12)+':00'+(frame.utc?'Z':'+08:00');
-            img.onload=()=>{if(imageRequests[type]!==request)return;img.hidden=false;status.textContent=t('图像时间：','圖像時間：')+timestamp(iso);imagery[type]=true;};
-            img.onerror=()=>{img.hidden=true;status.textContent=t('图像载入失败，请刷新或查看天文台原始图像。','圖像載入失敗，請重新整理或查看天文台原始圖像。');};
+            img.onload=()=>{if(imageRequests[type]!==request)return;img.hidden=false;imageryStatus(box,t('图像时间：','圖像時間：')+timestamp(iso));imagery[type]=true;};
+            img.onerror=()=>{if(imageRequests[type]!==request)return;img.hidden=true;imageryStatus(box,t('图像载入失败，请刷新或查看天文台原始图像。','圖像載入失敗，請重新整理或查看天文台原始圖像。'));};
             img.alt=t(type==='radar'?'香港天文台最新天气雷达图':'香港天文台最新红外卫星图',type==='radar'?'香港天文台最新天氣雷達圖':'香港天文台最新紅外衛星圖');if(type==='rainfall')img.alt=t('香港天文台过去一小时分区雨量示意图','香港天文台過去一小時分區雨量示意圖');img.src=url.href;
-        } catch {if(imageRequests[type]===request)status.textContent=t('图像暂时无法取得，请刷新或查看天文台原始图像。','圖像暫時無法取得，請重新整理或查看天文台原始圖像。');}
+        } catch {if(imageRequests[type]===request)imageryStatus(box,t('图像暂时无法取得，请刷新或查看天文台原始图像。','圖像暫時無法取得，請重新整理或查看天文台原始圖像。'));}
     }
     const refresh=()=>{if(tabs.value==='forecast')loadForecast();else loadImagery(tabs.value,true);};
     button.onclick=()=>{labelsUpdate();dialog.open=true;loadForecast();if(tabs.value!=='forecast')loadImagery(tabs.value,true);clearInterval(refreshTimer);refreshTimer=setInterval(()=>{if(document.visibilityState==='visible')refresh();},300000);};
