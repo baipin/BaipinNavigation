@@ -515,6 +515,21 @@
         .weather-detail-warnings button { display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid rgba(128,128,128,.22); border-radius:16px; background:rgba(128,128,128,.06); color:inherit; font:inherit; cursor:pointer; }
         .weather-detail-warnings button:hover { background:rgba(128,128,128,.15); }
         .weather-detail-warnings img { width:42px; height:42px; object-fit:contain; }
+        #weather-detail-tabs::part(tabs) { overflow-x:auto; }
+        #weather-detail-tabs mdui-tab { flex-shrink:0; white-space:nowrap; }
+        .world-city-search { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+        .world-city-search input { flex:1; min-width:140px; padding:12px 16px; border-radius:24px; border:1px solid rgba(128,128,128,.4); color:inherit; background:transparent; font:inherit; }
+        .world-city-results { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+        .world-city-results button { text-align:left; border:1px solid rgba(128,128,128,.25); background:rgba(128,128,128,.07); color:inherit; border-radius:12px; padding:12px; font:inherit; cursor:pointer; }
+        .world-weather-grid,.regional-temperature-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+        .world-weather-card { background:rgba(128,128,128,.07); border:1px solid rgba(128,128,128,.15); padding:16px; border-radius:20px; min-width:0; }
+        .world-weather-card strong { font-size:1.7rem; }
+        .world-weather-card img { object-fit:contain; vertical-align:middle; background:#486b91; border-radius:12px; padding:4px; margin-right:12px; }
+        .world-weather-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+        .world-weather-heading h3 { margin:0; }
+        .world-weather-card small { opacity:.65; overflow-wrap:anywhere; }
+        .cyclone-detail { margin:16px 0 24px; line-height:1.7; }
+        .cyclone-track { display:block; max-width:100%; max-height:60dvh; object-fit:contain; margin:16px auto; border-radius:12px; }
         .aqhi-map-layout { display:grid; grid-template-columns:minmax(0,2fr) minmax(220px,1fr); gap:16px; margin:16px 0; }
         .aqhi-distribution-map { width:100%; background:rgba(112,177,206,.12); border:1px solid rgba(128,128,128,.2); border-radius:20px; }
         .aqhi-map-land { fill:rgba(128,128,128,.2); stroke:rgba(128,128,128,.6); stroke-width:1; }
@@ -935,8 +950,9 @@
         <mdui-button slot="action" variant="filled" id="settings-reset-confirm">恢复默认设置</mdui-button>
     </mdui-dialog>
     <script src="js/weather-warning-dialog.js?v=material-table-v3"></script>
+    <script type="module" src="js/weather-extra.js?v=extra-weather-v1"></script>
     <script src="js/aqhi-detail.js?v=aqhi-map-v1"></script>
-    <script src="js/weather-detail.js?v=weather-aqhi-v6"></script>
+    <script src="js/weather-detail.js?v=weather-extra-v7"></script>
     <script src="js/aed-wait.js?v=wait-colors-v2"></script>
     <script src="js/weather-upgrades.js?v=warning-details-v1"></script>
     <script>
@@ -4163,6 +4179,6 @@ function setBackgroundToCookie(value) {
     <script src="js/app-info.js?v=local-greeting-title-v2"></script>
     <script src="js/settings.js?v=material-tabs-v2"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
-    <script type="module" src="js/sync.js?v=camera-background-v1"></script>
+    <script type="module" src="js/sync.js?v=weather-cities-v2"></script>
 </body>
 </html>
