@@ -22,13 +22,14 @@ export async function canvasJSON(data,path,{lookup=dnsLookup,request=httpsReques
  const address=addresses[0].address;
  return new Promise((resolve,reject)=>{
   const req=request(url,{method:'GET',agent:false,family:4,lookup:(_host,options,callback)=>callback(null,options?.all?[{address,family:4}]:address,4),headers:{Authorization:'Bearer '+data.token,Accept:'application/json','User-Agent':'BaipinNavigation/1.0 (+https://123.baipon.com; Canvas calendar)'}},response=>{
+   response.on('error',reject);
    const fail=(code,message)=>{response.resume();reject(new CalendarError(code,message));};
    if(response.statusCode===401)return fail(401,'Canvas 令牌无效或已过期，请重新连接');
    if(response.statusCode===403)return fail(403,'学校 Canvas 未允许此访问，请检查令牌权限或联系学校管理员');
    if(response.statusCode===429)return fail(429,'Canvas 请求过于频繁，请稍后刷新');
    if(response.statusCode<200||response.statusCode>=300)return fail(502,'Canvas 接口不可用；请确认填写的是 Canvas 网址，而非学校登录／SSO 网址');
    let bytes=0;const chunks=[];response.on('data',chunk=>{bytes+=chunk.length;if(bytes>4000000){reject(new CalendarError(502,'Canvas 数据过大，请减少选择的课程'));req.destroy();return;}chunks.push(chunk);});
-   response.on('error',reject);response.on('end',()=>{try{resolve({json:JSON.parse(Buffer.concat(chunks).toString('utf8')),link:response.headers.link||''});}catch{reject(new CalendarError(502,'学校未返回 Canvas API 数据，请检查网址和 API 访问权限'));}});
+   response.on('end',()=>{try{resolve({json:JSON.parse(Buffer.concat(chunks).toString('utf8')),link:response.headers.link||''});}catch{reject(new CalendarError(502,'学校未返回 Canvas API 数据，请检查网址和 API 访问权限'));}});
   });
   const timer=setTimeout(()=>req.destroy(new CalendarError(504,'Canvas 连接超时，请稍后重试')),15000);timer.unref?.();req.on('close',()=>clearTimeout(timer));req.on('error',reject);req.end();
  });
@@ -63,7 +64,7 @@ export function createCanvasHandler(dependencies={}){
     const body=calendarBody(req);if(typeof body.origin!=='string'||body.origin.length>500||typeof body.token!=='string'||!body.token.trim()||body.token.length>2048||/[\s\x00-\x1f\x7f]/.test(body.token))throw new CalendarError(400,'请填写学校 Canvas 网址及个人访问令牌');
     const data={origin:canvasOrigin(body.origin.trim()),token:body.token,expires:Date.now()+30*86400000};const profile=(await call(data,'/api/v1/users/self/profile')).json;
     if(!profile?.id)throw new CalendarError(502,'无法确认 Canvas 用户');data.user={id:'canvas:'+createHash('sha256').update(data.origin+'#'+String(profile.id)).digest('hex'),name:clean(profile.name||profile.short_name,100)||'Canvas',email:data.origin};
-    await call(data,'/api/v1/courses?enrollment_state=active&per_page=100');storeSession(res,COOKIE,data,secret);return res.status(200).json({authenticated:true,calendarAuthorized:true,user:data.user});
+    storeSession(res,COOKIE,data,secret);return res.status(200).json({authenticated:true,calendarAuthorized:true,user:data.user});
    }
    const data=readSession(req,COOKIE,secret);if(action==='status')return res.status(200).json({configured:true,authenticated:!!data,calendarAuthorized:!!data,user:data?.user||null});if(!data)throw new CalendarError(401,'请先连接学校 Canvas');
    if(action==='calendar-list'){

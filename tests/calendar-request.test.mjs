@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {calendarRequest} from '../js/calendar-request.js';
+const endpoint='/api/canvas',body={origin:'https://cityuhk.instructure.com',token:'fake-private-token'};
+let calls=[];
+const queue=(...responses)=>async(url,options)=>{calls.push({url,options});const next=responses.shift();if(!next)throw Error('Unexpected extra request');return next;};
+const json=(value,status=200)=>Response.json(value,{status});
+let result=await calendarRequest(endpoint,'canvas','connect',body,{},s=>s,queue(new Response('Bad Gateway',{status:502}),json({authenticated:true})));
+assert.equal(result.authenticated,true);assert.equal(calls.length,2);assert.equal(calls[0].url,'/api/canvas?action=connect');assert.equal(calls[1].url,'/api/sync?provider=canvas&action=connect');assert.deepEqual(calls[0].options,calls[1].options);assert.equal(calls[1].options.credentials,'same-origin');
+calls=[];await assert.rejects(()=>calendarRequest(endpoint,'canvas','connect',body,{},s=>s,queue(json({error:'Canvas API failed'},502))),/Canvas API failed/);assert.equal(calls.length,1);
+calls=[];await assert.rejects(()=>calendarRequest(endpoint,'canvas','connect',body,{},s=>s,queue(new Response('Bad Gateway',{status:502}),new Response('FUNCTION_INVOCATION_FAILED fake-private-token',{status:502,headers:{'x-vercel-error':'FUNCTION_INVOCATION_FAILED','x-vercel-id':'hkg1::test-123'}}))),error=>error.message.includes('HTTP 502')&&error.message.includes('FUNCTION_INVOCATION_FAILED')&&error.message.includes('hkg1::test-123')&&!error.message.includes('fake-private-token'));assert.equal(calls.length,2);
+for(const [provider,action]of [['canvas','calendar-save'],['canvas','calendar-delete'],['canvas','disconnect'],['google','connect'],['icloud','connect']]){calls=[];await assert.rejects(()=>calendarRequest(endpoint,provider,action,body,{},s=>s,queue(new Response('Bad Gateway',{status:502}))),/HTTP 502/);assert.equal(calls.length,1);}
+calls=[];result=await calendarRequest(endpoint,'canvas','calendar-events',undefined,{calendar:'course_42',start:'2026-11-01',end:'2026-12-01'},s=>s,queue(new Response('Gateway timeout',{status:504}),json({events:[]})));assert.equal(calls.length,2);const url=new URL(calls[1].url,'https://123.baipon.com');assert.equal(url.searchParams.get('calendar'),'course_42');assert.equal(url.searchParams.get('start'),'2026-11-01');assert.equal(calls[1].options.method,undefined);
+calls=[];await assert.rejects(()=>calendarRequest(endpoint,'canvas','status',undefined,{},s=>s,queue(new Response('Sensitive body not shown',{status:403,headers:{'cf-ray':'0123456789abcdef-HKG'}}))),error=>error.message.includes('0123456789abcdef-HKG')&&!error.message.includes('Sensitive'));assert.equal(calls.length,1);
+calls=[];await assert.rejects(()=>calendarRequest(endpoint,'canvas','status',undefined,{},s=>s,queue(json(null))),/响应格式不正确/);assert.equal(calls.length,1);
+console.log('PASS: non-JSON gateway fallback, bounded retry, canonical same-origin route, unchanged credential body, no write retries, diagnostic reference and no raw-body/token disclosure.');
