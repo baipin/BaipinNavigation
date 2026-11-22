@@ -586,6 +586,10 @@
         .calendar-provider-notice>span:nth-child(2) { flex:1; min-width:0; overflow-wrap:anywhere; }
         .calendar-provider-notice>.material-icons { font-size:22px; flex:none; }
         .calendar-provider-notice mdui-button-icon { color:inherit; width:32px; height:32px; flex:none; }
+        .calendar-event-form>[hidden] { display:none; }
+        .calendar-source-link { display:inline-flex; align-items:center; gap:5px; color:rgb(var(--mdui-color-primary)); font-size:.85rem; }
+        .calendar-source-link[hidden] { display:none; }
+        .calendar-source-link .material-icons { font-size:16px; }
         .calendar-provider-heading { display:flex; align-items:center; gap:10px; }
         .calendar-provider-heading img { width:24px; height:24px; object-fit:contain; flex:none; }
         .settings-calendar-accounts { display:grid; gap:10px; margin-top:14px; }
@@ -4294,6 +4298,6 @@ function setBackgroundToCookie(value) {
     <script src="js/settings.js?v=calendar-settings-v4"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
     <script type="module" src="js/sync.js?v=calendar-permissions-v3"></script>
-    <script type="module" src="js/calendar.js?v=calendar-settings-status-v6"></script>
+    <script type="module" src="js/calendar.js?v=canvas-calendar-v7"></script>
 </body>
 </html>

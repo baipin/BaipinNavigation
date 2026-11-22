@@ -122,3 +122,14 @@ CITY FEED 股票与指数卡片加入最近交易日的真实 5 分钟价格走�
 测试：`node tests/calendar.test.mjs`、`node tests/calendar-oauth.test.mjs`、`node tests/icloud.test.mjs`，并运行原有 sync/microsoft/github 测试。测试均使用模拟服务；真实授权仍需提供商权限和应用配置。
 
 日历对话框的 Google/Microsoft 退出仅停用当前设备的日历连接，预设同步会话和自动同步状态保留；服务器会阻止已停用连接的日历读写，普通预设重新登录不会自动重新连接日历，需用户再次点击日历授权。iCloud 断开仍只清除其独立会话。
+
+
+## Canvas 学校日历
+
+日历账号对话框可使用学校 Canvas HTTPS 网址和个人访问令牌连接一个学校账号，选择课程，在同一月历显示课程事件及作业 Due（按设备本地时区显示），并打开学校的原作业。Canvas 在本站只读；无截止日期的作业不显示于日期格。默认选择已载入课程，可逐门取消。课程偏好使用现有 `navi_calendar_preferences.canvas`，纳入导入导出、恢复默认与多端预设同步；令牌、课程内容及作业不进入预设。
+
+接口 `/api/canvas` 重写到现有 `/api/sync?provider=canvas`，不新增 Vercel 函数。服务端 `server/canvas-calendar.js` 只 GET 当前用户 profile、active courses 和 calendar_events（type=assignment/event，明确指定 context_codes[]），分页有上限且提示截断。学校须启用个人访问令牌；用户在学校 Canvas 账号设置生成令牌，无需本站另行注册学校 OAuth。令牌可能具备较广权限，连接对话框已作说明。
+
+使用 `CANVAS_SESSION_KEY`（至少 32 个随机字符），未设置时沿用已有 `ICLOUD_SESSION_KEY` 或 `GOOGLE_KEY`。凭证放在最长 30 天的独立 AES-GCM 加密 HttpOnly Secure Cookie 中，学校服务端撤销／到期仍会使连接失效。学校域名仅允许 HTTPS 443，DNS 解析为公开 IPv4 并固定该地址建立 TLS 连接，阻止内网／元数据地址、重定向和跨域分页，令牌只发送到用户指定学校。每次读取限定月份，前端最多 4 本日历并发；每五分钟更新。
+
+测试：`node tests/canvas.test.mjs`（模拟学校 API，连接／只读／课程选择兼容的预设／Due 时区与零时长／分页／DNS 与令牌泄露防护），真实学校令牌需用户自行连接验证。

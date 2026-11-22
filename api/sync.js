@@ -1,3 +1,4 @@
+import canvasHandler from '../server/canvas-calendar.js';
 import icloudHandler from '../server/icloud-calendar.js';
 import {calendarApi,calendarGranted,CalendarError,GOOGLE_CALENDAR_SCOPE,GOOGLE_CALENDAR_LIST_SCOPE} from '../server/calendar-service.js';
 import microsoftHandler from '../server/microsoft-sync.js';
@@ -97,6 +98,7 @@ async function writeCloud(data,body) {
 }
 export default async function handler(req,res) {
     const route=new URL(req.url,'https://localhost');
+    if(route.pathname==='/api/canvas'||route.searchParams.get('provider')==='canvas'||req.query?.provider==='canvas')return canvasHandler(req,res);
     if(route.pathname==='/api/icloud'||route.searchParams.get('provider')==='icloud'||req.query?.provider==='icloud')return icloudHandler(req,res);
     if(route.pathname==='/api/microsoft' || route.pathname==='/api/microsoft/callback' || route.searchParams.get('provider')==='microsoft' || req.query?.provider==='microsoft')return microsoftHandler(req,res);
     res.setHeader('Cache-Control','no-store, max-age=0');

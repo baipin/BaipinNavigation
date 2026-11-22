@@ -11,6 +11,10 @@
     {
       "source": "/api/icloud",
       "destination": "/api/sync?provider=icloud"
+    },
+    {
+      "source": "/api/canvas",
+      "destination": "/api/sync?provider=canvas"
     }
   ]
 }
