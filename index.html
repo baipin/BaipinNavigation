@@ -584,6 +584,11 @@
         .calendar-account-section h3,.calendar-account-section p { margin:0; }
         .calendar-account-section small { font-size:.75rem; opacity:.7; line-height:1.6; }
         :is(#calendar-event-dialog,#calendar-accounts-dialog,#calendar-delete-dialog) [hidden] { display:none !important; }
+        .calendar-icloud-help { padding:14px 16px; border-radius:14px; background:rgba(128,128,128,.08); font-size:.8rem; line-height:1.8; }
+        .calendar-icloud-help ol { padding-inline-start:20px; margin:8px 0; }
+        .calendar-icloud-help p { margin:8px 0 0; }
+        .calendar-icloud-help a { color:inherit; text-underline-offset:3px; overflow-wrap:anywhere; }
+        .calendar-icloud-help .material-icons { font-size:1em; vertical-align:-.12em; margin-inline-start:.2em; }
         .calendar-event-form,.calendar-icloud-connect { display:grid; gap:16px; }
         .calendar-event-form label { display:grid; gap:8px; font-size:.85rem; }
         :is(.calendar-event-form,.calendar-icloud-connect) :is(input,select,textarea) { width:100%; box-sizing:border-box; padding:12px; border:1px solid rgba(128,128,128,.45); border-radius:12px; background:transparent; color:inherit; font:inherit; color-scheme:light; }
@@ -4260,6 +4265,6 @@ function setBackgroundToCookie(value) {
     <script src="js/settings.js?v=calendar-settings-v3"></script>
     <script type="module" src="js/camera-background.js?v=bing-background-v9"></script>
     <script type="module" src="js/sync.js?v=calendar-permissions-v3"></script>
-    <script type="module" src="js/calendar.js?v=desktop-calendar-v2"></script>
+    <script type="module" src="js/calendar.js?v=icloud-password-help-v3"></script>
 </body>
 </html>
