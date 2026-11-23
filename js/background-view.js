@@ -4,8 +4,8 @@
  const hint=document.createElement('span');hint.className='background-view-hint';cover.append(hint);document.body.append(cover);
  let pinned=false,preview=false,suppressHover=false,previousFocus=null,openedAt=0;
  const hover=matchMedia('(hover:hover) and (pointer:fine)');
- function labels(){const sc=root.lang==='zh-CN',name=sc?'欣赏背景':'欣賞背景';trigger.textContent=name;trigger.title=name;trigger.setAttribute('aria-label',name);const message=sc?'点按任意位置或按 Esc 恢复':'點按任意位置或按 Esc 還原';hint.textContent=message;cover.setAttribute('aria-label',message);}
- function showPreview(){if(pinned||suppressHover||!hover.matches)return;preview=true;root.classList.add('background-preview');}
+ function labels(){const sc=root.lang==='zh-CN',name=sc?'欣赏背景':'欣賞背景';trigger.title=name;trigger.setAttribute('aria-label',name);const message=sc?'点按任意位置或按 Esc 恢复':'點按任意位置或按 Esc 還原';hint.textContent=message;cover.setAttribute('aria-label',message);}
+ function showPreview(event){if(event.pointerType!=='mouse'||pinned||suppressHover||!hover.matches)return;preview=true;root.classList.add('background-preview');}
  function clearPreview(){preview=false;root.classList.remove('background-preview');}
  function restore(){if(!pinned)return;pinned=false;root.classList.remove('background-view');cover.hidden=true;trigger.setAttribute('aria-pressed','false');suppressHover=true;previousFocus?.focus?.({preventScroll:true});}
  trigger.addEventListener('pointerenter',showPreview);
