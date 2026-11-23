@@ -72,9 +72,19 @@ async function load(source,force=false,next=false){
   }
  }
 }
-function updateBatchButtons(){for(const button of region.querySelectorAll('[data-discover-next],[data-discover-refresh]')){const kind=button.dataset.discoverNext||button.dataset.discoverRefresh,source=kind==='github'?'github':picker.value;button.disabled=pending.has(source);button.setAttribute('aria-busy',String(pending.has(source)));if(button.tagName==='MDUI-BUTTON')button.loading=pending.has(source);}}
+function updateBatchButtons(){
+ for(const button of region.querySelectorAll('[data-discover-next],[data-discover-refresh]')){
+  const kind=button.dataset.discoverNext||button.dataset.discoverRefresh,source=kind==='github'?'github':picker.value,busy=pending.has(source);
+  button.disabled=busy;button.setAttribute('aria-busy',String(busy));
+  if(button.dataset.discoverRefresh){
+   let control=button.parentElement;
+   if(!control.classList.contains('discover-refresh-control')){control=node('span');control.className='discover-refresh-control';button.before(control);control.append(button);const spinner=node('mdui-circular-progress');spinner.className='discover-refresh-progress';spinner.setAttribute('role','status');control.append(spinner);}
+   control.classList.toggle('is-loading',busy);const spinner=control.querySelector('.discover-refresh-progress');spinner.hidden=!busy;spinner.setAttribute('aria-label',t('正在加载热门内容','正在載入熱門內容'));button.setAttribute('aria-label',t('刷新热门内容','更新熱門內容'));
+  }else if(button.tagName==='MDUI-BUTTON')button.loading=busy;
+ }
+}
 
-function render(){document.getElementById('discover-repo-title').textContent=t('热门 GitHub 仓库','熱門 GitHub 儲存庫');document.getElementById('discover-repo-caption').textContent='See Github Trends in 30 years';document.getElementById('discover-video-title').textContent=t('热门影片','熱門影片');picker.setAttribute('aria-label',t('影片平台','影片平台'));renderPlatform();updateBatchButtons();for(const button of region.querySelectorAll('[data-discover-refresh]'))button.setAttribute('aria-label',t('刷新热门内容','更新熱門內容'));titleButton.textContent=t('抓取页面标题','擷取網頁標題');draw('github');draw(picker.value);}
+function render(){document.getElementById('discover-repo-title').textContent=t('热门 GitHub 仓库','熱門 GitHub 儲存庫');document.getElementById('discover-repo-caption').textContent='See Github Trends in 30 days';document.getElementById('discover-video-title').textContent=t('热门影片','熱門影片');picker.setAttribute('aria-label',t('影片平台','影片平台'));renderPlatform();updateBatchButtons();for(const button of region.querySelectorAll('[data-discover-refresh]'))button.setAttribute('aria-label',t('刷新热门内容','更新熱門內容'));titleButton.textContent=t('抓取页面标题','擷取網頁標題');draw('github');draw(picker.value);}
 picker.onchange=()=>{renderPlatform();updateBatchButtons();try{localStorage.setItem('navi_discover_platform',picker.value);}catch{}draw(picker.value);void load(picker.value);};
 for(const button of picker.querySelectorAll('[data-platform]'))button.onclick=()=>{if(picker.value===button.dataset.platform)return;picker.value=button.dataset.platform;picker.dispatchEvent(new Event('change'));};
 picker.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key))return;event.preventDefault();const buttons=[...picker.querySelectorAll('[data-platform]')],next=event.key==='Home'?buttons[0]:event.key==='End'?buttons[1]:buttons.find(b=>b.dataset.platform!==picker.value);next.focus();next.click();});

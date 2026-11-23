@@ -71,3 +71,9 @@ button.discover-more:disabled .discover-more-circle { transform:none; }
 .discover-meta-item { display:inline-flex; align-items:center; gap:5px; min-width:0; max-width:100%; }
 .discover-meta-item .material-icons { flex:none; font-size:16px; line-height:1; }
 .discover-meta-item>span:last-child { min-width:0; overflow-wrap:anywhere; }
+
+.discover-refresh-control { display:inline-grid; place-items:center; width:40px; height:40px; flex:0 0 40px; }
+.discover-refresh-control>mdui-button-icon,.discover-refresh-progress { grid-area:1/1; }
+.discover-refresh-control.is-loading>mdui-button-icon { opacity:0; pointer-events:none; }
+.discover-refresh-progress { width:22px; height:22px; --mdui-color-primary:220,225,255; }
+.discover-refresh-progress[hidden] { display:none; }

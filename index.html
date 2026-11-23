@@ -747,7 +747,7 @@
         #footer-last-sync { display:block; margin-top:2px; opacity:.75; }
         @media(max-width:600px) { .settings-background-actions mdui-button { max-width:100%; } .footer-meta { gap:8px; } }
     </style>
-    <link rel="stylesheet" href="/discover.css?v=metadata-icons-v8">
+    <link rel="stylesheet" href="/discover.css?v=loading-state-v9">
     <link rel="stylesheet" href="city-feed.css?v=market-trends-v1">
 </head>
 <body>
@@ -925,7 +925,7 @@
         </aside>
     </div>
     <section id="discover" aria-label="热门内容">
-        <article class="discover-panel"><div class="discover-header"><div><h2 id="discover-repo-title">热门 GitHub 仓库</h2><p id="discover-repo-caption">See Github Trends in 30 years</p></div><mdui-button-icon icon="open_in_new" data-discover-open="github" href="https://github.com/trending" target="_blank" rel="noopener noreferrer" aria-label="在新窗口打开 GitHub" title="在新窗口打开 GitHub"></mdui-button-icon><mdui-button-icon icon="refresh" data-discover-refresh="github" aria-label="刷新热门内容"></mdui-button-icon></div><div class="discover-track" id="discover-repos" aria-label="GitHub"></div><p class="discover-status" id="discover-repo-status" role="status"></p></article>
+        <article class="discover-panel"><div class="discover-header"><div><h2 id="discover-repo-title">热门 GitHub 仓库</h2><p id="discover-repo-caption">See Github Trends in 30 days</p></div><mdui-button-icon icon="open_in_new" data-discover-open="github" href="https://github.com/trending" target="_blank" rel="noopener noreferrer" aria-label="在新窗口打开 GitHub" title="在新窗口打开 GitHub"></mdui-button-icon><mdui-button-icon icon="refresh" data-discover-refresh="github" aria-label="刷新热门内容"></mdui-button-icon></div><div class="discover-track" id="discover-repos" aria-label="GitHub"></div><p class="discover-status" id="discover-repo-status" role="status"></p></article>
         <article class="discover-panel"><div class="discover-header"><div><h2 id="discover-video-title">热门影片</h2></div><div id="discover-platform" class="discover-platform" role="radiogroup" aria-label="影片平台"><span class="discover-platform-thumb" aria-hidden="true"></span><button type="button" role="radio" data-platform="bilibili" aria-checked="true" tabindex="0" aria-label="Bilibili" title="Bilibili"><span class="platform-icon platform-icon-bilibili" aria-hidden="true"></span></button><button type="button" role="radio" data-platform="youtube" aria-checked="false" tabindex="-1" aria-label="YouTube" title="YouTube"><span class="platform-icon platform-icon-youtube" aria-hidden="true"></span></button></div><mdui-button-icon icon="open_in_new" data-discover-open="video" href="https://www.bilibili.com/v/popular/all" target="_blank" rel="noopener noreferrer" aria-label="在新窗口打开 Bilibili" title="在新窗口打开 Bilibili"></mdui-button-icon><mdui-button-icon icon="refresh" data-discover-refresh="video" aria-label="刷新热门内容"></mdui-button-icon></div><div class="discover-track" id="discover-videos" aria-label="影片"></div><p class="discover-status" id="discover-video-status" role="status"></p></article>
     </section>
     <section id="city-finance">
@@ -4356,6 +4356,6 @@ function setBackgroundToCookie(value) {
     <script type="module" src="js/camera-background.js?v=first-paint-v10"></script>
     <script type="module" src="js/sync.js?v=discover-v16"></script>
     <script type="module" src="js/calendar.js?v=calendar-feishu-v31"></script>
-    <script type="module" src="/js/discover.js?v=metadata-icons-v8"></script>
+    <script type="module" src="/js/discover.js?v=loading-state-v9"></script>
 </body>
 </html>
