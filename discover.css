@@ -50,11 +50,11 @@
 @media(prefers-reduced-motion:reduce){.discover-platform-thumb,.discover-platform button,.discover-more-circle{transition:none;}}
 
 /* Native in-feed creative; keep Google's content untouched and visibly identified. */
-.discover-video-ad { align-self:flex-start; height:auto; min-height:0; cursor:default; transition:none; background:transparent; border:0; box-shadow:none; overflow:visible; }
-.discover-video-ad:hover,.discover-video-ad:active { transform:none; background:transparent; box-shadow:none; }
+.discover-video-ad { align-self:flex-start; box-sizing:border-box; height:auto; min-height:0; min-width:268px; padding:8px; cursor:default; transition:none; background:#26383c; border:1px solid #ffffff14; border-radius:16px; box-shadow:0 3px 9px #0004; overflow:visible; }
+.discover-video-ad:hover,.discover-video-ad:active { transform:none; background:#26383c; box-shadow:0 3px 9px #0004; }
 .discover-video-ad[hidden] { display:none; }
 .discover-video-ad .adsbygoogle { display:block; width:100%; min-width:250px; max-width:100%; }
-@media(max-width:600px){.discover-video-ad{flex-basis:max(250px,min(272px,78vw));}}
+@media(max-width:600px){.discover-video-ad{flex-basis:max(268px,min(272px,78vw));}}
 
 .discover-platform button { width:56px; min-height:40px; padding:8px; }
 .platform-icon { display:block; width:24px; height:24px; background:currentColor; mask:var(--platform-icon) center/contain no-repeat; -webkit-mask:var(--platform-icon) center/contain no-repeat; }
