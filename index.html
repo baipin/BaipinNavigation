@@ -747,6 +747,7 @@
         #footer-last-sync { display:block; margin-top:2px; opacity:.75; }
         @media(max-width:600px) { .settings-background-actions mdui-button { max-width:100%; } .footer-meta { gap:8px; } }
     </style>
+    <link rel="stylesheet" href="/discover.css?v=content-v1">
     <link rel="stylesheet" href="city-feed.css?v=market-trends-v1">
 </head>
 <body>
@@ -793,7 +794,7 @@
         <div class="city-dashboard-grid">
             <article class="city-card">
                 <div class="city-card-head">
-                    <div><div class="city-card-title">香港实时脉搏</div><div class="city-card-caption">运输署行车时间 · 海底隧道与机场方向</div></div>
+                    <div><div class="city-card-title">香港行车时间监测</div><div class="city-card-caption">运输署行车时间 · 海底隧道与机场方向</div></div>
                     <span class="city-live" id="city-traffic-live">同步中</span>
                 </div>
                 <div class="city-journey-grid" id="city-journey-grid"><div class="city-card-caption">正在读取官方行车时间…</div></div>
@@ -923,6 +924,10 @@
             </div>
         </aside>
     </div>
+    <section id="discover" aria-label="热门内容">
+        <article class="discover-panel"><div class="discover-header"><div><h2 id="discover-repo-title">近期热门 GitHub 仓库</h2><p id="discover-repo-caption">近 30 天创建 · 按 Star 数排序</p></div><mdui-button-icon icon="refresh" data-discover-refresh="github" aria-label="刷新热门内容"></mdui-button-icon></div><div class="discover-track" id="discover-repos" aria-label="GitHub"></div><p class="discover-status" id="discover-repo-status" role="status"></p></article>
+        <article class="discover-panel"><div class="discover-header"><div><h2 id="discover-video-title">热门影片</h2></div><select id="discover-platform" aria-label="影片平台"><option value="bilibili">Bilibili</option><option value="youtube">YouTube</option></select><mdui-button-icon icon="refresh" data-discover-refresh="video" aria-label="刷新热门内容"></mdui-button-icon></div><div class="discover-track" id="discover-videos" aria-label="影片"></div><p class="discover-status" id="discover-video-status" role="status"></p></article>
+    </section>
     <section id="city-finance">
         <div class="city-finance-card">
             <div class="city-finance-item"><div class="city-finance-label">港幣 / 人民幣</div><div class="city-finance-value" id="city-fx">HK$1 = ¥--</div><div class="city-finance-note" id="city-fx-note">匯率日期 --</div></div>
@@ -965,7 +970,7 @@
                 <mdui-button variant="tonal" id="btn-get-icon">抓取图标</mdui-button>
                 <mdui-button variant="tonal" id="btn-pick-icon-bookmark">挑选图标</mdui-button>
             </div>
-            <mdui-text-field label="显示名称" id="f-name"></mdui-text-field>
+            <mdui-text-field label="显示名称" id="f-name"></mdui-text-field><mdui-button variant="tonal" id="btn-get-title" icon="title">抓取页面标题</mdui-button>
         </div>
         <mdui-button slot="action" variant="text" id="act-cancel">取消</mdui-button>
         <mdui-button slot="action" variant="text" id="act-del" style="color:red">删除</mdui-button>
@@ -1254,13 +1259,7 @@
             window.naviSetSearchEngine(item.value);
         };
 
-        document.getElementById('btn-get-engine-icon').onclick = () => {
-            const url = document.getElementById('engine-url').value;
-            if (url && url.startsWith('http')) {
-                const domain = new URL(url).origin;
-                document.getElementById('engine-icon').value = `${domain}/favicon.ico`;
-            }
-        };
+
 
         document.getElementById('engine-save').onclick = () => {
             const name = document.getElementById('engine-name').value.trim();
@@ -1388,13 +1387,7 @@
 
         document.getElementById('act-cancel').onclick = () => dialog.open = false;
 
-        document.getElementById('btn-get-icon').onclick = () => {
-            const url = document.getElementById('f-url').value;
-            if (url && url.startsWith('http')) {
-                const domain = new URL(url).origin;
-                document.getElementById('f-icon').value = `${domain}/favicon.ico`;
-            }
-        };
+
 
         /* 实时搜索联想（保持原样） */
         const searchInput = document.getElementById('search-input');
@@ -2614,7 +2607,7 @@ function setBackgroundToCookie(value) {
             }
             const pulse = grid.querySelector('article:first-child');
             if (pulse) {
-                pulse.querySelector('.city-card-title').textContent = '香港实时脉搏';
+                pulse.querySelector('.city-card-title').textContent = '香港行车时间监测';
                 pulse.querySelector('.city-card-caption').textContent = '全城信号总览 · 交通、港铁及公共服务';
                 pulse.querySelector('.city-metrics').innerHTML = `
                     <div class="city-metric"><div class="city-metric-label">运输署实时信号</div><div class="city-metric-value" id="city-pulse-signals">--</div><div class="city-metric-note">行车时间资料点</div><div class="city-meter"><i id="city-pulse-meter"></i></div></div>
@@ -2624,7 +2617,7 @@ function setBackgroundToCookie(value) {
             const departure = grid.querySelector('#city-journeys')?.closest('article');
             if (departure) departure.remove();
             if (pulse) {
-                pulse.querySelector('.city-card-title').textContent = '香港实时脉搏 · 行车时间';
+                pulse.querySelector('.city-card-title').textContent = '香港行车时间监测';
                 pulse.querySelector('.city-card-caption').textContent = '运输署实时行车时间 · 海底隧道、西隧及机场方向';
                 pulse.querySelector('.city-metrics').innerHTML = `
                     <div class="city-metric"><div class="city-metric-label">海底隧道 → 九龙</div><div class="city-metric-value" id="city-harbour">--</div><div class="city-metric-note">由港岛出发</div><div class="city-meter"><i id="city-harbour-meter"></i></div></div>
@@ -3451,7 +3444,7 @@ function setBackgroundToCookie(value) {
         }
         const cityLocalizedText = {
             tc: {
-                brand:'導航', quickAccess:'快速訪問', cityTraffic:'香港實時脈搏 · 行車時間',
+                brand:'導航', quickAccess:'快速訪問', cityTraffic:'香港行車時間監測',
                 trafficCaption:'運輸署實時行車時間 · 海底隧道、西隧及機場方向',
                 trafficNews:'最新交通消息', trafficNewsCaption:'運輸署及香港電台交通消息',
                 busTitle:'巴士到站', busCaption:'九巴、城巴及大嶼山巴士 · 附近站點或路線查詢',
@@ -3460,7 +3453,7 @@ function setBackgroundToCookie(value) {
                 financeNotes:['匯率日期 --','即時參考匯率','即時參考匯率','市場數據讀取中','即時參考匯率']
             },
             sc: {
-                brand:'导航', quickAccess:'快捷访问', cityTraffic:'香港实时脉搏 · 行车时间',
+                brand:'导航', quickAccess:'快捷访问', cityTraffic:'香港行车时间监测',
                 trafficCaption:'运输署实时行车时间 · 海底隧道、西隧及机场方向',
                 trafficNews:'最新交通消息', trafficNewsCaption:'运输署及香港电台交通消息',
                 busTitle:'巴士到站', busCaption:'九巴、城巴及大屿山巴士 · 附近站点或路线查询',
@@ -4361,7 +4354,8 @@ function setBackgroundToCookie(value) {
     <script src="js/app-info.js?v=feishu-history-v3"></script>
     <script src="js/settings.js?v=calendar-settings-v6"></script>
     <script type="module" src="js/camera-background.js?v=first-paint-v10"></script>
-    <script type="module" src="js/sync.js?v=feishu-doubao-label-v15"></script>
+    <script type="module" src="js/sync.js?v=discover-v16"></script>
     <script type="module" src="js/calendar.js?v=calendar-feishu-v31"></script>
+    <script type="module" src="/js/discover.js?v=content-v1"></script>
 </body>
 </html>

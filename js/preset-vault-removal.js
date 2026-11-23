@@ -1,4 +1,4 @@
-import {sanitizePreset} from './preset-schema.js?v=feishu-v5';
+import {sanitizePreset} from './preset-schema.js?v=discover-v6';
 
 // Change only the vault in the latest cloud revision, never upload local preferences.
 export async function removeCloudCalendarVault(request) {

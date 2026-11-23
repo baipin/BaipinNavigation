@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/site-metadata",
+      "destination": "/api/sync?content=metadata"
+    },
+    {
+      "source": "/api/discover",
+      "destination": "/api/sync?content=discover"
+    },
+    {
       "source": "/api/feishu/callback",
       "destination": "/api/sync?provider=feishu&action=callback"
     },

@@ -1,0 +1,23 @@
+import {identifySite,text} from './public-page.js';
+const cache=new Map();
+const clean=(x,max=300)=>text(x).slice(0,max);
+async function json(url,headers={}){const r=await fetch(url,{headers,signal:AbortSignal.timeout(12000),redirect:'error'});if(!r.ok)throw Error('upstream');return r.json();}
+export function githubCards(data){return (data.items||[]).filter(x=>/^[\w.-]+\/[\w.-]+$/.test(x.full_name)).slice(0,12).map(x=>({title:x.full_name,description:clean(x.description),url:'https://github.com/'+x.full_name,author:x.language||'',metric:'★ '+Number(x.stargazers_count||0).toLocaleString('en'),image:null}));}
+export function bilibiliCards(data){return (data.data?.list||[]).filter(x=>/^BV[\da-zA-Z]+$/.test(x.bvid)).slice(0,12).map(x=>({title:clean(x.title),description:clean(x.desc),author:clean(x.owner?.name),url:'https://www.bilibili.com/video/'+x.bvid,image:safeImage(x.pic,['hdslb.com']),metric:Number(x.stat?.view||0).toLocaleString('en')+' views'}));}
+function safeImage(value,hosts){try{const u=new URL(value.startsWith('//')?'https:'+value:value);if(u.protocol==='http:'&&hosts.some(h=>u.hostname===h||u.hostname.endsWith('.'+h)))u.protocol='https:';return u.protocol==='https:'&&hosts.some(h=>u.hostname===h||u.hostname.endsWith('.'+h))?u.href:null;}catch{return null;}}
+export function youtubeCards(data){
+ const found=new Map();function walk(x){if(!x||typeof x!=='object')return;if(Array.isArray(x)){for(const v of x)walk(v);return;}const v=x.videoRenderer||x.gridVideoRenderer;if(v&&/^[\w-]{11}$/.test(v.videoId)){const label=x=>x?.simpleText||x?.runs?.map(y=>y.text).join('')||'';found.set(v.videoId,{title:clean(label(v.title)),description:clean(label(v.descriptionSnippet)),author:clean(label(v.ownerText||v.shortBylineText)),url:'https://www.youtube.com/watch?v='+v.videoId,image:safeImage(v.thumbnail?.thumbnails?.at(-1)?.url||'',['ytimg.com']),metric:clean(label(v.viewCountText))});}for(const [k,v]of Object.entries(x))if(k!=='videoRenderer'&&k!=='gridVideoRenderer')walk(v);}walk(data);return [...found.values()].slice(0,12);
+}
+async function discover(source){
+ if(source==='github'){const since=new Date(Date.now()-30*86400000).toISOString().slice(0,10);return {items:githubCards(await json('https://api.github.com/search/repositories?'+new URLSearchParams({q:'created:>='+since+' archived:false',sort:'stars',order:'desc',per_page:'12'}),{Accept:'application/vnd.github+json','User-Agent':'BaipinNavigation'})),period:'30d'};}
+ if(source==='bilibili')return {items:bilibiliCards(await json('https://api.bilibili.com/x/web-interface/popular?ps=12&pn=1',{'User-Agent':'Mozilla/5.0',Referer:'https://www.bilibili.com/'}))};
+ if(process.env.YOUTUBE_API_KEY){const data=await json('https://www.googleapis.com/youtube/v3/videos?'+new URLSearchParams({part:'snippet,statistics',chart:'mostPopular',regionCode:'HK',maxResults:'12',key:process.env.YOUTUBE_API_KEY}));return {items:(data.items||[]).filter(x=>/^[\w-]{11}$/.test(x.id)).map(x=>({title:clean(x.snippet?.title),author:clean(x.snippet?.channelTitle),description:clean(x.snippet?.description),url:'https://www.youtube.com/watch?v='+x.id,image:safeImage(x.snippet?.thumbnails?.high?.url||'',['ytimg.com']),metric:Number(x.statistics?.viewCount||0).toLocaleString('en')+' views'}))};}
+ throw Error('YouTube API key not configured');
+}
+export default async function siteContent(req,res){
+ if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'Method not allowed'});}
+ const url=new URL(req.url,'https://localhost'),metadata=url.pathname==='/api/site-metadata'||url.searchParams.get('content')==='metadata';
+ if(metadata){res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');try{return res.status(200).json(await identifySite(url.searchParams.get('url')));}catch{return res.status(422).json({error:'无法识别此页面，请确认网址可公开访问，或手动填写标题及图标。'});}}
+ const source=url.searchParams.get('source');if(source==='youtube'&&!process.env.YOUTUBE_API_KEY)return res.status(503).json({error:'YouTube 热门需要站点配置 YOUTUBE_API_KEY。'});if(!['github','bilibili','youtube'].includes(source))return res.status(400).json({error:'Unknown source'});
+ try{let data=cache.get(source);if(!data||Date.now()-data.at>600000){const result=await discover(source);if(!result.items.length)throw Error('empty');data={...result,at:Date.now(),updatedAt:new Date().toISOString()};cache.set(source,data);}res.setHeader('Cache-Control','public, max-age=120, s-maxage=600');return res.status(200).json(data);}catch{return res.status(502).json({error:source==='youtube'?'YouTube 热门暂时不可用，请切换 Bilibili；站点可配置 YOUTUBE_API_KEY 使用官方热门榜。':'热门内容暂时无法取得，请稍后重试。'});}
+}
