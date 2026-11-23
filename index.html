@@ -474,6 +474,9 @@
     <style>
         #data-manage-dialog [hidden], #search-clear[hidden], #footer-account[hidden], #footer-avatar[hidden], #footer-account [hidden] { display:none !important; }
         #data-manage-dialog::part(panel) { display:flex; flex-direction:column; box-sizing:border-box; width:min(560px,calc(100vw - 32px)); height:min(680px,calc(100dvh - 48px)); max-width:calc(100vw - 32px); max-height:calc(100dvh - 48px); }
+        #bookmark-save-status:empty, #bookmark-save-progress[hidden] { display:none!important; }
+        #bookmark-save-status { margin:0; font-size:.85rem; line-height:1.5; color:rgb(var(--mdui-color-error)); }
+        #bookmark-save-progress { width:100%; border-radius:4px; }
         mdui-dialog select:focus-visible, mdui-dialog input:focus-visible, mdui-dialog textarea:focus-visible { outline-offset:-2px; }
         mdui-dialog select { margin-block:3px; }
         #data-manage-dialog::part(header),#data-manage-dialog::part(action) { flex-shrink:0; }
@@ -1444,6 +1447,10 @@
             dialog.open = true;
         }
 
+        const bookmarkSaveProgress = document.createElement('mdui-linear-progress');
+        bookmarkSaveProgress.id = 'bookmark-save-progress';
+        bookmarkSaveProgress.hidden = true;
+        document.getElementById('f-name').parentElement.append(bookmarkSaveProgress);
         const bookmarkSaveStatus = document.createElement('p');
         bookmarkSaveStatus.id = 'bookmark-save-status';
         bookmarkSaveStatus.setAttribute('role','status');
@@ -1465,6 +1472,7 @@
                 bookmarkSaveStatus.textContent = language('请填写有效的网站网址。','請填寫有效的網站網址。');
                 return;
             }
+            bookmarkSaveStatus.textContent = '';
             button.disabled = true;
             button.loading = true;
             const controller = new AbortController();
@@ -1473,7 +1481,8 @@
             const timeout = setTimeout(cancel,35000);
             try {
                 if(!nameField.value.trim() || !iconField.value.trim()) {
-                    bookmarkSaveStatus.textContent = language('正在自动获取网站图标和标题…','正在自動取得網站圖示和標題…');
+                    bookmarkSaveProgress.setAttribute('aria-label',language('正在获取网站图标和标题','正在取得網站圖示和標題'));
+                    bookmarkSaveProgress.hidden = false;
                     const response = await fetch('/api/site-metadata?' + new URLSearchParams({url:url.href}),{signal:controller.signal,cache:'no-store'});
                     if(!response.ok) throw Error();
                     const metadata = await response.json();
@@ -1492,6 +1501,7 @@
                 if(dialog.open) bookmarkSaveStatus.textContent = language('未能自动获取，请重试或手动填写图标和标题后再添加。','未能自動取得，請重試或手動填寫圖示和標題後再新增。');
             } finally {
                 clearTimeout(timeout);
+                bookmarkSaveProgress.hidden = true;
                 dialog.removeEventListener('close',cancel);
                 button.disabled = false;
                 button.loading = false;

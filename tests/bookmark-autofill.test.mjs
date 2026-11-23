@@ -5,13 +5,13 @@ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const source=html.slice(html.indexOf("        document.getElementById('act-save').onclick = async"),html.indexOf("        document.getElementById('act-del').onclick"));
 async function run({name='',icon='',ok=true,pendingEdit,cancel=false}={}) {
  const fields={'f-name':{value:name},'f-icon':{value:icon},'f-url':{value:'example.com'},'act-save':{}};
- const bookmarks=[];let requests=0,saved=false;
+ const bookmarks=[];let requests=0,saved=false;const progress={hidden:true,setAttribute(){}};
  const dialog={open:true,addEventListener(){},removeEventListener(){}};
  const status={textContent:''};
- const context={document:{getElementById:id=>fields[id],documentElement:{lang:'zh-CN'}},bookmarkSaveStatus:status,dialog,curIdx:null,bookmarks,URL,URLSearchParams,AbortController,setTimeout,clearTimeout,localStorage:{setItem(){saved=true;}},render(){},fetch:async()=>{requests++;if(pendingEdit)fields['f-name'].value=pendingEdit;if(cancel)dialog.open=false;return {ok,json:async()=>({title:'Site title',icon:'https://example.com/icon.png'})};}};
+ const context={document:{getElementById:id=>fields[id],documentElement:{lang:'zh-CN'}},bookmarkSaveStatus:status,bookmarkSaveProgress:progress,dialog,curIdx:null,bookmarks,URL,URLSearchParams,AbortController,setTimeout,clearTimeout,localStorage:{setItem(){saved=true;}},render(){},fetch:async()=>{requests++;assert.equal(progress.hidden,false);if(pendingEdit)fields['f-name'].value=pendingEdit;if(cancel)dialog.open=false;return {ok,json:async()=>({title:'Site title',icon:'https://example.com/icon.png'})};}};
  vm.runInNewContext(source,context);
  await fields['act-save'].onclick();
- assert.equal(fields['act-save'].disabled,false);
+ assert.equal(fields['act-save'].disabled,false);assert.equal(progress.hidden,true);
  return {requests,bookmarks,saved,status,dialog};
 }
 let r=await run();assert.equal(r.bookmarks[0].name,'Site title');assert.equal(r.bookmarks[0].icon,'https://example.com/icon.png');assert.equal(r.requests,1);
