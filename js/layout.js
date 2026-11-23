@@ -28,5 +28,6 @@
     }
     new MutationObserver(observeCards).observe(grid,{childList:true});
     mobile.addEventListener('change',schedule);
+    document.addEventListener('navi-widgets-change',schedule);
     observeCards();
 })();

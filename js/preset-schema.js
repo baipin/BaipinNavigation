@@ -2,7 +2,7 @@ import {validateVault} from './calendar-vault-format.js';
 import {normalizeCities} from './weather-cities.js';
 import {parseCameraPreference} from './camera-background-model.js';
 // Preferences and an optional encrypted calendar vault travel between devices; auth cookies, plaintext credentials and live caches do not.
-export const PRESET_KEYS = ['bp_v7','custom_engines','last_engine','theme_mode','custom_rss','navi_city_stocks','navi_city_feed','navi_rss_expansion_v1','navi_language','hko_rain_area','navi_aqhi_station','navi_camera_background','navi_weather_cities','navi_calendar_preferences','navi_calendar_vault','navi_discover_platform','navi_quick_access_offset','navi_quick_access_offset_vh','navi_music_platform'];
+export const PRESET_KEYS = ['bp_v7','custom_engines','last_engine','theme_mode','custom_rss','navi_city_stocks','navi_city_feed','navi_rss_expansion_v1','navi_language','hko_rain_area','navi_aqhi_station','navi_camera_background','navi_weather_cities','navi_calendar_preferences','navi_calendar_vault','navi_discover_platform','navi_quick_access_offset','navi_quick_access_offset_vh','navi_music_platform','navi_music_charts','navi_widgets'];
 export const COOKIE_KEYS = ['homepage_bg'];
 export const MAX_PRESET_BYTES = 180000;
 export function sanitizePreset(input) {
@@ -30,6 +30,8 @@ export function sanitizePreset(input) {
             if (['navi_city_feed','custom_engines'].includes(key) && Array.isArray(parsed)) throw new Error('预设设置格式不正确');
         }
     }
+    if(result.localStorage.navi_music_charts!==null){const charts=JSON.parse(result.localStorage.navi_music_charts);if(!charts||Array.isArray(charts)||typeof charts!=='object'||Object.entries(charts).some(([key,value])=>!(key==='apple'?['hk','tw','us','jp']:key==='qq'?['hot','rising','new','mainland']:[]).includes(value)))throw new Error('音乐榜单设置不正确');}
+    if(result.localStorage.navi_widgets!==null){const widgets=JSON.parse(result.localStorage.navi_widgets);const ids=['quick','poem','weather','calendar','news','feed','journeys','rails','flights','traffic','bus','aed','holidays','boundary','repos','videos','music','finance'];if(!widgets||Array.isArray(widgets)||typeof widgets!=='object'||Object.entries(widgets).some(([key,value])=>!ids.includes(key)||typeof value!=='boolean'))throw new Error('小工具设置不正确');}
     if(result.localStorage.navi_music_platform!==null&&!['apple','qq'].includes(result.localStorage.navi_music_platform))throw new Error('音乐平台设置不正确');
     const relativeSpacing=result.localStorage.navi_quick_access_offset_vh;
     if(relativeSpacing!==null && (!/^-?\d+$/.test(relativeSpacing)||Number(relativeSpacing)<-8||Number(relativeSpacing)>100))throw new Error('快捷访问相对间距设置不正确');

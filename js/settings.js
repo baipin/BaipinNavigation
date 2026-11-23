@@ -29,8 +29,8 @@
     try {updateSpacing(spacingPreference.read());} catch {updateSpacing(0);}
 
     const texts={
-        sc:{spacing:'快捷访问起始位置',spacingHint:'按屏幕高度比例调整；向左上移，向右下移。',spacingReset:'默认位置',title:'设置',general:'常规',background:'背景',sync:'登录与备份',appearance:'语言与显示',content:'内容配置',engine:'当前搜索引擎',weather:'天气预设地区',rain:'降雨量监测地区',aqhi:'空气质素 AQHI 监测地区',bookmarks:'快捷访问配置',engines:'搜索引擎配置',rss:'RSS 配置',city:'CITY FEED 配置',backgroundTitle:'首页背景',random:'从 Unsplash 获取随机背景',reset:'恢复默认背景',resetAll:'恢复默认设置',undoReset:'撤销上次恢复',backgroundHint:'背景会保存在此设备，开启同步后也可随预设同步。'},
-        tc:{spacing:'快速訪問起始位置',spacingHint:'按螢幕高度比例調整；向左上移，向右下移。',spacingReset:'預設位置',title:'設定',general:'一般',background:'背景',sync:'登入與備份',appearance:'語言與顯示',content:'內容設定',engine:'目前搜尋引擎',weather:'天氣預設地區',rain:'降雨量監測地區',aqhi:'空氣質素 AQHI 監測地區',bookmarks:'快速訪問設定',engines:'搜尋引擎設定',rss:'RSS 設定',city:'CITY FEED 設定',backgroundTitle:'首頁背景',random:'從 Unsplash 取得隨機背景',reset:'還原預設背景',resetAll:'還原預設設定',undoReset:'復原上次還原',backgroundHint:'背景會儲存在此裝置，開啟同步後亦可隨預設同步。'}
+        sc:{widgets:'首页小工具',spacing:'快捷访问起始位置',spacingHint:'按屏幕高度比例调整；向左上移，向右下移。',spacingReset:'默认位置',title:'设置',general:'常规',background:'背景',sync:'登录与备份',appearance:'语言与显示',content:'内容配置',engine:'当前搜索引擎',weather:'天气预设地区',rain:'降雨量监测地区',aqhi:'空气质素 AQHI 监测地区',bookmarks:'快捷访问配置',engines:'搜索引擎配置',rss:'RSS 配置',city:'CITY FEED 配置',backgroundTitle:'首页背景',random:'从 Unsplash 获取随机背景',reset:'恢复默认背景',resetAll:'恢复默认设置',undoReset:'撤销上次恢复',backgroundHint:'背景会保存在此设备，开启同步后也可随预设同步。'},
+        tc:{widgets:'首頁小工具',spacing:'快速訪問起始位置',spacingHint:'按螢幕高度比例調整；向左上移，向右下移。',spacingReset:'預設位置',title:'設定',general:'一般',background:'背景',sync:'登入與備份',appearance:'語言與顯示',content:'內容設定',engine:'目前搜尋引擎',weather:'天氣預設地區',rain:'降雨量監測地區',aqhi:'空氣質素 AQHI 監測地區',bookmarks:'快速訪問設定',engines:'搜尋引擎設定',rss:'RSS 設定',city:'CITY FEED 設定',backgroundTitle:'首頁背景',random:'從 Unsplash 取得隨機背景',reset:'還原預設背景',resetAll:'還原預設設定',undoReset:'復原上次還原',backgroundHint:'背景會儲存在此裝置，開啟同步後亦可隨預設同步。'}
     };
     function render() {
         const sc=document.documentElement.lang==='zh-CN',labels=texts[sc?'sc':'tc'];
@@ -49,8 +49,13 @@
         document.getElementById('settings-calendar-heading').textContent=sc?'日历账号与授权':'日曆帳戶與授權';
         document.querySelector('[data-open-calendar-accounts]').textContent=sc?'日历账号与显示':'日曆帳戶與顯示';
         document.getElementById('settings-calendar').textContent=sc?'日历账号与显示':'日曆帳戶與顯示';
-        refreshDistricts();refreshEngines();
+        refreshDistricts();refreshEngines();renderWidgets();
     }
+    function renderWidgets(){
+        const host=document.getElementById('settings-widgets'),api=window.naviWidgets;if(!host||!api)return;
+        host.replaceChildren(...api.catalog.map(([id,sc,tc])=>{const row=document.createElement('label');row.className='settings-widget-row';const name=document.createElement('span');name.textContent=document.documentElement.lang==='zh-CN'?sc:tc;const toggle=document.createElement('mdui-switch');toggle.checked=api.enabled(id);toggle.setAttribute('aria-label',name.textContent);toggle.onchange=()=>api.set(id,toggle.checked);row.append(name,toggle);return row;}));
+    }
+    document.addEventListener('navi-widgets-change',renderWidgets);
     function select(tab) {
         refreshDistricts();refreshEngines();
         current=['general','background','sync'].includes(tab)?tab:'general';

@@ -13,7 +13,7 @@ const titleButton=document.getElementById('btn-get-title');
 metadataButton(document.getElementById('btn-get-icon'),document.getElementById('f-url'),document.getElementById('f-icon'),'icon');
 metadataButton(titleButton,document.getElementById('f-url'),document.getElementById('f-name'),'title');
 metadataButton(document.getElementById('btn-get-engine-icon'),document.getElementById('engine-url'),document.getElementById('engine-icon'),'icon');
-const region=document.getElementById('discover'),picker=document.getElementById('discover-platform'),data=new Map(),errors=new Map(),pending=new Set();let started=false,videoFeedAd=null,videoAdDismissed=false,videoBatchChanged=false;const pages=new Map();
+const region=document.getElementById('discover'),picker=document.getElementById('discover-platform'),data=new Map(),errors=new Map(),pending=new Set();let started=false,videoFeedAd=null,videoAdDismissed=false,videoBatchChanged=false;const pages=new Map(),batchHistory=new Map();
 try{picker.value=localStorage.getItem('navi_discover_platform')==='youtube'?'youtube':'bilibili';}catch{}
 function moreLink(source){
  const more=node('button');more.type='button';more.className='discover-more';more.dataset.discoverNext=source==='github'?'github':'video';more.disabled=pending.has(source);more.setAttribute('aria-label',t('换一批','換一批'));more.setAttribute('aria-busy',String(pending.has(source)));
@@ -29,6 +29,7 @@ function draw(source){
   for(const child of [...list.children])if(child!==videoFeedAd?.element)child.remove();
   if(videoFeedAd){videoFeedAd.updateLabel();videoFeedAd.element.hidden=!result?.items.length||videoAdDismissed||videoFeedAd.failed||videoFeedAd.unfilled;if(videoFeedAd.element.parentElement!==list)list.append(videoFeedAd.element);}
  }else list.replaceChildren();
+ updateBackButtons();
  let index=0;
  if(result)for(const item of result.items){
   const card=node('a');card.className='discover-card'+(isRepo?' discover-repo-card':'');card.href=item.url;card.target='_blank';card.rel='noopener noreferrer';
@@ -57,12 +58,12 @@ function renderPlatform(){
 }
 
 async function load(source,force=false,next=false){
- if(pending.has(source)||!force&&data.has(source))return;
+ if(!window.naviWidgets.enabled(source==='github'?'repos':'videos')||pending.has(source)||!force&&data.has(source))return;
  const previous=data.get(source),page=next?(previous?.hasMore?(pages.get(source)||1)+1:1):(pages.get(source)||1),list=document.getElementById(source==='github'?'discover-repos':'discover-videos'),status=document.getElementById(source==='github'?'discover-repo-status':'discover-video-status');
  let succeeded=false;
  pending.add(source);errors.delete(source);updateBatchButtons();
  if(source==='github'||source===picker.value){list.setAttribute('aria-busy','true');status.textContent=t('正在加载…','正在載入…');}
- try{const response=await fetch('/api/discover?'+new URLSearchParams({source,page:String(page),v:'batches-v3'}),{signal:AbortSignal.timeout(25000)});if(!response.ok)throw Error();const result=await response.json();if(!result.items?.length)throw Error();data.set(source,result);pages.set(source,page);if(next&&source!=='github'){videoBatchChanged=true;videoFeedAd?.enableClose();}succeeded=true;}
+ try{const response=await fetch('/api/discover?'+new URLSearchParams({source,page:String(page),v:'batches-v3'}),{signal:AbortSignal.timeout(25000)});if(!response.ok)throw Error();const result=await response.json();if(!result.items?.length)throw Error();if(next&&previous){const stack=batchHistory.get(source)||[];stack.push({result:previous,page:pages.get(source)||1});if(stack.length>4)stack.shift();batchHistory.set(source,stack);}data.set(source,result);pages.set(source,page);if(next&&source!=='github'){videoBatchChanged=true;videoFeedAd?.enableClose();}succeeded=true;}
  catch{errors.set(source,true);}finally{
   pending.delete(source);updateBatchButtons();
   if(source==='github'||source===picker.value){
@@ -72,7 +73,16 @@ async function load(source,force=false,next=false){
   }
  }
 }
+function updateBackButtons(){
+ for(const kind of ['github','video']){
+  const source=kind==='github'?'github':picker.value,refresh=region.querySelector('[data-discover-refresh="'+kind+'"]');
+  let button=region.querySelector('[data-discover-back="'+kind+'"]');
+  if(!button){button=node('mdui-button-icon');button.icon='arrow_back';button.dataset.discoverBack=kind;(refresh.parentElement.classList.contains('discover-refresh-control')?refresh.parentElement:refresh).before(button);button.onclick=()=>{const current=kind==='github'?'github':picker.value,stack=batchHistory.get(current)||[];if(!stack.length||pending.has(current))return;const entry=stack.pop();data.set(current,entry.result);pages.set(current,entry.page);draw(current);const list=document.getElementById(kind==='github'?'discover-repos':'discover-videos');list.scrollLeft=0;};}
+  button.hidden=!(batchHistory.get(source)?.length);button.disabled=pending.has(source);button.setAttribute('aria-label',t('返回上一批','返回上一批'));button.title=t('返回上一批','返回上一批');
+ }
+}
 function updateBatchButtons(){
+ updateBackButtons();
  for(const button of region.querySelectorAll('[data-discover-next],[data-discover-refresh]')){
   const kind=button.dataset.discoverNext||button.dataset.discoverRefresh,source=kind==='github'?'github':picker.value,busy=pending.has(source);
   button.disabled=busy;button.setAttribute('aria-busy',String(busy));
@@ -91,5 +101,6 @@ picker.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','ArrowUp
 for(const b of region.querySelectorAll('[data-discover-next]'))b.onclick=()=>void load(b.dataset.discoverNext==='github'?'github':picker.value,true,true);
 for(const b of region.querySelectorAll('[data-discover-refresh]'))b.onclick=()=>void load(b.dataset.discoverRefresh==='github'?'github':picker.value,true);
 new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});render();
-const observer=new IntersectionObserver(entries=>{if(entries.some(x=>x.isIntersecting)){started=true;void load('github');void load(picker.value);observer.disconnect();}},{rootMargin:'200px'});observer.observe(region);
-setInterval(()=>{if(started&&document.visibilityState==='visible'){void load('github',true);void load(picker.value,true);}},900000);
+const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){started=true;void load(entry.target.id==='discover-repos'?'github':picker.value);}},{rootMargin:'150px'});observer.observe(document.getElementById('discover-repos'));observer.observe(document.getElementById('discover-videos'));
+document.addEventListener('navi-widgets-change',()=>{if(window.naviWidgets.ready('repos'))void load('github');if(window.naviWidgets.ready('videos'))void load(picker.value);});
+setInterval(()=>{if(started&&document.visibilityState==='visible'){if(window.naviWidgets.ready('repos'))void load('github',true);if(window.naviWidgets.ready('videos'))void load(picker.value,true);}},900000);

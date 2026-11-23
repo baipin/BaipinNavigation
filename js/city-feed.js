@@ -322,22 +322,26 @@
         applyDisplay();
 
     }
-    const stockDialog = document.createElement('dialog'); stockDialog.className='city-feed-stock-dialog'; stockDialog.id='city-feed-stock-dialog';
+    const stockDialog = document.createElement('mdui-dialog'); stockDialog.className='city-feed-stock-dialog'; stockDialog.id='city-feed-stock-dialog';
     stockDialog.innerHTML=`<form><h2></h2>
         <nav class="city-feed-settings-tabs"><button type="button" data-panel="display" aria-pressed="true"></button><button type="button" data-panel="stocks" aria-pressed="false"></button></nav>
         <section class="city-feed-settings-panel" data-settings-panel="display"><div class="city-feed-display-options"></div><fieldset class="city-feed-ticker-options"><legend></legend><div class="city-feed-speed-settings"></div><div class="city-feed-ticker-switches"></div><div class="city-feed-rss-options"></div><p class="city-feed-rss-hint"></p></fieldset></section>
         <section class="city-feed-settings-panel" data-settings-panel="stocks" hidden><p class="city-feed-stock-hint"></p><label class="city-feed-symbol-label" for="city-feed-custom-symbols"></label><div class="city-feed-symbol-entry"><input id="city-feed-custom-symbols" type="text" placeholder="BABA, 0700.HK, 600000.SS, 000001.SZ"><button type="button" data-stock-action="add"></button></div><p class="city-feed-stock-error" role="alert" aria-live="polite"></p><p class="city-feed-stock-feedback" role="status"></p><div class="city-feed-custom-list"></div><div class="city-feed-stock-options"></div></section>
         <div class="city-feed-stock-actions"><button type="button" data-stock-action="reset"></button><button type="button" data-stock-action="cancel"></button><button type="submit" data-stock-action="save"></button></div></form>`;
-    section.append(stockDialog);
+    const headline=stockDialog.querySelector('h2');headline.slot='headline';stockDialog.prepend(headline);
+    const actions=stockDialog.querySelector('.city-feed-stock-actions');
+    for(const old of [...actions.querySelectorAll('button')]){const button=document.createElement('mdui-button');button.dataset.stockAction=old.dataset.stockAction;button.variant=old.type==='submit'?'tonal':'text';button.type='button';if(old.type==='submit')button.onclick=()=>stockDialog.querySelector('form').requestSubmit();button.slot='action';stockDialog.append(button);}actions.remove();
+    const oldTabs=stockDialog.querySelector('.city-feed-settings-tabs'),tabs=document.createElement('mdui-tabs');tabs.className='city-feed-material-tabs';tabs.value='display';tabs.fullWidth=true;
+    for(const key of ['display','stocks']){const tab=document.createElement('mdui-tab');tab.value=key;tab.dataset.panel=key;tabs.append(tab);}oldTabs.replaceWith(tabs);
+    document.body.append(stockDialog);
     let draftSymbols=[];
     function switchSettingsPanel(panel) {
         stockDialog.querySelectorAll('[data-settings-panel]').forEach(node=>node.hidden=node.dataset.settingsPanel!==panel);
-        stockDialog.querySelectorAll('[data-panel]').forEach(node=>node.setAttribute('aria-pressed',String(node.dataset.panel===panel)));
+        tabs.value=panel;
     }
-    stockDialog.querySelectorAll('[data-panel]').forEach(button=>button.addEventListener('click',()=>switchSettingsPanel(button.dataset.panel)));
+    tabs.addEventListener('change',()=>switchSettingsPanel(tabs.value));
     function checkbox(parent,value,title,checked,kind) {
-        const label=document.createElement('label'),input=document.createElement('input');
-        input.type='checkbox'; input.value=value; input.checked=checked; input.dataset.settingKind=kind;
+        const label=document.createElement('label'),input=document.createElement('mdui-checkbox'); input.value=value;input.setAttribute('value',value); input.checked=checked; input.dataset.settingKind=kind;
         const caption=document.createElement('span');caption.textContent=title;label.append(input,caption);parent.append(label);return input;
     }
     function renderCustomList() {
@@ -401,24 +405,24 @@
         stockDialog.querySelector('.city-feed-rss-hint').textContent=text('这里只选择 CITY FEED 显示哪些 RSS。RSS 列表的添加、编辑和移除，请到上方「香港新闻」容器的 RSS 图标管理；这些设置均支持导入导出。','這裡只選擇 CITY FEED 顯示哪些 RSS。RSS 清單的新增、編輯和移除，請到上方「香港新聞」容器的 RSS 圖示管理；這些設定均支援匯入匯出。');
         stockDialog.querySelector('.city-feed-stock-error').textContent='';stockDialog.querySelector('.city-feed-stock-feedback').textContent='';
         ['reset','cancel','save'].forEach((action,index)=> {stockDialog.querySelector('[data-stock-action="'+action+'"]').textContent=text(['恢复全部默认','取消','保存'][index],['恢復全部預設','取消','儲存'][index]);});
-        syncRssControls();switchSettingsPanel('display');stockDialog.showModal();stockDialog.scrollTop=0;
+        syncRssControls();switchSettingsPanel('display');stockDialog.open=true;
     });
     function applySettings() {
         applyStockSelection();page=boardPage=featuredPage=0;renderMarkets();renderFreshness();renderWeatherFlip();requestAnimationFrame(fitBoard);refreshMarquee();refreshStocks();
         if(typeof updateCityTicker==='function') updateCityTicker();
     }
-    stockDialog.querySelector('[data-stock-action="cancel"]').addEventListener('click',()=>stockDialog.close());
-    stockDialog.querySelector('[data-stock-action="reset"]').addEventListener('click',()=> {stockSelection=null;displaySettings={...displayDefaults};localStorage.removeItem('navi_city_stocks');localStorage.removeItem('navi_city_feed');applySettings();stockDialog.close();});
+    stockDialog.querySelector('[data-stock-action="cancel"]').addEventListener('click',()=>stockDialog.open=false);
+    stockDialog.querySelector('[data-stock-action="reset"]').addEventListener('click',()=> {stockSelection=null;displaySettings={...displayDefaults};localStorage.removeItem('navi_city_stocks');localStorage.removeItem('navi_city_feed');applySettings();stockDialog.open=false;});
     stockDialog.querySelector('form').addEventListener('submit',event=> {
         event.preventDefault();if(!addSymbols())return;
-        const ids=[...stockDialog.querySelectorAll('[data-setting-kind="stock"]:checked')].map(input=>input.value);
+        const ids=[...stockDialog.querySelectorAll('[data-setting-kind="stock"]')].filter(input=>input.checked).map(input=>input.value);
         const next={...displaySettings};stockDialog.querySelectorAll('[data-setting-kind="display"]').forEach(input=>next[input.value]=input.checked);
         stockDialog.querySelectorAll('[data-speed-key]').forEach(input=>{const value=Number(input.value);next[input.dataset.speedKey]=validMarqueeSpeed(value)?value:displayDefaults[input.dataset.speedKey];});
         const rssInputs=[...stockDialog.querySelectorAll('[data-setting-kind="rss"]')];
         next.rssSources=rssInputs.every(input=>input.checked)?null:rssInputs.filter(input=>input.checked).map(input=>input.value);
         if(next.stocks && !ids.length && !draftSymbols.length) {switchSettingsPanel('stocks');stockDialog.querySelector('.city-feed-stock-error').textContent=text('请至少选择或添加一只股票，或关闭个股行情。','請至少選擇或加入一隻股票，或關閉個股行情。');return;}
         stockSelection={ids,symbols:[...draftSymbols]};displaySettings=next;
-        localStorage.setItem('navi_city_stocks',JSON.stringify(stockSelection));localStorage.setItem('navi_city_feed',JSON.stringify(displaySettings));applySettings();stockDialog.close();
+        localStorage.setItem('navi_city_stocks',JSON.stringify(stockSelection));localStorage.setItem('navi_city_feed',JSON.stringify(displaySettings));applySettings();stockDialog.open=false;
     });
     function syncRates() {
         markets.filter((item) => item.dom).forEach((market) => {

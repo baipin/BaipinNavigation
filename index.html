@@ -5,7 +5,7 @@
 
 <!DOCTYPE html>
 <html lang="zh-CN" class="mdui-theme-light">
-<head><script src="/js/quick-access-spacing.js?v=spacing-v3"></script><script src="/js/background-startup.js?v=source-priority-v2"></script>
+<head><script src="/js/widgets.js?v=widgets-v1"></script><script src="/js/quick-access-spacing.js?v=spacing-v3"></script><script src="/js/background-startup.js?v=source-priority-v2"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>百品导航 - 客制化高自由度网址导航</title>
@@ -484,6 +484,22 @@
     <style>
         #data-manage-dialog [hidden], #search-clear[hidden], #footer-account[hidden], #footer-avatar[hidden], #footer-account [hidden] { display:none !important; }
         #data-manage-dialog::part(panel) { display:flex; flex-direction:column; box-sizing:border-box; width:min(560px,calc(100vw - 32px)); height:min(680px,calc(100dvh - 48px)); max-width:calc(100vw - 32px); max-height:calc(100dvh - 48px); }
+        .widgets-empty { display:none!important; }
+        .settings-widget-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:0 16px; }
+        .settings-widget-row { display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:52px; border-bottom:1px solid rgba(128,128,128,.15); font-size:.85rem; }
+        .settings-widget-row mdui-switch { flex:none; }
+        /* Large scrolling backdrop surfaces can leave stale compositor tiles, especially on mobile Safari. */
+        .city-card,.city-finance-card,.city-ticker-card,.discover-panel { backdrop-filter:none!important; -webkit-backdrop-filter:none!important; }
+        .city-card,.city-finance-card,.city-ticker-card { background-color:rgba(19,32,35,.91)!important; }
+        @media(max-width:600px) {
+            .bookmark-title-row { flex-direction:column; align-items:stretch; }
+            #edit-dialog .button-row { display:grid!important; grid-template-columns:minmax(0,1fr) minmax(0,1fr); align-items:stretch!important; }
+            #edit-dialog #f-icon { grid-column:1/-1; width:100%; min-width:0!important; }
+            #icon-picker-dialog { padding:8px!important; }
+            #icon-picker-dialog::part(panel) { flex-shrink:0; box-sizing:border-box; width:calc(100vw - 16px); max-width:calc(100vw - 16px); height:calc(100dvh - 24px); max-height:calc(100dvh - 24px); border-radius:20px; }
+            #icon-picker-dialog::part(body) { padding:0 8px; }
+            #icon-picker-dialog::part(header) { padding:18px 20px; }
+        }
         .bookmark-title-row { display:flex; align-items:flex-end; gap:10px; }
         .bookmark-title-row mdui-text-field { flex:1; min-width:0; }
         .bookmark-title-row mdui-button { flex:none; }
@@ -831,8 +847,8 @@
         #footer-last-sync { display:block; margin-top:2px; opacity:.75; }
         @media(max-width:600px) { .settings-background-actions mdui-button { max-width:100%; } .footer-meta { gap:8px; } }
     </style>
-    <link rel="stylesheet" href="/discover.css?v=music-v14">
-    <link rel="stylesheet" href="city-feed.css?v=market-trends-v1">
+    <link rel="stylesheet" href="/discover.css?v=charts-v15">
+    <link rel="stylesheet" href="city-feed.css?v=material-dialog-v2">
 </head>
 <body>
     <header class="app-bar">
@@ -1011,7 +1027,7 @@
     <section id="discover" aria-label="热门内容">
         <article class="discover-panel"><div class="discover-header"><div><h2 id="discover-repo-title">热门 GitHub 仓库</h2><p id="discover-repo-caption">See Github Trends in 30 days</p></div><mdui-button-icon icon="open_in_new" data-discover-open="github" href="https://github.com/trending" target="_blank" rel="noopener noreferrer" aria-label="在新窗口打开 GitHub" title="在新窗口打开 GitHub"></mdui-button-icon><mdui-button-icon icon="refresh" data-discover-refresh="github" aria-label="刷新热门内容"></mdui-button-icon></div><div class="discover-track" id="discover-repos" aria-label="GitHub"></div><p class="discover-status" id="discover-repo-status" role="status"></p></article>
         <article class="discover-panel"><div class="discover-header"><div><h2 id="discover-video-title">热门影片</h2></div><div id="discover-platform" class="discover-platform" role="radiogroup" aria-label="影片平台"><span class="discover-platform-thumb" aria-hidden="true"></span><button type="button" role="radio" data-platform="bilibili" aria-checked="true" tabindex="0" aria-label="Bilibili" title="Bilibili"><span class="platform-icon platform-icon-bilibili" aria-hidden="true"></span></button><button type="button" role="radio" data-platform="youtube" aria-checked="false" tabindex="-1" aria-label="YouTube" title="YouTube"><span class="platform-icon platform-icon-youtube" aria-hidden="true"></span></button></div><mdui-button-icon icon="open_in_new" data-discover-open="video" href="https://www.bilibili.com/v/popular/all" target="_blank" rel="noopener noreferrer" aria-label="在新窗口打开 Bilibili" title="在新窗口打开 Bilibili"></mdui-button-icon><mdui-button-icon icon="refresh" data-discover-refresh="video" aria-label="刷新热门内容"></mdui-button-icon></div><div class="discover-track" id="discover-videos" aria-label="影片"></div><p class="discover-status" id="discover-video-status" role="status"></p></article>
-        <article class="discover-panel" id="discover-music"><div class="discover-header"><div><h2 id="discover-music-title">热门音乐</h2><p id="discover-music-caption">Apple Music · 香港热门歌曲</p></div><mdui-segmented-button-group id="music-platform" selects="single" value="apple" aria-label="音乐来源"><mdui-segmented-button value="apple">Apple Music</mdui-segmented-button><mdui-segmented-button value="qq">QQ 音乐</mdui-segmented-button></mdui-segmented-button-group><mdui-button-icon id="music-open" icon="open_in_new" href="https://music.apple.com/hk/new" target="_blank" rel="noopener noreferrer" aria-label="打开音乐平台"></mdui-button-icon><mdui-button-icon id="music-refresh" icon="refresh" aria-label="刷新热门音乐"></mdui-button-icon></div><div class="discover-track" id="discover-music-track" aria-label="热门音乐"></div><p class="discover-status" id="discover-music-status" role="status"></p></article>
+        <article class="discover-panel" id="discover-music"><div class="discover-header"><div><h2 id="discover-music-title">热门音乐</h2><p id="discover-music-caption">Apple Music · 香港热门歌曲</p></div><mdui-segmented-button-group id="music-platform" selects="single" value="apple" aria-label="音乐来源"><mdui-segmented-button value="apple" aria-label="Apple Music" title="Apple Music"><span class="music-platform-icon music-platform-apple" aria-hidden="true"></span></mdui-segmented-button><mdui-segmented-button value="qq" aria-label="QQ 音乐" title="QQ 音乐"><span class="music-platform-icon music-platform-qq" aria-hidden="true"></span></mdui-segmented-button></mdui-segmented-button-group><select id="music-chart" class="music-chart" aria-label="音乐榜单"></select><mdui-button-icon id="music-back" icon="arrow_back" aria-label="返回上一批" hidden></mdui-button-icon><mdui-button-icon id="music-open" icon="open_in_new" href="https://music.apple.com/hk/new" target="_blank" rel="noopener noreferrer" aria-label="打开音乐平台"></mdui-button-icon><mdui-button-icon id="music-refresh" icon="refresh" aria-label="刷新热门音乐"></mdui-button-icon></div><div class="discover-track" id="discover-music-track" aria-label="热门音乐"></div><p class="discover-status" id="discover-music-status" role="status"></p></article>
     </section>
     <section id="city-finance">
         <div class="city-finance-card">
@@ -1122,6 +1138,7 @@
                 <label><span data-settings-text="rain">降雨量监测地区</span><select id="settings-rain-region" aria-label="降雨量监测地区"></select></label>
                 <label><span data-settings-text="aqhi">空气质素 AQHI 监测地区</span><select id="settings-aqhi-region" aria-label="空气质素 AQHI 监测地区"></select></label>
             </div>
+            <h3 data-settings-text="widgets">首页小工具</h3><div id="settings-widgets" class="settings-widget-list"></div>
             <h3 data-settings-text="content">内容配置</h3>
             <div class="settings-actions">
                 <mdui-button variant="outlined" icon="edit_note" id="settings-bookmarks" data-settings-text="bookmarks">快捷访问配置</mdui-button>
@@ -1437,7 +1454,7 @@
             iconPickerTarget=target;
             document.getElementById('icon-picker-heading').textContent=document.documentElement.lang==='zh-CN'?'挑选图标':'挑選圖示';
             document.getElementById('icon-picker-close').textContent=document.documentElement.lang==='zh-CN'?'关闭':'關閉';
-            const host=document.getElementById('icon-picker-content');if(!host.dataset.loaded){host.dataset.loaded='1';import('./js/icon-picker.js?v=full-v3').then(m=>m.initIconPicker(host,window.naviSelectIcon)).catch(()=>{host.dataset.loaded='';host.textContent='图标库暂不可用，请关闭后重试。';});}
+            const host=document.getElementById('icon-picker-content');if(!host.dataset.loaded){host.dataset.loaded='1';import('./js/icon-picker.js?v=mobile-v4').then(m=>m.initIconPicker(host,window.naviSelectIcon)).catch(()=>{host.dataset.loaded='';host.textContent='图标库暂不可用，请关闭后重试。';});}
             const parentDialog=document.getElementById(target==='f-icon'?'edit-dialog':'add-engine-dialog');
             if(parentDialog.open){parentDialog.addEventListener('closed',()=>{iconPickerDialog.open=true;},{once:true});parentDialog.open=false;}
             else iconPickerDialog.open=true;
@@ -4057,17 +4074,9 @@ function setBackgroundToCookie(value) {
             }
         };
         function updateCityDashboard() {
-            updateCityJourneys();
-            updateCityNews();
-            updateCityRails();
-            cityLoadDefaultBusStop();
-            updateCityAir();
-            updateCityAed();
-            updateCityHolidaysLive();
-            updateCityBoundary();
-            updateCityFinance();
+            const jobs=[['journeys',updateCityJourneys],['traffic',updateCityNews],['rails',updateCityRails],['bus',cityLoadDefaultBusStop],['weather',updateCityAir],['aed',updateCityAed],['holidays',updateCityHolidaysLive],['boundary',updateCityBoundary],['finance',updateCityFinance]];
+            for(const [id,load]of jobs)window.naviWidgets.run(id,load);
             updateCityTicker();
-            setTimeout(cityUpdatePulse, 1800);
         }
         const cityDashboard = document.querySelector('.city-dashboard');
         const originalContent = document.querySelector('.content-layout:last-of-type');
@@ -4419,22 +4428,22 @@ function setBackgroundToCookie(value) {
             cityFlightAwareClearCache();
             updateCityFlights();
         };
-        setInterval(updateCityFlights, 60000);
-        updateCityFlights();
+        setInterval(()=>window.naviWidgets.run('flights',updateCityFlights), 60000);
+        window.naviWidgets.run('flights',updateCityFlights);
         updateLiveWeather();
         fetchData(warningApiUrl, 'warning-info', formatWarningData);
         updateCityDashboard();
-        setInterval(updateCityNews, 60000);
+        setInterval(()=>window.naviWidgets.run('traffic',updateCityNews), 60000);
         setTimeout(() => {
             const journeyGrid = document.getElementById('city-journey-grid');
-            if (journeyGrid && journeyGrid.textContent.includes('读取')) updateCityJourneys();
+            if (journeyGrid && journeyGrid.textContent.includes('读取')) window.naviWidgets.run('journeys',updateCityJourneys);
             const rain = document.getElementById('city-rain');
-            if (rain && rain.textContent.includes('读取')) updateCityAir();
+            if (rain && rain.textContent.includes('读取')) window.naviWidgets.run('weather',updateCityAir);
         }, 1500);
         setInterval(updateCityDashboard, 120000);
     </script>
-    <script src="js/city-feed.js?v=market-trends-v1"></script>
-    <script src="js/layout.js"></script>
+    <script src="js/city-feed.js?v=material-dialog-v2"></script>
+    <script src="js/layout.js?v=widgets-v2"></script>
     <footer class="app-site-footer" aria-label="关于百品导航">
         <section class="app-overview" id="app-overview" aria-labelledby="app-name">
             <div class="footer-brand"><img src="/img/logo.png" alt=""><h1 id="app-name" data-app-info="name">百品导航</h1><mdui-fab id="background-view-button" size="small" icon="wallpaper" aria-label="欣赏背景" title="欣赏背景" aria-pressed="false"></mdui-fab></div>
@@ -4472,12 +4481,12 @@ function setBackgroundToCookie(value) {
         })();
     </script>
     <script src="js/app-info.js?v=account-copy-v4"></script>
-    <script src="js/settings.js?v=spacing-v3"></script>
+    <script src="js/settings.js?v=widgets-v4"></script>
     <script type="module" src="js/camera-background.js?v=source-priority-v11"></script>
-    <script type="module" src="js/sync.js?v=music-v20"></script>
+    <script type="module" src="js/sync.js?v=widgets-v21"></script>
     <script type="module" src="js/calendar.js?v=calendar-map-icon-v35"></script>
-    <script type="module" src="/js/discover.js?v=title-v12"></script>
-    <script type="module" src="/js/music.js?v=music-v1"></script>
+    <script type="module" src="/js/discover.js?v=batch-history-v13"></script>
+    <script type="module" src="/js/music.js?v=charts-v2"></script>
     <script src="/js/background-view.js?v=hover-450-v5"></script>
 </body>
 </html>

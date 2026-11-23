@@ -93,3 +93,12 @@ button.discover-more:disabled .discover-more-circle { transform:none; }
 /* Ad creatives remain in the same light color scheme in both site themes;
    this avoids browser-forced darkening of only parts of the cross-origin ad. */
 .discover-video-ad .adsbygoogle,.discover-video-ad .adsbygoogle iframe { color-scheme:light only; border:0!important; background-color:transparent!important; }
+
+.music-platform-icon { display:block; width:24px; height:24px; background:currentColor; mask:var(--music-logo) center/contain no-repeat; -webkit-mask:var(--music-logo) center/contain no-repeat; }
+.music-platform-apple { --music-logo:url('/img/platforms/applemusic.svg'); }
+.music-platform-qq { --music-logo:url('/img/platforms/qqmusic.svg'); }
+.music-chart { max-width:100%; min-height:40px; padding:8px 32px 8px 12px; border:1px solid #a7b6bd; border-radius:12px; background:#26383c; color:#f5f7f7; font:inherit; font-size:.85rem; color-scheme:dark; }
+.discover-header [hidden] { display:none!important; }
+/* Stable translucent paint without a large backdrop-filter layer. */
+.discover-panel { background:rgba(12,25,28,.91); }
+@media(max-width:600px){#music-platform{flex:none}#music-platform mdui-segmented-button{min-width:52px}.music-chart{flex:1;min-width:120px}.music-card{flex-basis:min(210px,68vw)}}

@@ -324,3 +324,21 @@
 .city-feed-face[data-direction="up"] > .city-feed-trend { color:#ee8177; }
 .city-feed-face[data-direction="down"] > .city-feed-trend { color:#74d092; }
 .city-feed-face > .city-feed-name,.city-feed-face > .city-feed-price,.city-feed-face > .city-feed-change { position:relative; z-index:1; text-shadow:0 1px 3px #000; }
+
+/* MDUI owns modal focus, entrance/exit animation and the overlay. */
+mdui-dialog.city-feed-stock-dialog { width:auto; max-height:none; padding:0; border:0; background:transparent; color:var(--text-main); overflow:visible; z-index:2700; --mdui-color-surface-container-high:255,255,255; }
+.mdui-theme-dark mdui-dialog.city-feed-stock-dialog { --mdui-color-surface-container-high:30,30,35; }
+mdui-dialog.city-feed-stock-dialog::part(panel) { width:min(680px,calc(100vw - 24px)); height:min(760px,calc(100dvh - 32px)); max-height:calc(100dvh - 32px); display:flex; flex-direction:column; border-radius:28px; background:rgb(var(--mdui-color-surface-container-high)); }
+mdui-dialog.city-feed-stock-dialog::part(body) { flex:1; min-height:0; overflow:auto; scrollbar-width:thin; scrollbar-color:rgba(128,128,128,.45) transparent; padding:0 24px; }
+mdui-dialog.city-feed-stock-dialog::part(body)::-webkit-scrollbar { width:5px; }
+mdui-dialog.city-feed-stock-dialog::part(body)::-webkit-scrollbar-thumb { background:#8887; border-radius:10px; }
+mdui-dialog.city-feed-stock-dialog form { min-width:0; padding:0 3px 16px; }
+.city-feed-material-tabs { display:block; position:sticky; top:0; z-index:1; margin-bottom:16px; background:rgb(var(--mdui-color-surface-container-high)); }
+.city-feed-stock-dialog :is(.city-feed-stock-hint,.city-feed-rss-hint,.city-feed-symbol-label,.city-feed-ticker-options legend) { color:inherit; line-height:1.7; }
+.city-feed-stock-dialog .city-feed-symbol-entry input { background:transparent; color:inherit; border-color:#8888; }
+.city-feed-stock-dialog mdui-checkbox { flex:none; }
+.city-feed-stock-dialog [hidden] { display:none!important; }
+@media(max-width:600px){mdui-dialog.city-feed-stock-dialog { padding:0; }mdui-dialog.city-feed-stock-dialog::part(body){padding:0 16px}.city-feed-display-options,.city-feed-ticker-switches{grid-template-columns:minmax(0,1fr)}}
+mdui-dialog.city-feed-stock-dialog :is(.city-feed-speed-row output,.city-feed-speed-hint,.city-feed-stock-feedback) { color:inherit; }
+mdui-dialog.city-feed-stock-dialog input[type=range] { accent-color:rgb(var(--mdui-color-primary)); }
+mdui-dialog.city-feed-stock-dialog .city-feed-speed-reset { color:rgb(var(--mdui-color-primary)); border-color:#8888; }
