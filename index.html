@@ -1410,6 +1410,7 @@
 
         function openDialog(idx = null) {
             curIdx = idx;
+            document.getElementById('bookmark-save-status').textContent = '';
             document.getElementById('f-name').value = idx !== null ? bookmarks[idx].name : '';
             document.getElementById('f-url').value = idx !== null ? bookmarks[idx].url : '';
             document.getElementById('f-icon').value = idx !== null ? bookmarks[idx].icon : '';
@@ -1417,11 +1418,58 @@
             dialog.open = true;
         }
 
-        document.getElementById('act-save').onclick = () => {
-            const data = { name: document.getElementById('f-name').value || '未命名', url: document.getElementById('f-url').value || '#', icon: document.getElementById('f-icon').value || 'link' };
-            if(curIdx !== null) bookmarks[curIdx] = data; else bookmarks.push(data);
-            localStorage.setItem('bp_v7', JSON.stringify(bookmarks));
-            dialog.open = false; render();
+        const bookmarkSaveStatus = document.createElement('p');
+        bookmarkSaveStatus.id = 'bookmark-save-status';
+        bookmarkSaveStatus.setAttribute('role','status');
+        document.getElementById('f-name').parentElement.append(bookmarkSaveStatus);
+        document.getElementById('act-save').onclick = async () => {
+            const button = document.getElementById('act-save');
+            if(button.disabled) return;
+            const nameField = document.getElementById('f-name');
+            const urlField = document.getElementById('f-url');
+            const iconField = document.getElementById('f-icon');
+            const entered = urlField.value.trim();
+            const index = curIdx;
+            const language = (sc,tc) => document.documentElement.lang === 'zh-CN' ? sc : tc;
+            let url;
+            try {
+                url = new URL(/^https?:\/\//i.test(entered) ? entered : 'https://' + entered);
+                if(!entered || !['http:','https:'].includes(url.protocol) || !url.hostname) throw Error();
+            } catch {
+                bookmarkSaveStatus.textContent = language('请填写有效的网站网址。','請填寫有效的網站網址。');
+                return;
+            }
+            button.disabled = true;
+            button.loading = true;
+            const controller = new AbortController();
+            const cancel = () => controller.abort();
+            dialog.addEventListener('close',cancel,{once:true});
+            const timeout = setTimeout(cancel,35000);
+            try {
+                if(!nameField.value.trim() || !iconField.value.trim()) {
+                    bookmarkSaveStatus.textContent = language('正在自动获取网站图标和标题…','正在自動取得網站圖示和標題…');
+                    const response = await fetch('/api/site-metadata?' + new URLSearchParams({url:url.href}),{signal:controller.signal,cache:'no-store'});
+                    if(!response.ok) throw Error();
+                    const metadata = await response.json();
+                    if(controller.signal.aborted || !dialog.open || curIdx !== index || urlField.value.trim() !== entered) return;
+                    // Respect edits made while the request was pending.
+                    if(!nameField.value.trim() && typeof metadata.title === 'string') nameField.value = metadata.title;
+                    if(!iconField.value.trim() && typeof metadata.icon === 'string') iconField.value = metadata.icon;
+                }
+                if(controller.signal.aborted || !dialog.open || curIdx !== index || urlField.value.trim() !== entered) return;
+                const data = {name:nameField.value.trim() || url.hostname,url:url.href,icon:iconField.value.trim() || 'link'};
+                if(index !== null) bookmarks[index] = data; else bookmarks.push(data);
+                localStorage.setItem('bp_v7',JSON.stringify(bookmarks));
+                dialog.open = false;
+                render();
+            } catch {
+                if(dialog.open) bookmarkSaveStatus.textContent = language('未能自动获取，请重试或手动填写图标和标题后再添加。','未能自動取得，請重試或手動填寫圖示和標題後再新增。');
+            } finally {
+                clearTimeout(timeout);
+                dialog.removeEventListener('close',cancel);
+                button.disabled = false;
+                button.loading = false;
+            }
         };
 
         document.getElementById('act-del').onclick = () => { 
