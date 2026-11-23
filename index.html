@@ -673,6 +673,17 @@
         .calendar-source-link { display:inline-flex; align-items:center; gap:5px; color:rgb(var(--mdui-color-primary)); font-size:.85rem; }
         .calendar-source-link[hidden] { display:none; }
         .calendar-source-link .material-icons { font-size:16px; }
+        .calendar-account-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+        .calendar-account-identity { flex:1 1 180px; min-width:0; }
+        .calendar-account-identity p { margin-top:6px; font-size:.8rem; opacity:.7; overflow-wrap:anywhere; }
+        .calendar-account-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+        .calendar-account-actions mdui-button { max-width:100%; }
+        .calendar-source-list { display:grid; border-radius:12px; background:rgba(128,128,128,.05); overflow:hidden; }
+        .calendar-source-row { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:48px; padding:4px 12px; cursor:pointer; }
+        .calendar-source-row + .calendar-source-row { border-top:1px solid rgba(128,128,128,.12); }
+        .calendar-source-row > span { flex:1; min-width:0; font-size:.85rem; overflow-wrap:anywhere; }
+        .calendar-source-row small { display:block; margin-top:2px; }
+        .calendar-source-row mdui-checkbox { flex:none; }
         .calendar-provider-heading { display:flex; align-items:center; gap:10px; }
         .calendar-provider-heading img { width:24px; height:24px; object-fit:contain; flex:none; }
         .settings-calendar-accounts { display:grid; gap:10px; margin-top:14px; }
@@ -4421,7 +4432,7 @@ function setBackgroundToCookie(value) {
     <script src="js/settings.js?v=spacing-v3"></script>
     <script type="module" src="js/camera-background.js?v=source-priority-v11"></script>
     <script type="module" src="js/sync.js?v=spacing-v19"></script>
-    <script type="module" src="js/calendar.js?v=calendar-feishu-v31"></script>
+    <script type="module" src="js/calendar.js?v=calendar-account-layout-v32"></script>
     <script type="module" src="/js/discover.js?v=dismiss-v11"></script>
     <script src="/js/background-view.js?v=hover-450-v5"></script>
 </body>
