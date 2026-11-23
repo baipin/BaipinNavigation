@@ -16,8 +16,8 @@
     <link rel="icon" type="image/png" href="img/logo.png">
    
     <link rel="stylesheet" href="https://unpkg.com/mdui@2.0.3/mdui.css">
-    <link rel="preload" href="/fonts/material-icons.woff2" as="font" type="font/woff2" crossorigin>
-    <link href="/material-icons.css" rel="stylesheet">
+    <link rel="preload" href="/fonts/material-icons.woff2?v=full-v2" as="font" type="font/woff2" crossorigin>
+    <link href="/material-icons.css?v=full-v2" rel="stylesheet">
     <script src="https://unpkg.com/mdui@2.0.3/mdui.global.js"></script>
     <script src="https://sdk.jinrishici.com/v2/browser/jinrishici.js" charset="utf-8"></script>
     <meta name="referrer" content="no-referrer-when-downgrade">
@@ -249,7 +249,10 @@
             font-size: 2rem; width: 95%; text-align: center; overflow: hidden; white-space: nowrap;
         }
 
-        .icon-picker-iframe { width: 100%; height: 560px; border: none; border-radius: 12px; }
+        #icon-picker-dialog { z-index:2800; }
+        #icon-picker-dialog::part(panel) { display:flex; flex-direction:column; width:min(840px,calc(100vw - 24px)); max-width:calc(100vw - 24px); height:min(720px,calc(100dvh - 32px)); max-height:calc(100dvh - 32px); }
+        #icon-picker-dialog::part(body) { flex:1 1 0; padding:0 16px; min-width:0; min-height:0; overflow:hidden; }
+        #icon-picker-content { display:block; width:100%; height:100%; border:0; border-radius:12px; }
 
         @media (max-width: 600px) {
             .button-row {
@@ -481,6 +484,9 @@
     <style>
         #data-manage-dialog [hidden], #search-clear[hidden], #footer-account[hidden], #footer-avatar[hidden], #footer-account [hidden] { display:none !important; }
         #data-manage-dialog::part(panel) { display:flex; flex-direction:column; box-sizing:border-box; width:min(560px,calc(100vw - 32px)); height:min(680px,calc(100dvh - 48px)); max-width:calc(100vw - 32px); max-height:calc(100dvh - 48px); }
+        .bookmark-title-row { display:flex; align-items:flex-end; gap:10px; }
+        .bookmark-title-row mdui-text-field { flex:1; min-width:0; }
+        .bookmark-title-row mdui-button { flex:none; }
         #bookmark-save-status:empty, #bookmark-save-progress[hidden] { display:none!important; }
         #bookmark-save-status { margin:0; font-size:.85rem; line-height:1.5; color:rgb(var(--mdui-color-error)); }
         #bookmark-save-progress { display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:16px; background:rgb(var(--mdui-color-secondary-container)); color:rgb(var(--mdui-color-on-secondary-container)); box-shadow:0 2px 6px #0002; font-size:.875rem; line-height:1.5; }
@@ -825,7 +831,7 @@
         #footer-last-sync { display:block; margin-top:2px; opacity:.75; }
         @media(max-width:600px) { .settings-background-actions mdui-button { max-width:100%; } .footer-meta { gap:8px; } }
     </style>
-    <link rel="stylesheet" href="/discover.css?v=close-subtle-v13">
+    <link rel="stylesheet" href="/discover.css?v=music-v14">
     <link rel="stylesheet" href="city-feed.css?v=market-trends-v1">
 </head>
 <body>
@@ -1005,6 +1011,7 @@
     <section id="discover" aria-label="热门内容">
         <article class="discover-panel"><div class="discover-header"><div><h2 id="discover-repo-title">热门 GitHub 仓库</h2><p id="discover-repo-caption">See Github Trends in 30 days</p></div><mdui-button-icon icon="open_in_new" data-discover-open="github" href="https://github.com/trending" target="_blank" rel="noopener noreferrer" aria-label="在新窗口打开 GitHub" title="在新窗口打开 GitHub"></mdui-button-icon><mdui-button-icon icon="refresh" data-discover-refresh="github" aria-label="刷新热门内容"></mdui-button-icon></div><div class="discover-track" id="discover-repos" aria-label="GitHub"></div><p class="discover-status" id="discover-repo-status" role="status"></p></article>
         <article class="discover-panel"><div class="discover-header"><div><h2 id="discover-video-title">热门影片</h2></div><div id="discover-platform" class="discover-platform" role="radiogroup" aria-label="影片平台"><span class="discover-platform-thumb" aria-hidden="true"></span><button type="button" role="radio" data-platform="bilibili" aria-checked="true" tabindex="0" aria-label="Bilibili" title="Bilibili"><span class="platform-icon platform-icon-bilibili" aria-hidden="true"></span></button><button type="button" role="radio" data-platform="youtube" aria-checked="false" tabindex="-1" aria-label="YouTube" title="YouTube"><span class="platform-icon platform-icon-youtube" aria-hidden="true"></span></button></div><mdui-button-icon icon="open_in_new" data-discover-open="video" href="https://www.bilibili.com/v/popular/all" target="_blank" rel="noopener noreferrer" aria-label="在新窗口打开 Bilibili" title="在新窗口打开 Bilibili"></mdui-button-icon><mdui-button-icon icon="refresh" data-discover-refresh="video" aria-label="刷新热门内容"></mdui-button-icon></div><div class="discover-track" id="discover-videos" aria-label="影片"></div><p class="discover-status" id="discover-video-status" role="status"></p></article>
+        <article class="discover-panel" id="discover-music"><div class="discover-header"><div><h2 id="discover-music-title">热门音乐</h2><p id="discover-music-caption">Apple Music · 香港热门歌曲</p></div><mdui-segmented-button-group id="music-platform" selects="single" value="apple" aria-label="音乐来源"><mdui-segmented-button value="apple">Apple Music</mdui-segmented-button><mdui-segmented-button value="qq">QQ 音乐</mdui-segmented-button></mdui-segmented-button-group><mdui-button-icon id="music-open" icon="open_in_new" href="https://music.apple.com/hk/new" target="_blank" rel="noopener noreferrer" aria-label="打开音乐平台"></mdui-button-icon><mdui-button-icon id="music-refresh" icon="refresh" aria-label="刷新热门音乐"></mdui-button-icon></div><div class="discover-track" id="discover-music-track" aria-label="热门音乐"></div><p class="discover-status" id="discover-music-status" role="status"></p></article>
     </section>
     <section id="city-finance">
         <div class="city-finance-card">
@@ -1048,7 +1055,7 @@
                 <mdui-button variant="tonal" id="btn-get-icon">抓取图标</mdui-button>
                 <mdui-button variant="tonal" id="btn-pick-icon-bookmark">挑选图标</mdui-button>
             </div>
-            <mdui-text-field label="显示名称" id="f-name"></mdui-text-field><mdui-button variant="tonal" id="btn-get-title" icon="title">抓取页面标题</mdui-button>
+            <div class="bookmark-title-row"><mdui-text-field label="显示名称" id="f-name"></mdui-text-field><mdui-button variant="tonal" id="btn-get-title" icon="title">抓取标题</mdui-button></div>
         </div>
         <mdui-button slot="action" variant="text" id="act-cancel">取消</mdui-button>
         <mdui-button slot="action" variant="text" id="act-del" style="color:red">删除</mdui-button>
@@ -1084,23 +1091,11 @@
         <mdui-button slot="action" variant="tonal" id="manage-rss-add">添加RSS源</mdui-button>
     </mdui-dialog>
 
-    <!-- icon-picker-dialog（已增加底部完整列表链接） -->
-<mdui-dialog id="icon-picker-dialog" close-on-overlay-click>
-    <span slot="headline">选择 Material Design Icon</span>
-    <iframe id="icon-picker-iframe" 
-            style="width:100%; height:520px; border:none; border-radius:12px;" 
-            src="icon_picker.html"></iframe>
-    
-    <!-- 新增：对话框底部完整列表链接 -->
-    <div style="padding: 12px 16px; text-align: center; border-top: 1px solid rgba(128,128,128,0.2);">
-        <a href="https://fonts.google.com/icons" 
-           target="_blank" >
-            在新窗口中打开完整 Material Icons 列表
-        </a>
-    </div>
-
-    <mdui-button slot="action" variant="text" id="icon-picker-close">关闭</mdui-button>
-</mdui-dialog>
+    <mdui-dialog id="icon-picker-dialog" close-on-overlay-click>
+        <span slot="headline" id="icon-picker-heading">挑选图标</span>
+        <div id="icon-picker-content" role="region" aria-label="Material 图标选择器"></div>
+        <mdui-button slot="action" variant="text" id="icon-picker-close">关闭</mdui-button>
+    </mdui-dialog>
 
     <!-- 新增：首页背景设置对话框 -->
 <!-- 新增：数据导出导入对话框 -->
@@ -1436,9 +1431,20 @@
         };
 
         const iconPickerDialog = document.getElementById('icon-picker-dialog');
-        function openIconPicker() { iconPickerDialog.open = true; }
-        document.getElementById('btn-pick-icon-bookmark').onclick = openIconPicker;
-        document.getElementById('btn-pick-icon-engine').onclick = openIconPicker;
+        let iconPickerTarget='f-icon';
+        iconPickerDialog.addEventListener('closed',()=>{document.getElementById(iconPickerTarget==='f-icon'?'edit-dialog':'add-engine-dialog').open=true;});
+        function openIconPicker(target='f-icon') {
+            iconPickerTarget=target;
+            document.getElementById('icon-picker-heading').textContent=document.documentElement.lang==='zh-CN'?'挑选图标':'挑選圖示';
+            document.getElementById('icon-picker-close').textContent=document.documentElement.lang==='zh-CN'?'关闭':'關閉';
+            const host=document.getElementById('icon-picker-content');if(!host.dataset.loaded){host.dataset.loaded='1';import('./js/icon-picker.js?v=full-v3').then(m=>m.initIconPicker(host,window.naviSelectIcon)).catch(()=>{host.dataset.loaded='';host.textContent='图标库暂不可用，请关闭后重试。';});}
+            const parentDialog=document.getElementById(target==='f-icon'?'edit-dialog':'add-engine-dialog');
+            if(parentDialog.open){parentDialog.addEventListener('closed',()=>{iconPickerDialog.open=true;},{once:true});parentDialog.open=false;}
+            else iconPickerDialog.open=true;
+        }
+        window.naviSelectIcon=name=>{if(!/^[a-z0-9_]+$/.test(name))return;document.getElementById(iconPickerTarget).value=name;iconPickerDialog.open=false;};
+        document.getElementById('btn-pick-icon-bookmark').onclick = ()=>openIconPicker('f-icon');
+        document.getElementById('btn-pick-icon-engine').onclick = ()=>openIconPicker('engine-icon');
         document.getElementById('icon-picker-close').onclick = () => iconPickerDialog.open = false;
 
         const dialog = document.getElementById('edit-dialog');
@@ -1462,11 +1468,11 @@
         bookmarkSaveProgress.setAttribute('aria-live','polite');
         const bookmarkInfoIcon=document.createElement('span');bookmarkInfoIcon.className='material-icons';bookmarkInfoIcon.textContent='auto_awesome';bookmarkInfoIcon.setAttribute('aria-hidden','true');
         const bookmarkInfoText=document.createElement('span');bookmarkSaveProgress.append(bookmarkInfoIcon,bookmarkInfoText);
-        document.getElementById('f-name').parentElement.append(bookmarkSaveProgress);
+        document.getElementById('f-name').closest('.bookmark-title-row').parentElement.append(bookmarkSaveProgress);
         const bookmarkSaveStatus = document.createElement('p');
         bookmarkSaveStatus.id = 'bookmark-save-status';
         bookmarkSaveStatus.setAttribute('role','status');
-        document.getElementById('f-name').parentElement.append(bookmarkSaveStatus);
+        document.getElementById('f-name').closest('.bookmark-title-row').parentElement.append(bookmarkSaveStatus);
         document.getElementById('act-save').onclick = async () => {
             const button = document.getElementById('act-save');
             if(button.disabled) return;
@@ -1988,23 +1994,6 @@
         };
 
         // 接收 iframe 传回的 icon 名称并自动填充
-        window.addEventListener('message', function(e) {
-            if (e.data && e.data.type === 'SELECT_ICON') {
-                const iconName = e.data.icon;
-                
-                const fIcon = document.getElementById('f-icon');
-                const engineIcon = document.getElementById('engine-icon');
-                
-                if (fIcon && document.getElementById('edit-dialog').open) {
-                    fIcon.value = iconName;
-                } else if (engineIcon && document.getElementById('add-engine-dialog').open) {
-                    engineIcon.value = iconName;
-                }
-                
-                document.getElementById('icon-picker-dialog').open = false;
-            }
-        });
-
         /* ==================== 新增功能：首页背景切换（使用 source.unsplash.com） ==================== */
         /* ==================== 修复后的背景应用函数 ==================== */
 document.getElementById('random-bg-btn').onclick = async () => {
@@ -4485,9 +4474,10 @@ function setBackgroundToCookie(value) {
     <script src="js/app-info.js?v=account-copy-v4"></script>
     <script src="js/settings.js?v=spacing-v3"></script>
     <script type="module" src="js/camera-background.js?v=source-priority-v11"></script>
-    <script type="module" src="js/sync.js?v=spacing-v19"></script>
+    <script type="module" src="js/sync.js?v=music-v20"></script>
     <script type="module" src="js/calendar.js?v=calendar-map-icon-v35"></script>
-    <script type="module" src="/js/discover.js?v=dismiss-v11"></script>
+    <script type="module" src="/js/discover.js?v=title-v12"></script>
+    <script type="module" src="/js/music.js?v=music-v1"></script>
     <script src="/js/background-view.js?v=hover-450-v5"></script>
 </body>
 </html>

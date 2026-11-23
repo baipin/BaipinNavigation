@@ -116,7 +116,7 @@ function clearBody(req){
 }
 export default async function handler(req,res) {
     const route=new URL(req.url,'https://localhost');
-    if(['/api/site-metadata','/api/discover'].includes(route.pathname)||['metadata','discover'].includes(route.searchParams.get('content')))return siteContent(req,res);
+    if(['/api/site-metadata','/api/discover','/api/music'].includes(route.pathname)||['metadata','discover','music'].includes(route.searchParams.get('content')))return siteContent(req,res);
     if(route.pathname==='/api/feishu'||route.pathname==='/api/feishu/callback'||route.searchParams.get('provider')==='feishu'||req.query?.provider==='feishu')return feishuHandler(req,res);
     if(route.pathname==='/api/canvas'||route.searchParams.get('provider')==='canvas'||req.query?.provider==='canvas')return canvasHandler(req,res);
     if(route.pathname==='/api/icloud'||route.searchParams.get('provider')==='icloud'||req.query?.provider==='icloud')return icloudHandler(req,res);

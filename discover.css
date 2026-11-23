@@ -85,3 +85,11 @@ button.discover-more:disabled .discover-more-circle { transform:none; }
 .discover-ad-close::part(button) { color:inherit; }
 .discover-ad-close:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
 .discover-ad-close[hidden] { display:none; }
+/* Music shares the article cards but uses square album covers. */
+#music-platform { max-width:100%; --mdui-color-primary:208,188,255; --mdui-color-on-surface:245,247,247; --mdui-color-secondary-container:62,74,100; --mdui-color-on-secondary-container:240,235,255; }
+.music-card { flex-basis:210px; }
+.music-cover { position:relative; aspect-ratio:1; }
+.music-rank { position:absolute; left:10px; top:10px; border-radius:10px; padding:4px 8px; background:#14272dcc; color:#fff; font-size:.8rem; font-variant-numeric:tabular-nums; }
+/* Ad creatives remain in the same light color scheme in both site themes;
+   this avoids browser-forced darkening of only parts of the cross-origin ad. */
+.discover-video-ad .adsbygoogle,.discover-video-ad .adsbygoogle iframe { color-scheme:light only; border:0!important; background-color:transparent!important; }

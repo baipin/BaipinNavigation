@@ -1,3 +1,4 @@
+import music from './music.js';
 import {addGithubPreviews} from './github-preview.js';
 import {identifySite,text} from './public-page.js';
 const cache=new Map();let youtubePool=null;
@@ -17,6 +18,7 @@ async function discover(source,page=1){
 }
 export default async function siteContent(req,res){
  if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'Method not allowed'});}
+ const route=new URL(req.url,'https://localhost');if(route.pathname==='/api/music'||route.searchParams.get('content')==='music')return music(req,res);
  const url=new URL(req.url,'https://localhost'),metadata=url.pathname==='/api/site-metadata'||url.searchParams.get('content')==='metadata';
  if(metadata){res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');try{return res.status(200).json(await identifySite(url.searchParams.get('url')));}catch{return res.status(422).json({error:'无法识别此页面，请确认网址可公开访问，或手动填写标题及图标。'});}}
  const source=url.searchParams.get('source');if(source==='youtube'&&!process.env.YOUTUBE_API_KEY)return res.status(503).json({error:'YouTube 热门需要站点配置 YOUTUBE_API_KEY。'});if(!['github','bilibili','youtube'].includes(source))return res.status(400).json({error:'Unknown source'});

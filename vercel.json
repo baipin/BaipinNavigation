@@ -9,6 +9,10 @@
       "destination": "/api/sync?content=discover"
     },
     {
+      "source": "/api/music",
+      "destination": "/api/sync?content=music"
+    },
+    {
       "source": "/api/feishu/callback",
       "destination": "/api/sync?provider=feishu&action=callback"
     },

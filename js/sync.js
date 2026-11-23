@@ -1,5 +1,5 @@
 import {syncRequest} from './sync-request.js?v=transport-v2';
-import {PRESET_KEYS,COOKIE_KEYS,sanitizePreset} from './preset-schema.js?v=spacing-v9';
+import {PRESET_KEYS,COOKIE_KEYS,sanitizePreset} from './preset-schema.js?v=music-v10';
 import {removeCloudCalendarVault} from './preset-vault-removal.js?v=discover-v3';
 
 const dialog = document.getElementById('data-manage-dialog');
