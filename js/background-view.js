@@ -5,7 +5,7 @@
  let pinned=false,preview=false,suppressHover=false,previousFocus=null,openedAt=0,hoverTimer=null;
  const hover=matchMedia('(hover:hover) and (pointer:fine)');
  function labels(){const sc=root.lang==='zh-CN',name=sc?'欣赏背景':'欣賞背景';trigger.title=name;trigger.setAttribute('aria-label',name);const message=sc?'点按任意位置或按 Esc 恢复':'點按任意位置或按 Esc 還原';hint.textContent=message;cover.setAttribute('aria-label',message);}
- function showPreview(event){if(event.pointerType!=='mouse'||pinned||suppressHover||!hover.matches)return;clearTimeout(hoverTimer);hoverTimer=setTimeout(()=>{hoverTimer=null;if(pinned||suppressHover)return;preview=true;root.classList.add('background-preview');},600);}
+ function showPreview(event){if(event.pointerType!=='mouse'||pinned||suppressHover||!hover.matches)return;clearTimeout(hoverTimer);hoverTimer=setTimeout(()=>{hoverTimer=null;if(pinned||suppressHover)return;preview=true;root.classList.add('background-preview');},450);}
  function clearPreview(){clearTimeout(hoverTimer);hoverTimer=null;preview=false;root.classList.remove('background-preview');}
  function restore(){if(!pinned)return;pinned=false;root.classList.remove('background-view');cover.hidden=true;trigger.setAttribute('aria-pressed','false');suppressHover=true;previousFocus?.focus?.({preventScroll:true});}
  trigger.addEventListener('pointerenter',showPreview);
