@@ -485,6 +485,15 @@
         #data-manage-dialog [hidden], #search-clear[hidden], #footer-account[hidden], #footer-avatar[hidden], #footer-account [hidden] { display:none !important; }
         #data-manage-dialog::part(panel) { display:flex; flex-direction:column; box-sizing:border-box; width:min(560px,calc(100vw - 32px)); height:min(680px,calc(100dvh - 48px)); max-width:calc(100vw - 32px); max-height:calc(100dvh - 48px); }
         .widgets-empty { display:none!important; }
+        .settings-widget-disclosure { margin:20px 0; border:1px solid rgba(128,128,128,.25); border-radius:16px; }
+        .settings-widget-disclosure summary { display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; list-style:none; font-size:.95rem; font-weight:500; border-radius:16px; }
+        .settings-widget-disclosure summary::-webkit-details-marker { display:none; }
+        .settings-widget-disclosure summary:hover { background:rgba(128,128,128,.08); }
+        .settings-widget-disclosure summary:focus-visible { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:-2px; }
+        .settings-widget-chevron { margin-inline-start:auto; transition:transform .2s; }
+        .settings-widget-disclosure[open] .settings-widget-chevron { transform:rotate(180deg); }
+        .settings-widget-disclosure .settings-widget-list { padding:0 16px 12px; }
+        @media(prefers-reduced-motion:reduce){.settings-widget-chevron{transition:none}}
         .settings-widget-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:0 16px; }
         .settings-widget-row { display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:52px; border-bottom:1px solid rgba(128,128,128,.15); font-size:.85rem; }
         .settings-widget-row mdui-switch { flex:none; }
@@ -1138,7 +1147,7 @@
                 <label><span data-settings-text="rain">降雨量监测地区</span><select id="settings-rain-region" aria-label="降雨量监测地区"></select></label>
                 <label><span data-settings-text="aqhi">空气质素 AQHI 监测地区</span><select id="settings-aqhi-region" aria-label="空气质素 AQHI 监测地区"></select></label>
             </div>
-            <h3 data-settings-text="widgets">首页小工具</h3><div id="settings-widgets" class="settings-widget-list"></div>
+            <details class="settings-widget-disclosure"><summary><span class="material-icons" aria-hidden="true">widgets</span><span data-settings-text="widgets">小工具显示</span><span class="material-icons settings-widget-chevron" aria-hidden="true">expand_more</span></summary><div id="settings-widgets" class="settings-widget-list"></div></details>
             <h3 data-settings-text="content">内容配置</h3>
             <div class="settings-actions">
                 <mdui-button variant="outlined" icon="edit_note" id="settings-bookmarks" data-settings-text="bookmarks">快捷访问配置</mdui-button>
@@ -4481,7 +4490,7 @@ function setBackgroundToCookie(value) {
         })();
     </script>
     <script src="js/app-info.js?v=account-copy-v4"></script>
-    <script src="js/settings.js?v=widgets-v4"></script>
+    <script src="js/settings.js?v=widgets-folded-v5"></script>
     <script type="module" src="js/camera-background.js?v=source-priority-v11"></script>
     <script type="module" src="js/sync.js?v=widgets-v21"></script>
     <script type="module" src="js/calendar.js?v=calendar-map-icon-v35"></script>
