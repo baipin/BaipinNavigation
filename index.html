@@ -451,7 +451,7 @@
 
         .app-site-footer { position:relative; }
         #background-view-button { position:static; margin-left:auto; flex:none; width:48px; height:48px; border-radius:16px; background-color:rgba(225,216,255,.48); color:#312257; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
-        #background-view-button::part(button) { display:flex; align-items:center; justify-content:center; padding:0; }
+        #background-view-button::part(button) { display:flex; box-sizing:border-box; width:100%; height:100%; align-items:center; justify-content:center; padding:0; }
         #background-view-button::part(label) { display:none; }
         #background-view-button::part(icon) { display:inline-flex; align-items:center; justify-content:center; margin:0; width:24px; height:24px; font-size:24px; }
         .mdui-theme-dark #background-view-button { background-color:rgba(104,87,143,.42); color:#eee5ff; }
