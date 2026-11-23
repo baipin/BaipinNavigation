@@ -1,4 +1,4 @@
-import {createVideoFeedAd} from './discover-ad.js?v=aligned-footer-v3';
+import {createVideoFeedAd} from './discover-ad.js?v=dismiss-v4';
 const sc=()=>document.documentElement.lang==='zh-CN',t=(s,c)=>sc()?s:c;
 const node=(tag,content)=>{const el=document.createElement(tag);if(content)el.textContent=content;return el;};
 function metadataButton(button,urlField,target,kind){
@@ -13,7 +13,7 @@ const titleButton=document.getElementById('btn-get-title');
 metadataButton(document.getElementById('btn-get-icon'),document.getElementById('f-url'),document.getElementById('f-icon'),'icon');
 metadataButton(titleButton,document.getElementById('f-url'),document.getElementById('f-name'),'title');
 metadataButton(document.getElementById('btn-get-engine-icon'),document.getElementById('engine-url'),document.getElementById('engine-icon'),'icon');
-const region=document.getElementById('discover'),picker=document.getElementById('discover-platform'),data=new Map(),errors=new Map(),pending=new Set();let started=false,videoFeedAd=null;const pages=new Map();
+const region=document.getElementById('discover'),picker=document.getElementById('discover-platform'),data=new Map(),errors=new Map(),pending=new Set();let started=false,videoFeedAd=null,videoAdDismissed=false,videoBatchChanged=false;const pages=new Map();
 try{picker.value=localStorage.getItem('navi_discover_platform')==='youtube'?'youtube':'bilibili';}catch{}
 function moreLink(source){
  const more=node('button');more.type='button';more.className='discover-more';more.dataset.discoverNext=source==='github'?'github':'video';more.disabled=pending.has(source);more.setAttribute('aria-label',t('换一批','換一批'));more.setAttribute('aria-busy',String(pending.has(source)));
@@ -24,10 +24,10 @@ function draw(source){
  const isRepo=source==='github',list=document.getElementById(isRepo?'discover-repos':'discover-videos'),status=document.getElementById(isRepo?'discover-repo-status':'discover-video-status'),position=list.dataset.source===source?list.scrollLeft:0;
  list.dataset.source=source;const result=data.get(source);
  if(!isRepo){
-  if(result?.items.length>=4&&!videoFeedAd)videoFeedAd=createVideoFeedAd();
+  if(result?.items.length>=4&&!videoFeedAd&&!videoAdDismissed)videoFeedAd=createVideoFeedAd({onClose:()=>{videoAdDismissed=true;}});if(videoBatchChanged)videoFeedAd?.enableClose();
   // Leave the ad and its iframe attached while rebuilding the surrounding cards.
   for(const child of [...list.children])if(child!==videoFeedAd?.element)child.remove();
-  if(videoFeedAd){videoFeedAd.updateLabel();videoFeedAd.element.hidden=!result?.items.length||videoFeedAd.failed||videoFeedAd.unfilled;if(videoFeedAd.element.parentElement!==list)list.append(videoFeedAd.element);}
+  if(videoFeedAd){videoFeedAd.updateLabel();videoFeedAd.element.hidden=!result?.items.length||videoAdDismissed||videoFeedAd.failed||videoFeedAd.unfilled;if(videoFeedAd.element.parentElement!==list)list.append(videoFeedAd.element);}
  }else list.replaceChildren();
  let index=0;
  if(result)for(const item of result.items){
@@ -62,7 +62,7 @@ async function load(source,force=false,next=false){
  let succeeded=false;
  pending.add(source);errors.delete(source);updateBatchButtons();
  if(source==='github'||source===picker.value){list.setAttribute('aria-busy','true');status.textContent=t('正在加载…','正在載入…');}
- try{const response=await fetch('/api/discover?'+new URLSearchParams({source,page:String(page),v:'batches-v3'}),{signal:AbortSignal.timeout(25000)});if(!response.ok)throw Error();const result=await response.json();if(!result.items?.length)throw Error();data.set(source,result);pages.set(source,page);succeeded=true;}
+ try{const response=await fetch('/api/discover?'+new URLSearchParams({source,page:String(page),v:'batches-v3'}),{signal:AbortSignal.timeout(25000)});if(!response.ok)throw Error();const result=await response.json();if(!result.items?.length)throw Error();data.set(source,result);pages.set(source,page);if(next&&source!=='github'){videoBatchChanged=true;videoFeedAd?.enableClose();}succeeded=true;}
  catch{errors.set(source,true);}finally{
   pending.delete(source);updateBatchButtons();
   if(source==='github'||source===picker.value){

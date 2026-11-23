@@ -5,7 +5,7 @@
 
 <!DOCTYPE html>
 <html lang="zh-CN" class="mdui-theme-light">
-<head><script src="/js/background-startup.js?v=first-paint-v1"></script>
+<head><script src="/js/background-startup.js?v=source-priority-v2"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>百品导航 - 客制化高自由度网址导航</title>
@@ -747,7 +747,7 @@
         #footer-last-sync { display:block; margin-top:2px; opacity:.75; }
         @media(max-width:600px) { .settings-background-actions mdui-button { max-width:100%; } .footer-meta { gap:8px; } }
     </style>
-    <link rel="stylesheet" href="/discover.css?v=aligned-ad-v10">
+    <link rel="stylesheet" href="/discover.css?v=dismiss-v11">
     <link rel="stylesheet" href="city-feed.css?v=market-trends-v1">
 </head>
 <body>
@@ -1802,22 +1802,7 @@
             }
         };
 
-        window.addEventListener('load', () => {
-    const saved = getBackgroundFromCookie();
-    if (!saved) return;
 
-    try {
-        const data = JSON.parse(saved);
-
-        if (data.url) {
-            applyBackground(data.url);              // ✅ 只传 URL
-            updateAttributionFooter(data.info);     // ✅ 恢复 footer
-        }
-
-    } catch (e) {
-        console.warn('背景解析失败', e);
-    }
-});
         document.getElementById('manage-rss-close').onclick = () => document.getElementById('manage-rss-dialog').open = false;
         document.getElementById('manage-rss-add').onclick = () => {
             const newUrl = prompt("请输入RSS源地址：");
@@ -1957,6 +1942,7 @@ function updateAttributionFooter(info) {
 }
 
         function loadSavedBackground() {
+    try{if(localStorage.getItem('navi_camera_background'))return;}catch{}
     if(window.naviBackgroundStartup?.pending)return;
     document.documentElement.style.removeProperty('--navi-wallpaper');
     document.documentElement.style.removeProperty('--legal-wallpaper');
@@ -2057,23 +2043,7 @@ function setBackgroundToCookie(value) {
 
         // 新增功能的初始化
         // 加载保存的背景
-        window.addEventListener('load', () => {
-    const saved = getBackgroundFromCookie();
-    if (!saved) return;
-
-    try {
-        const data = JSON.parse(saved);
-
-        // ✅ 防御性判断（关键）
-        if (data && typeof data === 'object' && data.url) {
-            applyBackground(data.url);
-            updateAttributionFooter(data.info);
-        }
-
-    } catch (e) {
-        console.warn('背景解析失败', e);
-    }
-});
+        window.addEventListener('load', loadSavedBackground, {once:true});
         addSettingsButtons();            // 添加设置按钮到顶部栏
 
 
@@ -4353,9 +4323,9 @@ function setBackgroundToCookie(value) {
     </script>
     <script src="js/app-info.js?v=feishu-history-v3"></script>
     <script src="js/settings.js?v=calendar-settings-v6"></script>
-    <script type="module" src="js/camera-background.js?v=first-paint-v10"></script>
+    <script type="module" src="js/camera-background.js?v=source-priority-v11"></script>
     <script type="module" src="js/sync.js?v=discover-v16"></script>
     <script type="module" src="js/calendar.js?v=calendar-feishu-v31"></script>
-    <script type="module" src="/js/discover.js?v=aligned-ad-v10"></script>
+    <script type="module" src="/js/discover.js?v=dismiss-v11"></script>
 </body>
 </html>

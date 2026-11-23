@@ -20,7 +20,7 @@ export function installLegalBackground({document:doc=document,window:win=window,
   footer.append(link((source==='hko'?t('香港天文台','香港天文台'):t('运输署','運輸署'))+' · '+name,source==='hko'?'https://www.hko.gov.hk/'+(simple()?'sc':'tc')+'/wxinfo/ts/index_webcam.htm':source.startsWith('webcast')?'https://www.hkemobility.gov.hk/'+(simple()?'sc':'tc')+'/traffic-information/live/webcast':'https://www.hkemobility.gov.hk/'));
  }
  function photo(){
-  if(win.naviBackgroundStartup?.pending)return;
+  if(current||win.naviBackgroundStartup?.pending)return;
   let saved=null;try{const raw=doc.cookie.split(';').map(x=>x.trim()).find(x=>x.startsWith('homepage_bg='))?.slice(12);if(raw){const decoded=decodeURIComponent(raw);try{saved=JSON.parse(decoded);}catch{saved={url:decoded};}const url=new URL(saved.url);if(['https:','http:'].includes(url.protocol)){image(url.href);credit=saved.info?.isDefault?null:{type:'photo',info:saved.info};renderCredit();return;}}}catch{}
   doc.documentElement.style.removeProperty('--legal-wallpaper');credit=null;renderCredit();
  }

@@ -61,6 +61,6 @@ themeButton.onclick = () => {
 systemTheme.addEventListener('change',applyTheme);
 window.addEventListener('storage',event=> { if (event.key === 'theme_mode') applyTheme(); });
 // All background sources use the same saved preferences as the homepage.
-import('./legal-background.js?v=first-paint-v2').then(({installLegalBackground})=>installLegalBackground()).catch(()=>window.naviBackgroundStartup?.fallback());
+import('./legal-background.js?v=source-priority-v3').then(({installLegalBackground})=>installLegalBackground()).catch(()=>window.naviBackgroundStartup?.fallback());
 applyTheme();
 render();

@@ -79,3 +79,6 @@ button.discover-more:disabled .discover-more-circle { transform:none; }
 .discover-refresh-progress[hidden] { display:none; }
 
 .discover-card small.discover-ad-meta { margin-top:auto; padding:20px 8px 8px; min-height:18px; }
+
+.discover-ad-close { margin-left:auto; flex:none; --mdui-color-on-surface:238,242,245; }
+.discover-ad-close[hidden] { display:none; }

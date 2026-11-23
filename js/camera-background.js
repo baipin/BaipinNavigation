@@ -182,7 +182,7 @@ render();
 const initialize=async()=>{
     if(!choice)return;
     try {await loadCatalog();if(choice.source==='bing')await loadBing();render();updateBackground();}
-    catch {window.naviBackgroundStartup?.fallback();showStatus(t('摄影机背景暂时无法载入，已保留照片背景。','攝影機背景暫時無法載入，已保留照片背景。'));}
+    catch {window.naviBackgroundStartup?.fallback();showStatus(t('摄影机背景暂时无法载入，将保留同一来源的上一幅画面，请稍后重试。','攝影機背景暫時無法載入，将保留同一来源的上一幅画面，请稍后重试。'));}
 };
 // Module scripts run after parsing; do not wait for ads and other unrelated assets.
 initialize();

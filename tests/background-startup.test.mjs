@@ -16,10 +16,10 @@ for(const photo of ['https://example.test/custom.jpg',JSON.stringify({url:'https
  const s=start({camera:{source:'webcast-live',id:'HK'}});assert.equal(s.styles.get('--legal-wallpaper'),'none');assert.equal(s.api.pending,true);s.api.ready('blob:frame');assert.equal(s.api.pending,false);assert.ok(s.styles.get('--navi-wallpaper').includes('blob:frame'));
 }
 {
- const s=start({camera:{source:'bing',id:'DAILY'},preview:{choice:'bing:DAILY',url:'https://www.bing.com/cached.jpg'}});assert.ok(s.styles.get('--legal-wallpaper').includes('cached.jpg'));s.api.fallback();assert.ok(s.styles.get('--legal-wallpaper').includes('cached.jpg'));
+ const s=start({camera:{source:'bing',id:'DAILY'},preview:{version:2,choice:'bing:DAILY',url:'https://www.bing.com/cached.jpg'}});assert.ok(s.styles.get('--legal-wallpaper').includes('cached.jpg'));s.api.fallback();assert.ok(s.styles.get('--legal-wallpaper').includes('cached.jpg'));
 }
 {
- const s=start({photo:'https://example.test/saved.jpg',camera:{source:'traffic',id:'H429F'},preview:{choice:'bing:DAILY',url:'https://www.bing.com/wrong.jpg'}});assert.equal(s.styles.get('--legal-wallpaper'),'none');s.api.fallback();assert.ok(s.styles.get('--legal-wallpaper').includes('saved.jpg'));
+ const s=start({photo:'https://example.test/saved.jpg',camera:{source:'traffic',id:'H429F'},preview:{version:2,choice:'bing:DAILY',url:'https://www.bing.com/wrong.jpg'}});assert.equal(s.styles.get('--legal-wallpaper'),'none');s.api.fallback();assert.equal(s.styles.get('--legal-wallpaper'),'none','camera failure must not restore unrelated saved photo');
 }
 assert.equal(start({photo:'javascript:alert(1)'}).styles.size,0);
 assert.equal(start({blocked:true}).styles.size,0);
