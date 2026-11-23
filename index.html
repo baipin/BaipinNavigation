@@ -447,6 +447,19 @@
         @media (max-width:1100px) { .city-boundary-list { grid-template-columns:repeat(2,minmax(0,1fr)); } .city-journey-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
         @media (max-width:900px) { .city-dashboard-grid { display:block; } .city-dashboard-grid > article { margin-bottom:18px; } .city-journey-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .city-finance-card{grid-template-columns:repeat(2,minmax(0,1fr))}.city-finance-item:nth-child(2n){border-right:0} }
         @media (max-width:600px) { .city-dashboard { padding:0 12px; width:100%; } .city-metrics, .city-journey-grid, .city-boundary-list { grid-template-columns:1fr; } .city-metric { min-height:96px; } .city-rail-grid { grid-template-columns:1fr; } .city-two-col { grid-template-columns:1fr; } .city-flight-columns { grid-template-columns:1fr; } .city-flight-list { max-height:240px; } .city-card { padding:16px; } .city-finance-value { white-space:normal; font-size:1.15rem; } .city-input { min-width:0; width:100%; } .city-form .city-button { flex:1 1 40%; } .city-bus-line-list { grid-template-columns:1fr; } #city-finance,#city-ticker{padding:0 12px}.city-finance-card{grid-template-columns:1fr}.city-finance-item{border-right:0;border-bottom:1px solid rgba(255,255,255,.12)}.city-finance-item:last-child{border-bottom:0} }
+
+
+        .app-site-footer { position:relative; }
+        #background-view-button { position:absolute; top:12px; right:16px; }
+        .footer-description { padding-right:44px; }
+        html:is(.background-preview,.background-view) body>:not(.app-bar):not(.webcast-live-background):not(.webcast-capture-video):not(#background-view-restore):not(script):not(style):not(link) { opacity:0 !important; transition:opacity .2s ease; }
+        html.background-view body>.app-bar { opacity:0 !important; pointer-events:none; transition:opacity .2s ease; }
+        html.background-view body>:not(#background-view-restore) { pointer-events:none !important; }
+        #background-view-restore { position:fixed; inset:0; z-index:2147483646; width:100%; height:100dvh; padding:24px; border:0; background:transparent; color:#fff; cursor:pointer; display:flex; align-items:flex-end; justify-content:center; font:inherit; }
+        #background-view-restore[hidden] { display:none; }
+        .background-view-hint { margin-bottom:max(12px,env(safe-area-inset-bottom)); padding:12px 20px; border-radius:28px; background:rgba(20,25,30,.72); backdrop-filter:blur(16px); box-shadow:0 4px 16px #0003; font-size:.9rem; }
+        #background-view-restore:focus-visible .background-view-hint { outline:2px solid #fff; outline-offset:4px; }
+        @media(prefers-reduced-motion:reduce){html:is(.background-preview,.background-view) body>*{transition:none!important;}}
     </style>
     <style>
         #data-manage-dialog [hidden], #search-clear[hidden], #footer-account[hidden], #footer-avatar[hidden], #footer-account [hidden] { display:none !important; }
@@ -4286,6 +4299,7 @@ function setBackgroundToCookie(value) {
     <script src="js/city-feed.js?v=market-trends-v1"></script>
     <script src="js/layout.js"></script>
     <footer class="app-site-footer" aria-label="关于百品导航">
+        <mdui-button-icon id="background-view-button" icon="wallpaper" aria-label="欣赏背景" title="欣赏背景" aria-pressed="false"></mdui-button-icon>
         <section class="app-overview" id="app-overview" aria-labelledby="app-name">
             <div class="footer-brand"><img src="/img/logo.png" alt=""><h1 id="app-name" data-app-info="name">百品导航</h1></div>
             <p class="app-purpose" data-app-info="purpose">一站式个人导航与香港资讯首页</p>
@@ -4327,5 +4341,6 @@ function setBackgroundToCookie(value) {
     <script type="module" src="js/sync.js?v=discover-v16"></script>
     <script type="module" src="js/calendar.js?v=calendar-feishu-v31"></script>
     <script type="module" src="/js/discover.js?v=dismiss-v11"></script>
+    <script src="/js/background-view.js?v=background-view-v1"></script>
 </body>
 </html>
