@@ -456,7 +456,12 @@
         #background-view-button::part(icon) { display:inline-flex; align-items:center; justify-content:center; margin:0; width:24px; height:24px; font-size:24px; }
         .mdui-theme-dark #background-view-button { background-color:rgba(104,87,143,.42); color:#eee5ff; }
         @media(max-width:480px){.footer-brand{flex-wrap:wrap;}}
-        html:is(.background-preview,.background-view) body>:not(.app-bar):not(.webcast-live-background):not(.webcast-capture-video):not(#background-view-restore):not(script):not(style):not(link) { opacity:0 !important; transition:opacity .2s ease; }
+        html.background-view body>:not(.app-bar):not(.webcast-live-background):not(.webcast-capture-video):not(#background-view-restore):not(script):not(style):not(link),
+        html.background-preview body>:not(.app-bar):not(.app-site-footer):not(.webcast-live-background):not(.webcast-capture-video):not(#background-view-restore):not(script):not(style):not(link) { opacity:0 !important; transition:opacity .2s ease; }
+        html.background-preview .app-site-footer { background:transparent !important; border-color:transparent; backdrop-filter:none; -webkit-backdrop-filter:none; }
+        html.background-preview .app-overview>:not(.footer-brand),html.background-preview .footer-brand>:not(#background-view-button) { opacity:0; transition:opacity .2s ease; }
+        html.background-preview #background-view-button { background-color:rgba(225,216,255,.7); box-shadow:0 0 0 2px rgba(255,255,255,.65),0 4px 12px #0003; }
+        html.background-preview.mdui-theme-dark #background-view-button { background-color:rgba(104,87,143,.7); }
         html.background-view body>.app-bar { opacity:0 !important; pointer-events:none; transition:opacity .2s ease; }
         html.background-view body>:not(#background-view-restore) { pointer-events:none !important; }
         #background-view-restore { position:fixed; inset:0; z-index:2147483646; width:100%; height:100dvh; padding:24px; border:0; background:transparent; color:#fff; cursor:pointer; display:flex; align-items:flex-end; justify-content:center; font:inherit; }
