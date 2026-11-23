@@ -1,4 +1,4 @@
-import {createVideoFeedAd} from './discover-ad.js?v=natural-height-v2';
+import {createVideoFeedAd} from './discover-ad.js?v=aligned-footer-v3';
 const sc=()=>document.documentElement.lang==='zh-CN',t=(s,c)=>sc()?s:c;
 const node=(tag,content)=>{const el=document.createElement(tag);if(content)el.textContent=content;return el;};
 function metadataButton(button,urlField,target,kind){

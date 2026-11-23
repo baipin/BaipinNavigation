@@ -4,8 +4,10 @@ export function createVideoFeedAd({document:doc=document,window:win=window,Inter
  const element=doc.createElement('article');element.className='discover-card discover-video-ad';
  const unit=doc.createElement('ins');unit.className='adsbygoogle';unit.style.display='block';
  unit.setAttribute('data-ad-format','fluid');unit.setAttribute('data-ad-layout-key','-6t+ed+2i-1n-4w');unit.setAttribute('data-ad-client','ca-pub-3664886958722859');unit.setAttribute('data-ad-slot','3546508009');element.append(unit);
+ const footer=doc.createElement('small');footer.className='discover-video-meta discover-ad-meta';
+ const author=doc.createElement('span');author.className='discover-meta-item';const person=doc.createElement('span');person.className='material-icons';person.textContent='person';person.setAttribute('aria-hidden','true');const authorName=doc.createElement('span');author.append(person,authorName);footer.append(author);element.append(footer);
  let visible=false,requested=false,failed=false;
- const updateLabel=()=>{const name=doc.documentElement.lang==='zh-CN'?'广告':'廣告';element.setAttribute('aria-label',name);};
+ const updateLabel=()=>{const name=doc.documentElement.lang==='zh-CN'?'广告':'廣告';element.setAttribute('aria-label',name);authorName.textContent=doc.documentElement.lang==='zh-CN'?'特别推介':'特別推介';author.setAttribute('aria-label',authorName.textContent);author.title=authorName.textContent;};
  const request=()=>{
   if(requested||failed||!visible||!element.isConnected||element.hidden||unit.getBoundingClientRect().width<250)return;
   // Queue exactly once; the existing page-level AdSense loader processes the queue.

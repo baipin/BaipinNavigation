@@ -50,7 +50,7 @@
 @media(prefers-reduced-motion:reduce){.discover-platform-thumb,.discover-platform button,.discover-more-circle{transition:none;}}
 
 /* Native in-feed creative; keep Google's content untouched and visibly identified. */
-.discover-video-ad { align-self:flex-start; box-sizing:border-box; height:auto; min-height:0; min-width:268px; padding:8px; cursor:default; transition:none; background:#26383c; border:1px solid #ffffff14; border-radius:16px; box-shadow:0 3px 9px #0004; overflow:visible; }
+.discover-video-ad { align-self:stretch; box-sizing:border-box; height:auto; min-height:0; min-width:268px; padding:8px; cursor:default; transition:none; background:#26383c; border:1px solid #ffffff14; border-radius:16px; box-shadow:0 3px 9px #0004; overflow:visible; }
 .discover-video-ad:hover,.discover-video-ad:active { transform:none; background:#26383c; box-shadow:0 3px 9px #0004; }
 .discover-video-ad[hidden] { display:none; }
 .discover-video-ad .adsbygoogle { display:block; width:100%; min-width:250px; max-width:100%; }
@@ -77,3 +77,5 @@ button.discover-more:disabled .discover-more-circle { transform:none; }
 .discover-refresh-control.is-loading>mdui-button-icon { opacity:0; pointer-events:none; }
 .discover-refresh-progress { width:22px; height:22px; --mdui-color-primary:220,225,255; }
 .discover-refresh-progress[hidden] { display:none; }
+
+.discover-card small.discover-ad-meta { margin-top:auto; padding:20px 8px 8px; min-height:18px; }
