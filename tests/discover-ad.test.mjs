@@ -7,7 +7,7 @@ class Resize{constructor(callback){resize=callback;}observe(){}disconnect(){disc
 class Mutation{constructor(callback){mutation=callback;}observe(){}disconnect(){disconnects++;}}
 const doc={documentElement:{lang:'zh-CN'},createElement:tag=>new Element(tag)},win={};
 const ad=createVideoFeedAd({document:doc,window:win,Intersection,Resize,Mutation});
-assert.equal(ad.unit.getAttribute('data-ad-slot'),'3546508009');assert.equal(ad.unit.getAttribute('data-ad-layout-key'),'-6t+ed+2i-1n-4w');assert.equal(ad.unit.getAttribute('data-ad-format'),'fluid');
+assert.deepEqual(ad.element.children,[ad.unit],'no duplicate visible label or wrapper padding');assert.equal(ad.unit.getAttribute('data-ad-slot'),'3546508009');assert.equal(ad.unit.getAttribute('data-ad-layout-key'),'-6t+ed+2i-1n-4w');assert.equal(ad.unit.getAttribute('data-ad-format'),'fluid');
 visibility([{isIntersecting:true}]);assert.equal(win.adsbygoogle,undefined,'do not request a detached ad');ad.element.isConnected=true;ad.unit.width=0;resize();assert.equal(win.adsbygoogle,undefined,'wait for usable layout');ad.unit.width=249;resize();assert.equal(win.adsbygoogle,undefined,'fluid infeed needs minimum width');ad.unit.width=272;visibility([{isIntersecting:false}]);resize();assert.equal(win.adsbygoogle,undefined,'offscreen ads wait until viewed');
 visibility([{isIntersecting:true}]);assert.equal(win.adsbygoogle.length,1);resize();ad.request();visibility([{isIntersecting:true}]);assert.equal(win.adsbygoogle.length,1,'same unit never requests another impression');
 doc.documentElement.lang='zh-HK';ad.updateLabel();assert.equal(ad.element.getAttribute('aria-label'),'廣告');assert.equal(win.adsbygoogle.length,1,'translation never reloads ad');
