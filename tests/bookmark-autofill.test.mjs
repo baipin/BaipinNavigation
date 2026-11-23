@@ -8,7 +8,7 @@ async function run({name='',icon='',ok=true,pendingEdit,cancel=false}={}) {
  const bookmarks=[];let requests=0,saved=false;const progress={hidden:true,setAttribute(){}};
  const dialog={open:true,addEventListener(){},removeEventListener(){}};
  const status={textContent:''};
- const context={document:{getElementById:id=>fields[id],documentElement:{lang:'zh-CN'}},bookmarkSaveStatus:status,bookmarkSaveProgress:progress,dialog,curIdx:null,bookmarks,URL,URLSearchParams,AbortController,setTimeout,clearTimeout,localStorage:{setItem(){saved=true;}},render(){},fetch:async()=>{requests++;assert.equal(progress.hidden,false);if(pendingEdit)fields['f-name'].value=pendingEdit;if(cancel)dialog.open=false;return {ok,json:async()=>({title:'Site title',icon:'https://example.com/icon.png'})};}};
+ const context={document:{getElementById:id=>fields[id],documentElement:{lang:'zh-CN'}},bookmarkSaveStatus:status,bookmarkSaveProgress:progress,bookmarkInfoText:{textContent:''},dialog,curIdx:null,bookmarks,URL,URLSearchParams,AbortController,setTimeout,clearTimeout,localStorage:{setItem(){saved=true;}},render(){},fetch:async()=>{requests++;assert.equal(progress.hidden,false);if(pendingEdit)fields['f-name'].value=pendingEdit;if(cancel)dialog.open=false;return {ok,json:async()=>({title:'Site title',icon:'https://example.com/icon.png'})};}};
  vm.runInNewContext(source,context);
  await fields['act-save'].onclick();
  assert.equal(fields['act-save'].disabled,false);assert.equal(progress.hidden,true);
