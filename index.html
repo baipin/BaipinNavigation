@@ -717,6 +717,21 @@
         :is(.calendar-event-form,.calendar-icloud-connect) :is(input,select,textarea) { width:100%; box-sizing:border-box; padding:12px; border:1px solid rgba(128,128,128,.45); border-radius:12px; background:transparent; color:inherit; font:inherit; color-scheme:light; }
         #calendar-event-dialog::part(panel),#calendar-vault-dialog::part(panel) { min-width:0; max-width:calc(100vw - 32px); box-sizing:border-box; }
         #calendar-event-dialog::part(body),#calendar-vault-dialog::part(body) { min-width:0; overflow-x:hidden; box-sizing:border-box; }
+        .calendar-datetime-field { display:grid; gap:8px; min-width:0; font-size:.85rem; }
+        .calendar-datetime-controls { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:8px; min-width:0; }
+        .calendar-datetime-controls:has(input[hidden]) { grid-template-columns:minmax(0,1fr); }
+        .calendar-event-form .calendar-datetime-controls input { width:0; min-width:100%; max-width:100%; min-height:46px; appearance:none; -webkit-appearance:none; }
+        .calendar-datetime-controls input[hidden] { display:none!important; }
+        .calendar-location-picker { justify-self:start; margin-top:-8px; }
+        #calendar-map-dialog { z-index:2800; }
+        #calendar-map-dialog::part(panel) { width:min(760px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); background:var(--glass-bg); color:var(--text-main); }
+        #calendar-map-dialog::part(body) { min-width:0; }
+        .calendar-map-search { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+        .calendar-map-search input { flex:1 1 160px; min-width:0; width:0; padding:12px; border:1px solid rgba(128,128,128,.4); border-radius:12px; background:transparent; color:inherit; font:inherit; font-size:16px; }
+        .calendar-location-map { height:clamp(200px,42dvh,400px); width:100%; border-radius:12px; background:rgba(128,128,128,.1); }
+        .calendar-map-results { display:grid; gap:4px; max-height:130px; overflow:auto; margin-bottom:8px; }
+        .calendar-map-results button { padding:10px; border:0; border-radius:8px; text-align:start; background:rgba(128,128,128,.1); color:inherit; cursor:pointer; }
+        #calendar-map-dialog [hidden] { display:none!important; }
         .calendar-event-form input:is([type="datetime-local"],[type="date"]) { display:block; inline-size:100%; min-inline-size:0; max-inline-size:100%; overflow:hidden; }
         .calendar-event-form input::-webkit-datetime-edit { min-width:0; padding:0; }
         .calendar-event-form input::-webkit-date-and-time-value { min-width:0; text-align:start; }
@@ -4432,7 +4447,7 @@ function setBackgroundToCookie(value) {
     <script src="js/settings.js?v=spacing-v3"></script>
     <script type="module" src="js/camera-background.js?v=source-priority-v11"></script>
     <script type="module" src="js/sync.js?v=spacing-v19"></script>
-    <script type="module" src="js/calendar.js?v=calendar-account-layout-v32"></script>
+    <script type="module" src="js/calendar.js?v=calendar-map-v33"></script>
     <script type="module" src="/js/discover.js?v=dismiss-v11"></script>
     <script src="/js/background-view.js?v=hover-450-v5"></script>
 </body>

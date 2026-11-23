@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {formatMapPlace} from '../js/calendar-map.js';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+assert.equal(formatMapPlace({name:'大学',display_name:'九龙塘达之路'},22.3,114.1),'大学 · 九龙塘达之路');
+assert.equal(formatMapPlace({name:'大学',display_name:'大学, 九龙塘'},22.3,114.1),'大学, 九龙塘');
+assert.equal(formatMapPlace(null,22.3,114.1),'22.300000, 114.100000');
+const source=readFileSync(new URL('../js/calendar.js',import.meta.url),'utf8');
+const code=source.slice(source.indexOf('function dateTimeField()'),source.indexOf('const startField=dateTimeField()'));
+const context={node:()=>({append(){},setAttribute(){}}),form:{append(){}},Math};vm.createContext(context);vm.runInContext(code,context);
+const field=vm.runInContext('dateTimeField()',context);
+field.input.value='2026-11-24T09:30';assert.equal(field.input.value,'2026-11-24T09:30');
+field.input.type='date';assert.equal(field.input.value,'2026-11-24');
+field.input.disabled=true;assert.equal(field.input.disabled,true);
+field.input.disabled=false;field.input.type='datetime-local';assert.equal(field.input.value,'2026-11-24T09:30');
+field.input.value='2026-11-25';assert.equal(field.input.value,'2026-11-25T09:00');
+console.log('PASS: place name/address and coordinate fallback; split datetime values, all-day transitions and readonly controls.');
