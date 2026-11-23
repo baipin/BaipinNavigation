@@ -78,7 +78,11 @@ button.discover-more:disabled .discover-more-circle { transform:none; }
 .discover-refresh-progress { width:22px; height:22px; --mdui-color-primary:220,225,255; }
 .discover-refresh-progress[hidden] { display:none; }
 
-.discover-card small.discover-ad-meta { margin-top:auto; padding:20px 8px 8px; min-height:18px; }
+.discover-card small.discover-ad-meta { margin-top:auto; padding:20px 8px 8px; min-height:18px; opacity:1; }
+.discover-ad-meta>.discover-meta-item { opacity:.8; }
 
-.discover-ad-close { margin-left:auto; flex:none; --mdui-color-on-surface:238,242,245; }
+.discover-ad-close { margin-left:auto; flex:0 0 44px; width:44px; height:44px; border-radius:50%; color:#17272b; background:#e2e8ff; border:1px solid #ffffffb3; box-shadow:0 2px 6px #0005; --mdui-color-on-surface:23,39,43; }
+.discover-ad-close:hover { background:#fff; box-shadow:0 3px 9px #0006; }
+.discover-ad-close:focus-visible { outline:3px solid #fff; outline-offset:3px; }
+.discover-ad-close::part(button) { color:#17272b; }
 .discover-ad-close[hidden] { display:none; }
