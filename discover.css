@@ -66,3 +66,8 @@
 button.discover-more { border:0; padding:12px 4px; background:transparent; font:inherit; font-size:.9rem; cursor:pointer; }
 button.discover-more:disabled { cursor:progress; opacity:.6; }
 button.discover-more:disabled .discover-more-circle { transform:none; }
+
+.discover-card small.discover-video-meta { display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; }
+.discover-meta-item { display:inline-flex; align-items:center; gap:5px; min-width:0; max-width:100%; }
+.discover-meta-item .material-icons { flex:none; font-size:16px; line-height:1; }
+.discover-meta-item>span:last-child { min-width:0; overflow-wrap:anywhere; }
