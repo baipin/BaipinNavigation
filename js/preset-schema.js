@@ -31,7 +31,7 @@ export function sanitizePreset(input) {
         }
     }
     const spacing=result.localStorage.navi_quick_access_offset;
-    if(spacing!==null && (!/^-?\d+$/.test(spacing)||Number(spacing)<-60||Number(spacing)>240||Number(spacing)%4!==0))throw new Error('快捷访问间距设置不正确');
+    if(spacing!==null && (!/^-?\d+$/.test(spacing)||Number(spacing)<-60||Number(spacing)>4096||Number(spacing)%4!==0))throw new Error('快捷访问间距设置不正确');
     if(result.localStorage.navi_discover_platform!==null&&!['youtube','bilibili'].includes(result.localStorage.navi_discover_platform))throw new Error('影片平台设置不正确');
     if(result.localStorage.navi_calendar_vault!==null){const v=validateVault(JSON.parse(result.localStorage.navi_calendar_vault));result.localStorage.navi_calendar_vault=JSON.stringify(v);}
     if(result.localStorage.navi_calendar_preferences!==null){const p=JSON.parse(result.localStorage.navi_calendar_preferences);if(!p||typeof p!=='object'||Array.isArray(p)||Object.keys(p).some(k=>!['google','microsoft','icloud','canvas','feishu'].includes(k)))throw new Error('日历偏好不正确');for(const x of Object.values(p))if(!x||typeof x.account!=='string'||x.account.length>254||!Array.isArray(x.calendars)||x.calendars.length>100||x.calendars.some(id=>typeof id!=='string'||id.length>3000))throw new Error('日历偏好不正确');}
