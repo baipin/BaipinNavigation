@@ -1,3 +1,4 @@
+import {addGithubPreviews} from './github-preview.js';
 import {identifySite,text} from './public-page.js';
 const cache=new Map();
 const clean=(x,max=300)=>text(x).slice(0,max);
@@ -9,7 +10,7 @@ export function youtubeCards(data){
  const found=new Map();function walk(x){if(!x||typeof x!=='object')return;if(Array.isArray(x)){for(const v of x)walk(v);return;}const v=x.videoRenderer||x.gridVideoRenderer;if(v&&/^[\w-]{11}$/.test(v.videoId)){const label=x=>x?.simpleText||x?.runs?.map(y=>y.text).join('')||'';found.set(v.videoId,{title:clean(label(v.title)),description:clean(label(v.descriptionSnippet)),author:clean(label(v.ownerText||v.shortBylineText)),url:'https://www.youtube.com/watch?v='+v.videoId,image:safeImage(v.thumbnail?.thumbnails?.at(-1)?.url||'',['ytimg.com']),metric:clean(label(v.viewCountText))});}for(const [k,v]of Object.entries(x))if(k!=='videoRenderer'&&k!=='gridVideoRenderer')walk(v);}walk(data);return [...found.values()].slice(0,12);
 }
 async function discover(source){
- if(source==='github'){const since=new Date(Date.now()-30*86400000).toISOString().slice(0,10);return {items:githubCards(await json('https://api.github.com/search/repositories?'+new URLSearchParams({q:'created:>='+since+' archived:false',sort:'stars',order:'desc',per_page:'12'}),{Accept:'application/vnd.github+json','User-Agent':'BaipinNavigation'})),period:'30d'};}
+ if(source==='github'){const since=new Date(Date.now()-30*86400000).toISOString().slice(0,10);const result=await json('https://api.github.com/search/repositories?'+new URLSearchParams({q:'created:>='+since+' archived:false',sort:'stars',order:'desc',per_page:'12'}),{Accept:'application/vnd.github+json','User-Agent':'BaipinNavigation'});return {items:await addGithubPreviews(githubCards(result),result.items),period:'30d'};}
  if(source==='bilibili')return {items:bilibiliCards(await json('https://api.bilibili.com/x/web-interface/popular?ps=12&pn=1',{'User-Agent':'Mozilla/5.0',Referer:'https://www.bilibili.com/'}))};
  if(process.env.YOUTUBE_API_KEY){const data=await json('https://www.googleapis.com/youtube/v3/videos?'+new URLSearchParams({part:'snippet,statistics',chart:'mostPopular',regionCode:'HK',maxResults:'12',key:process.env.YOUTUBE_API_KEY}));return {items:(data.items||[]).filter(x=>/^[\w-]{11}$/.test(x.id)).map(x=>({title:clean(x.snippet?.title),author:clean(x.snippet?.channelTitle),description:clean(x.snippet?.description),url:'https://www.youtube.com/watch?v='+x.id,image:safeImage(x.snippet?.thumbnails?.high?.url||'',['ytimg.com']),metric:Number(x.statistics?.viewCount||0).toLocaleString('en')+' views'}))};}
  throw Error('YouTube API key not configured');
