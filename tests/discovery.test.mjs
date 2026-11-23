@@ -10,6 +10,12 @@ for(const url of ['file:///etc/passwd','https://user:password@example.test','htt
 for(const ip of ['127.0.0.1','10.0.0.1','169.254.169.254','192.168.1.1','100.64.0.1','::1','::ffff:127.0.0.1'])assert.equal(publicAddress(ip),false);assert.equal(publicAddress('8.8.8.8'),true);
 await assert.rejects(()=>publicPage('https://example.test',{resolve:async()=>[{address:'127.0.0.1'}]}),/公开/);
 let calls=[];const read=async url=>{calls.push(url);if(url==='https://example.test/')return {type:'text/html',url,body:Buffer.from(html)};if(url.endsWith('brand.svg'))return {type:'text/html',url,body:Buffer.from('not image')};if(url.endsWith('touch.png'))return {type:'image/png',url,body:Buffer.from('image')};throw Error('not found');};
+
+// Real-world favicon declarations may point at a full-resolution logo (dcw.hk: ~863 KiB).
+const largeLogo=Buffer.alloc(883548);let logoLimit=0;
+const largeRead=async(url,options={})=>{if(url==='https://www.dcw.hk/reading')return {url,type:'text/html',body:Buffer.from('<title>Reading</title><link rel="icon" href="/img/logo.png">')};assert.equal(url,'https://www.dcw.hk/img/logo.png');logoLimit=options.limit;if(largeLogo.length>options.limit)throw Error('too large');return {url,type:'image/png',body:largeLogo};};
+assert.equal((await identifySite('https://www.dcw.hk/reading',largeRead)).icon,'https://www.dcw.hk/img/logo.png');assert.ok(logoLimit>=largeLogo.length&&logoLimit<=2000000,'allow larger logos with a bounded download');
+
 assert.equal((await identifySite('https://example.test/',read)).icon,'https://example.test/assets/touch.png');assert.ok(!calls.some(x=>x.endsWith('favicon.ico')),'declared valid icon wins over root fallback');
 const manifestRead=async url=>url==='https://example.test/'?{url,type:'text/html',body:Buffer.from('<title>Manifest</title><link rel="manifest" href="/app.json">')}:url.endsWith('app.json')?{url,type:'application/json',body:Buffer.from('{"icons":[{"src":"logo.png"}]}')}:{url,type:'image/png',body:Buffer.from('image')};assert.equal((await identifySite('https://example.test/',manifestRead)).icon,'https://example.test/logo.png');
 assert.equal(githubCards({items:[{full_name:'owner/repo',stargazers_count:50}]}).length,1);assert.equal(githubCards({items:[{full_name:'javascript:bad'}]}).length,0);

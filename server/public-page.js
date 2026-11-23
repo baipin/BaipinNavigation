@@ -40,6 +40,6 @@ export async function identifySite(url,read=publicPage){
  const html=new TextDecoder(page.body.toString('ascii',0,1000).match(/charset\s*=\s*["']?([\w-]+)/i)?.[1]||'utf-8').decode(page.body),meta=pageMetadata(html,page.url);const candidates=[...meta.icons];
  if(!candidates.length&&meta.manifest)try{const manifest=await readWithin(meta.manifest,{limit:100000});for(const icon of JSON.parse(manifest.body.toString()).icons||[])try{candidates.push(pageURL(icon.src,manifest.url).href);}catch{}}catch{}
  candidates.push(new URL('/favicon.ico',page.url).href);let icon=null;
- for(const candidate of [...new Set(candidates)].slice(0,4))try{const result=await readWithin(candidate,{limit:500000,timeout:3500});if(/^image\//i.test(result.type)&&result.body.length){icon=result.url;break;}}catch{}
+ for(const candidate of [...new Set(candidates)].slice(0,4))try{const result=await readWithin(candidate,{limit:2000000,timeout:6000});if(/^image\//i.test(result.type)&&result.body.length){icon=result.url;break;}}catch{}
  return {title:meta.title,icon,url:page.url};
 }
