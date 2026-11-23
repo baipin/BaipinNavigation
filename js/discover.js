@@ -1,3 +1,4 @@
+import {createVideoFeedAd} from './discover-ad.js?v=infeed-v1';
 const sc=()=>document.documentElement.lang==='zh-CN',t=(s,c)=>sc()?s:c;
 const node=(tag,content)=>{const el=document.createElement(tag);if(content)el.textContent=content;return el;};
 function metadataButton(button,urlField,target,kind){
@@ -12,7 +13,7 @@ const titleButton=document.getElementById('btn-get-title');
 metadataButton(document.getElementById('btn-get-icon'),document.getElementById('f-url'),document.getElementById('f-icon'),'icon');
 metadataButton(titleButton,document.getElementById('f-url'),document.getElementById('f-name'),'title');
 metadataButton(document.getElementById('btn-get-engine-icon'),document.getElementById('engine-url'),document.getElementById('engine-icon'),'icon');
-const region=document.getElementById('discover'),picker=document.getElementById('discover-platform'),data=new Map(),errors=new Map(),pending=new Set();let started=false;
+const region=document.getElementById('discover'),picker=document.getElementById('discover-platform'),data=new Map(),errors=new Map(),pending=new Set();let started=false,videoFeedAd=null;
 try{picker.value=localStorage.getItem('navi_discover_platform')==='youtube'?'youtube':'bilibili';}catch{}
 function moreLink(source){
  const provider=source==='github'?'GitHub':source==='youtube'?'YouTube':'Bilibili';
@@ -21,15 +22,22 @@ function moreLink(source){
 }
 function draw(source){
  const isRepo=source==='github',list=document.getElementById(isRepo?'discover-repos':'discover-videos'),status=document.getElementById(isRepo?'discover-repo-status':'discover-video-status'),position=list.dataset.source===source?list.scrollLeft:0;
- list.dataset.source=source;list.replaceChildren();const result=data.get(source);
+ list.dataset.source=source;const result=data.get(source);
+ if(!isRepo){
+  if(result?.items.length>=4&&!videoFeedAd)videoFeedAd=createVideoFeedAd();
+  // Leave the ad and its iframe attached while rebuilding the surrounding cards.
+  for(const child of [...list.children])if(child!==videoFeedAd?.element)child.remove();
+  if(videoFeedAd){videoFeedAd.updateLabel();videoFeedAd.element.hidden=!result?.items.length||videoFeedAd.failed||videoFeedAd.unfilled;if(videoFeedAd.element.parentElement!==list)list.append(videoFeedAd.element);}
+ }else list.replaceChildren();
+ let index=0;
  if(result)for(const item of result.items){
   const card=node('a');card.className='discover-card'+(isRepo?' discover-repo-card':'');card.href=item.url;card.target='_blank';card.rel='noopener noreferrer';
   const cover=node('div');cover.className='discover-media';
   const placeholder=()=>{const icon=node('span',isRepo?'code':'play_circle');icon.className='material-icons discover-cover';cover.replaceChildren(icon);};
   if(item.image){const img=node('img');img.src=item.image;img.loading='lazy';img.referrerPolicy='no-referrer';img.alt='';let backup=false;img.onerror=()=>{if(!backup&&item.fallbackImage&&img.src!==item.fallbackImage){backup=true;img.src=item.fallbackImage;}else placeholder();};cover.append(img);}else placeholder();
-  const body=node('div');body.className='discover-card-body';const heading=node('h3',item.title),description=node('p',item.description),metric=(item.metric||'').replace(/ views$/,t(' 次观看',' 次觀看')),meta=node('small',[item.author,metric].filter(Boolean).join(' · '));body.append(heading,description,meta);card.append(cover,body);list.append(card);
+  const body=node('div');body.className='discover-card-body';const heading=node('h3',item.title),description=node('p',item.description),metric=(item.metric||'').replace(/ views$/,t(' 次观看',' 次觀看')),meta=node('small',[item.author,metric].filter(Boolean).join(' · '));body.append(heading,description,meta);card.append(cover,body);if(!isRepo&&videoFeedAd&&index<3)list.insertBefore(card,videoFeedAd.element);else list.append(card);index++;
  }
- list.append(moreLink(source));list.scrollLeft=position;
+ list.append(moreLink(source));list.scrollLeft=position;if(!isRepo)videoFeedAd?.request();
  const time=result?t('更新于 ','更新於 ')+new Date(result.updatedAt).toLocaleTimeString(sc()?'zh-CN':'zh-HK',{hour:'2-digit',minute:'2-digit'}):'';
  status.textContent=errors.has(source)?(source==='youtube'?t('YouTube 热门暂时不可用，请切换 Bilibili 或稍后重试','YouTube 熱門暫時不可用，請切換 Bilibili 或稍後重試'):t('暂时无法取得热门内容，请重试','暫時無法取得熱門內容，請重試'))+(result?' · '+time:''):pending.has(source)?t('正在加载…','正在載入…'):time;
 }
