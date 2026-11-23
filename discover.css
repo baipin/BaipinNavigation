@@ -62,3 +62,7 @@
 .platform-icon-youtube { --platform-icon:url('/img/platforms/youtube.svg'); }
 .discover-next { --mdui-color-secondary-container:58,76,82; --mdui-color-on-secondary-container:238,242,245; }
 @media(max-width:600px){.discover-header .discover-next{order:2;}.discover-header>.discover-platform{order:2;}}
+
+button.discover-more { border:0; padding:12px 4px; background:transparent; font:inherit; font-size:.9rem; cursor:pointer; }
+button.discover-more:disabled { cursor:progress; opacity:.6; }
+button.discover-more:disabled .discover-more-circle { transform:none; }

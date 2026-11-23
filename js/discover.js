@@ -16,10 +16,10 @@ metadataButton(document.getElementById('btn-get-engine-icon'),document.getElemen
 const region=document.getElementById('discover'),picker=document.getElementById('discover-platform'),data=new Map(),errors=new Map(),pending=new Set();let started=false,videoFeedAd=null;const pages=new Map();
 try{picker.value=localStorage.getItem('navi_discover_platform')==='youtube'?'youtube':'bilibili';}catch{}
 function moreLink(source){
- const provider=source==='github'?'GitHub':source==='youtube'?'YouTube':'Bilibili';
- const more=node('a');more.className='discover-more';more.href=source==='github'?'https://github.com/trending':source==='youtube'?'https://www.youtube.com/':'https://www.bilibili.com/v/popular/all';more.target='_blank';more.rel='noopener noreferrer';more.setAttribute('aria-label',t('前往 '+provider+' 查看更多','前往 '+provider+' 查看更多'));
- const circle=node('span');circle.className='discover-more-circle';const icon=node('span','arrow_forward');icon.className='material-icons';icon.setAttribute('aria-hidden','true');circle.append(icon);more.append(circle,node('span',t('更多','更多')));return more;
+ const more=node('button');more.type='button';more.className='discover-more';more.dataset.discoverNext=source==='github'?'github':'video';more.disabled=pending.has(source);more.setAttribute('aria-label',t('换一批','換一批'));more.setAttribute('aria-busy',String(pending.has(source)));
+ const circle=node('span');circle.className='discover-more-circle';const icon=node('span','shuffle');icon.className='material-icons';icon.setAttribute('aria-hidden','true');circle.append(icon);more.append(circle,node('span',t('换一批','換一批')));more.onclick=()=>void load(source,true,true);return more;
 }
+
 function draw(source){
  const isRepo=source==='github',list=document.getElementById(isRepo?'discover-repos':'discover-videos'),status=document.getElementById(isRepo?'discover-repo-status':'discover-video-status'),position=list.dataset.source===source?list.scrollLeft:0;
  list.dataset.source=source;const result=data.get(source);
@@ -48,14 +48,23 @@ function renderPlatform(){
 
 async function load(source,force=false,next=false){
  if(pending.has(source)||!force&&data.has(source))return;
- const previous=data.get(source),page=next?(previous?.hasMore?(pages.get(source)||1)+1:1):(pages.get(source)||1);
- pending.add(source);errors.delete(source);updateBatchButtons();draw(source);
- try{const response=await fetch('/api/discover?'+new URLSearchParams({source,page:String(page),v:'batches-v3'}),{signal:AbortSignal.timeout(25000)});if(!response.ok)throw Error();const result=await response.json();data.set(source,result);pages.set(source,page);if(next)document.getElementById(source==='github'?'discover-repos':'discover-videos').scrollLeft=0;}
- catch{errors.set(source,true);}finally{pending.delete(source);updateBatchButtons();if(source==='github'||source===picker.value)draw(source);}
+ const previous=data.get(source),page=next?(previous?.hasMore?(pages.get(source)||1)+1:1):(pages.get(source)||1),list=document.getElementById(source==='github'?'discover-repos':'discover-videos'),status=document.getElementById(source==='github'?'discover-repo-status':'discover-video-status');
+ let succeeded=false;
+ pending.add(source);errors.delete(source);updateBatchButtons();
+ if(source==='github'||source===picker.value){list.setAttribute('aria-busy','true');status.textContent=t('正在加载…','正在載入…');}
+ try{const response=await fetch('/api/discover?'+new URLSearchParams({source,page:String(page),v:'batches-v3'}),{signal:AbortSignal.timeout(25000)});if(!response.ok)throw Error();const result=await response.json();if(!result.items?.length)throw Error();data.set(source,result);pages.set(source,page);succeeded=true;}
+ catch{errors.set(source,true);}finally{
+  pending.delete(source);updateBatchButtons();
+  if(source==='github'||source===picker.value){
+   list.setAttribute('aria-busy','false');
+   if(succeeded){draw(source);if(next){list.scrollTo({left:0,behavior:'instant'});list.querySelector('a.discover-card')?.focus({preventScroll:true});}}
+   else status.textContent=t('加载失败，已保留当前内容，请重试。','載入失敗，已保留目前內容，請重試。');
+  }
+ }
 }
-function updateBatchButtons(){for(const button of region.querySelectorAll('[data-discover-next]')){const source=button.dataset.discoverNext==='github'?'github':picker.value;button.disabled=pending.has(source);button.loading=pending.has(source);}}
+function updateBatchButtons(){for(const button of region.querySelectorAll('[data-discover-next],[data-discover-refresh]')){const kind=button.dataset.discoverNext||button.dataset.discoverRefresh,source=kind==='github'?'github':picker.value;button.disabled=pending.has(source);button.setAttribute('aria-busy',String(pending.has(source)));if(button.tagName==='MDUI-BUTTON')button.loading=pending.has(source);}}
 
-function render(){document.getElementById('discover-repo-title').textContent=t('近期热门 GitHub 仓库','近期熱門 GitHub 儲存庫');document.getElementById('discover-repo-caption').textContent=t('近 30 天创建 · 按 Star 数排序','近 30 天建立 · 按 Star 數排序');document.getElementById('discover-video-title').textContent=t('热门影片','熱門影片');picker.setAttribute('aria-label',t('影片平台','影片平台'));renderPlatform();updateBatchButtons();for(const button of region.querySelectorAll('[data-discover-refresh]'))button.setAttribute('aria-label',t('刷新热门内容','更新熱門內容'));for(const button of region.querySelectorAll('[data-discover-next]'))button.textContent=t('换一批','換一批');titleButton.textContent=t('抓取页面标题','擷取網頁標題');draw('github');draw(picker.value);}
+function render(){document.getElementById('discover-repo-title').textContent=t('近期热门 GitHub 仓库','近期熱門 GitHub 儲存庫');document.getElementById('discover-repo-caption').textContent=t('近 30 天创建 · 按 Star 数排序','近 30 天建立 · 按 Star 數排序');document.getElementById('discover-video-title').textContent=t('热门影片','熱門影片');picker.setAttribute('aria-label',t('影片平台','影片平台'));renderPlatform();updateBatchButtons();for(const button of region.querySelectorAll('[data-discover-refresh]'))button.setAttribute('aria-label',t('刷新热门内容','更新熱門內容'));for(const button of region.querySelectorAll('.discover-header [data-discover-next]'))button.textContent=t('换一批','換一批');titleButton.textContent=t('抓取页面标题','擷取網頁標題');draw('github');draw(picker.value);}
 picker.onchange=()=>{renderPlatform();updateBatchButtons();try{localStorage.setItem('navi_discover_platform',picker.value);}catch{}draw(picker.value);void load(picker.value);};
 for(const button of picker.querySelectorAll('[data-platform]'))button.onclick=()=>{if(picker.value===button.dataset.platform)return;picker.value=button.dataset.platform;picker.dispatchEvent(new Event('change'));};
 picker.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key))return;event.preventDefault();const buttons=[...picker.querySelectorAll('[data-platform]')],next=event.key==='Home'?buttons[0]:event.key==='End'?buttons[1]:buttons.find(b=>b.dataset.platform!==picker.value);next.focus();next.click();});
