@@ -474,6 +474,8 @@
     <style>
         #data-manage-dialog [hidden], #search-clear[hidden], #footer-account[hidden], #footer-avatar[hidden], #footer-account [hidden] { display:none !important; }
         #data-manage-dialog::part(panel) { display:flex; flex-direction:column; box-sizing:border-box; width:min(560px,calc(100vw - 32px)); height:min(680px,calc(100dvh - 48px)); max-width:calc(100vw - 32px); max-height:calc(100dvh - 48px); }
+        mdui-dialog select:focus-visible, mdui-dialog input:focus-visible, mdui-dialog textarea:focus-visible { outline-offset:-2px; }
+        mdui-dialog select { margin-block:3px; }
         #data-manage-dialog::part(header),#data-manage-dialog::part(action) { flex-shrink:0; }
         #data-manage-dialog::part(body) { flex:1 1 0; min-height:0; overflow-y:auto; scrollbar-gutter:stable; }
         #settings-tabs::part(container) { position:sticky; top:0; z-index:1; }
@@ -499,13 +501,13 @@
         #data-manage-dialog.spacing-preview::part(overlay) { opacity:0!important; }
         #data-manage-dialog.spacing-preview .settings-spacing { box-shadow:0 4px 24px rgba(0,0,0,.16); }
         #data-manage-dialog.spacing-preview .settings-spacing-footer { opacity:0; pointer-events:none; }
-        .settings-panel { padding:16px 0; min-width:0; }
+        .settings-panel { box-sizing:border-box; padding:16px 4px; min-width:0; }
         .settings-panel h3 { margin:0 0 16px; font-size:1rem; }
         .settings-panel h3:not(:first-child) { margin-top:24px; }
         .settings-districts { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr)); gap:16px; margin-bottom:24px; }
         .settings-districts label { display:flex; flex-direction:column; gap:8px; min-width:0; font-size:.9rem; }
         .settings-districts select { box-sizing:border-box; width:100%; min-width:0; min-height:48px; padding:10px 12px; border:1px solid rgba(128,128,128,.5); border-radius:12px; background:transparent; color:inherit; font:inherit; }
-        .settings-districts select:focus-visible { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:2px; }
+        .settings-districts select:focus-visible { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:-2px; }
         .settings-districts option { color:rgb(var(--mdui-color-on-surface,33 33 33)); background:rgb(var(--mdui-color-surface,255 255 255)); }
         #weather-warning-dialog { z-index:3001; --mdui-color-surface-container-high:255,255,255; color:var(--text-main); }
         .mdui-theme-dark #weather-warning-dialog { z-index:3001; --mdui-color-surface-container-high:30,30,35; }
@@ -717,14 +719,10 @@
         :is(.calendar-event-form,.calendar-icloud-connect) :is(input,select,textarea) { width:100%; box-sizing:border-box; padding:12px; border:1px solid rgba(128,128,128,.45); border-radius:12px; background:transparent; color:inherit; font:inherit; color-scheme:light; }
         #calendar-event-dialog::part(panel),#calendar-vault-dialog::part(panel) { min-width:0; max-width:calc(100vw - 32px); box-sizing:border-box; }
         #calendar-event-dialog::part(body),#calendar-vault-dialog::part(body) { min-width:0; overflow-x:hidden; box-sizing:border-box; }
-        .calendar-datetime-field { display:grid; gap:8px; min-width:0; font-size:.85rem; }
-        .calendar-datetime-controls { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:8px; min-width:0; }
-        .calendar-datetime-controls:has(input[hidden]) { grid-template-columns:minmax(0,1fr); }
-        .calendar-event-form .calendar-datetime-controls input { width:0; min-width:100%; max-width:100%; min-height:46px; appearance:none; -webkit-appearance:none; }
-        .calendar-datetime-controls input[hidden] { display:none!important; }
         .calendar-location-picker { justify-self:start; margin-top:-8px; }
-        #calendar-map-dialog { z-index:2800; }
-        #calendar-map-dialog::part(panel) { width:min(760px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); background:var(--glass-bg); color:var(--text-main); }
+        #calendar-map-dialog { z-index:2800; --mdui-color-surface-container-high:255,255,255; }
+        .mdui-theme-dark #calendar-map-dialog { --mdui-color-surface-container-high:30,30,35; }
+        #calendar-map-dialog::part(panel) { width:min(760px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); background:rgb(var(--mdui-color-surface-container-high)); color:var(--text-main); }
         #calendar-map-dialog::part(body) { min-width:0; }
         .calendar-map-search { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
         .calendar-map-search input { flex:1 1 160px; min-width:0; width:0; padding:12px; border:1px solid rgba(128,128,128,.4); border-radius:12px; background:transparent; color:inherit; font:inherit; font-size:16px; }
@@ -732,12 +730,12 @@
         .calendar-map-results { display:grid; gap:4px; max-height:130px; overflow:auto; margin-bottom:8px; }
         .calendar-map-results button { padding:10px; border:0; border-radius:8px; text-align:start; background:rgba(128,128,128,.1); color:inherit; cursor:pointer; }
         #calendar-map-dialog [hidden] { display:none!important; }
-        .calendar-event-form input:is([type="datetime-local"],[type="date"]) { display:block; inline-size:100%; min-inline-size:0; max-inline-size:100%; overflow:hidden; }
+        .calendar-event-form input:is([type="datetime-local"],[type="date"]) { display:block; width:0; min-width:100%; max-width:100%; min-height:48px; appearance:none; -webkit-appearance:none; overflow:hidden; }
         .calendar-event-form input::-webkit-datetime-edit { min-width:0; padding:0; }
         .calendar-event-form input::-webkit-date-and-time-value { min-width:0; text-align:start; }
         @media(max-width:900px) { #calendar-event-dialog .calendar-event-form input,#calendar-vault-dialog input { font-size:16px; } }
         .mdui-theme-dark :is(.calendar-event-form,.calendar-icloud-connect) :is(input,select,textarea) { color-scheme:dark; }
-        :is(.calendar-event-form,.calendar-icloud-connect) :is(input,select,textarea):focus { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:1px; }
+        :is(.calendar-event-form,.calendar-icloud-connect) :is(input,select,textarea):focus { outline:2px solid rgb(var(--mdui-color-primary)); outline-offset:-2px; }
         /* Native popup options need opaque colors; the select's transparent field is not inherited by the OS menu. */
         select { color-scheme:light; }
         select :is(option,optgroup) { color:#212121; background-color:#fff; color-scheme:light; }
@@ -4447,7 +4445,7 @@ function setBackgroundToCookie(value) {
     <script src="js/settings.js?v=spacing-v3"></script>
     <script type="module" src="js/camera-background.js?v=source-priority-v11"></script>
     <script type="module" src="js/sync.js?v=spacing-v19"></script>
-    <script type="module" src="js/calendar.js?v=calendar-map-v33"></script>
+    <script type="module" src="js/calendar.js?v=calendar-map-v34"></script>
     <script type="module" src="/js/discover.js?v=dismiss-v11"></script>
     <script src="/js/background-view.js?v=hover-450-v5"></script>
 </body>

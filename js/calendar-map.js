@@ -4,8 +4,9 @@ let leaflet;
 function loadLeaflet(){
  if(window.L)return Promise.resolve(window.L);
  if(!leaflet)leaflet=new Promise((resolve,reject)=>{
-  const css=el('link');css.rel='stylesheet';css.href='/js/vendor/leaflet/leaflet.css';document.head.append(css);
-  const script=el('script');script.src='/js/vendor/leaflet/leaflet.js';script.onload=()=>resolve(window.L);script.onerror=()=>{leaflet=null;reject(Error());};document.head.append(script);
+  const css=el('link');css.rel='stylesheet';css.href='/js/vendor/leaflet/leaflet.css';
+  const styled=new Promise((done,fail)=>{css.onload=done;css.onerror=fail;});document.head.append(css);
+  const script=el('script');script.src='/js/vendor/leaflet/leaflet.js';script.onload=()=>styled.then(()=>resolve(window.L),()=>{leaflet=null;reject(Error());});script.onerror=()=>{leaflet=null;reject(Error());};document.head.append(script);
  });return leaflet;
 }
 export function formatMapPlace(data,lat,lon){
@@ -27,7 +28,7 @@ export async function pickCalendarLocation(initial=''){
  const spinner=el('mdui-circular-progress');spinner.style.width='24px';
  const cancel=el('mdui-button',text('取消','取消')),confirm=el('mdui-button',text('使用此地点','使用此地點'));cancel.slot=confirm.slot='action';confirm.variant='tonal';confirm.disabled=true;
  dialog.append(title,search,results,canvas,spinner,status,cancel,confirm);document.body.append(dialog);
- let map,marker,selection=null,version=0,controller,timer,closed=false,lastRequest=0;
+ let map,marker,selection=null,version=0,controller,timer,closed=false,lastRequest=0,resize;
  const language=()=>document.documentElement.lang==='zh-CN'?'zh-CN':'zh-HK';
  async function geocode(params){
   const wait=Math.max(0,lastRequest+1100-Date.now());if(wait)await new Promise(resolve=>setTimeout(resolve,wait));
@@ -50,7 +51,7 @@ export async function pickCalendarLocation(initial=''){
  }
  const answer=new Promise(resolve=>{
   cancel.onclick=()=>dialog.open=false;confirm.onclick=()=>{resolve(selection?.value||null);dialog.open=false;};
-  dialog.addEventListener('closed',()=>{closed=true;version++;clearTimeout(timer);controller?.abort();map?.remove();dialog.remove();resolve(null);},{once:true});
+  dialog.addEventListener('closed',()=>{closed=true;version++;clearTimeout(timer);controller?.abort();resize?.disconnect();map?.remove();dialog.remove();resolve(null);},{once:true});
  });
  dialog.addEventListener('opened',async()=>{
   try{
@@ -58,6 +59,7 @@ export async function pickCalendarLocation(initial=''){
    map=L.map(canvas,{zoomControl:true}).setView([22.3193,114.1694],12);
    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}).addTo(map);
    map.on('click',event=>reverse(event.latlng.lat,event.latlng.lng));map.invalidateSize();
+   resize=new ResizeObserver(()=>map.invalidateSize());resize.observe(canvas);
    status.textContent=text('点击地图选点，或搜索地点；确认后填入日程。','點擊地圖選點，或搜尋地點；確認後填入日程。');
   }catch{status.textContent=text('地图加载失败，请关闭后重试或手动输入地点。','地圖載入失敗，請關閉後重試或手動輸入地點。');}
   finally{spinner.hidden=true;}
@@ -77,5 +79,9 @@ export async function pickCalendarLocation(initial=''){
   if(!map)return;if(!navigator.geolocation){status.textContent=text('此浏览器不支持定位。','此瀏覽器不支援定位。');return;}
   locate.disabled=true;navigator.geolocation.getCurrentPosition(position=>{locate.disabled=false;if(closed)return;const {latitude,longitude}=position.coords;map.setView([latitude,longitude],16);reverse(latitude,longitude);},()=>{locate.disabled=false;if(!closed)status.textContent=text('无法获取位置，请搜索或点击地图。','無法取得位置，請搜尋或點擊地圖。');},{timeout:10000,maximumAge:60000});
  };
+ // Newly created MDUI dialogs suppress the opened event during their first update.
+ // Finish the initial closed render before starting the opening animation.
+ await customElements.whenDefined('mdui-dialog');
+ await dialog.updateComplete;
  dialog.open=true;return answer;
 }

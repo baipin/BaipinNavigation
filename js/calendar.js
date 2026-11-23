@@ -31,22 +31,13 @@ const field=(label,type='text')=>{const wrapper=node('label'),span=node('span',l
 const calendarField=field(''),calendarSelect=node('select');calendarField.input.replaceWith(calendarSelect);
 const titleField=field('');titleField.input.required=true;titleField.input.maxLength=200;
 const allDay=node('mdui-checkbox');form.append(allDay);
-function dateTimeField(){
- const wrapper=node('div'),span=node('span'),controls=node('div');wrapper.className='calendar-datetime-field';controls.className='calendar-datetime-controls';
- const date=node('input'),time=node('input');date.type='date';time.type='time';date.required=time.required=true;
- const label='calendar-date-label-'+Math.random().toString(36).slice(2);span.id=label;date.setAttribute('aria-labelledby',label);time.setAttribute('aria-labelledby',label);
- controls.append(date,time);wrapper.append(span,controls);form.append(wrapper);
- let type='datetime-local';
- const input={get type(){return type;},set type(value){type=value;time.hidden=value==='date';time.disabled=date.disabled||time.hidden;},get value(){return date.value+(type==='date'?'':'T'+time.value);},set value(value){const parts=value.split('T');date.value=parts[0]||'';time.value=(parts[1]||'09:00').slice(0,5);},get disabled(){return date.disabled;},set disabled(value){date.disabled=value;time.disabled=value||type==='date';},set required(value){date.required=time.required=value;}};
- return {wrapper,span,input};
-}
-const startField=dateTimeField(),endField=dateTimeField();startField.input.required=true;endField.input.required=true;
+const startField=field('','datetime-local'),endField=field('','datetime-local');startField.input.required=true;endField.input.required=true;
 const locationField=field('');locationField.input.maxLength=4000;const descriptionField=field(''),description=node('textarea');description.rows=4;description.maxLength=4000;descriptionField.input.replaceWith(description);
 const locationPicker=button('','map');locationPicker.type='button';locationPicker.className='calendar-location-picker';
 locationField.wrapper.after(locationPicker);
 locationPicker.onclick=async()=>{
  locationPicker.disabled=true;
- try{const {pickCalendarLocation}=await import('./calendar-map.js?v=map-v1');const value=await pickCalendarLocation(locationField.input.value);if(value&&eventDialog.open&&!locationField.input.disabled)locationField.input.value=value;}
+ try{const {pickCalendarLocation}=await import('./calendar-map.js?v=map-v2');const value=await pickCalendarLocation(locationField.input.value);if(value&&eventDialog.open&&!locationField.input.disabled)locationField.input.value=value;}
  catch{eventError.textContent=t('地图暂不可用，请手动输入地点。','地圖暫時無法使用，請手動輸入地點。');}
  finally{locationPicker.disabled=locationField.input.disabled;}
 };
