@@ -450,8 +450,8 @@
 
 
         .app-site-footer { position:relative; }
-        #background-view-button { position:absolute; top:12px; right:16px; }
-        .footer-description { padding-right:44px; }
+        #background-view-button { position:static; margin-left:auto; flex:none; }
+        @media(max-width:480px){.footer-brand{flex-wrap:wrap;}#background-view-button{font-size:.8rem;}}
         html:is(.background-preview,.background-view) body>:not(.app-bar):not(.webcast-live-background):not(.webcast-capture-video):not(#background-view-restore):not(script):not(style):not(link) { opacity:0 !important; transition:opacity .2s ease; }
         html.background-view body>.app-bar { opacity:0 !important; pointer-events:none; transition:opacity .2s ease; }
         html.background-view body>:not(#background-view-restore) { pointer-events:none !important; }
@@ -4299,9 +4299,8 @@ function setBackgroundToCookie(value) {
     <script src="js/city-feed.js?v=market-trends-v1"></script>
     <script src="js/layout.js"></script>
     <footer class="app-site-footer" aria-label="关于百品导航">
-        <mdui-button-icon id="background-view-button" icon="wallpaper" aria-label="欣赏背景" title="欣赏背景" aria-pressed="false"></mdui-button-icon>
         <section class="app-overview" id="app-overview" aria-labelledby="app-name">
-            <div class="footer-brand"><img src="/img/logo.png" alt=""><h1 id="app-name" data-app-info="name">百品导航</h1></div>
+            <div class="footer-brand"><img src="/img/logo.png" alt=""><h1 id="app-name" data-app-info="name">百品导航</h1><mdui-button id="background-view-button" variant="tonal" icon="wallpaper" aria-label="欣赏背景" title="欣赏背景" aria-pressed="false">欣赏背景</mdui-button></div>
             <p class="app-purpose" data-app-info="purpose">一站式个人导航与香港资讯首页</p>
             <div class="footer-description">
                 <p data-app-info="features">管理快捷书签、切换搜索引擎、订阅 RSS 新闻，查看香港天气、交通、市场资讯及日历，并自定义首页布局与偏好；支持通过 Google Drive、GitHub Secret Gist、Microsoft OneDrive 或飞书云空间在设备间同步个人预设，也可另行授权连接 Google、Microsoft、飞书、iCloud 或学校 Canvas 日历。</p>
@@ -4341,6 +4340,6 @@ function setBackgroundToCookie(value) {
     <script type="module" src="js/sync.js?v=discover-v16"></script>
     <script type="module" src="js/calendar.js?v=calendar-feishu-v31"></script>
     <script type="module" src="/js/discover.js?v=dismiss-v11"></script>
-    <script src="/js/background-view.js?v=background-view-v1"></script>
+    <script src="/js/background-view.js?v=footer-button-v2"></script>
 </body>
 </html>
