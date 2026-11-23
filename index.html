@@ -5,7 +5,7 @@
 
 <!DOCTYPE html>
 <html lang="zh-CN" class="mdui-theme-light">
-<head><script src="/js/quick-access-spacing.js?v=spacing-v2"></script><script src="/js/background-startup.js?v=source-priority-v2"></script>
+<head><script src="/js/quick-access-spacing.js?v=spacing-v3"></script><script src="/js/background-startup.js?v=source-priority-v2"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>百品导航 - 客制化高自由度网址导航</title>
@@ -1081,9 +1081,9 @@
             </div>
             <div class="settings-districts" style="margin-top:16px;"><label><span data-settings-text="engine">当前搜索引擎</span><select id="settings-current-engine" aria-label="当前搜索引擎"></select></label></div>
             <div class="settings-spacing">
-                <div class="settings-spacing-heading"><label for="settings-quick-access-spacing" data-settings-text="spacing">快捷访问起始位置</label><output id="settings-spacing-value" for="settings-quick-access-spacing">0 px</output></div>
-                <input id="settings-quick-access-spacing" type="range" min="-60" max="4096" step="4" value="0" aria-describedby="settings-spacing-hint">
-                <div class="settings-spacing-footer"><span id="settings-spacing-hint" data-settings-text="spacingHint">向左上移，向右下移；拖动时预览首页。</span><mdui-button variant="text" id="settings-spacing-reset" data-settings-text="spacingReset">默认位置</mdui-button></div>
+                <div class="settings-spacing-heading"><label for="settings-quick-access-spacing" data-settings-text="spacing">快捷访问起始位置</label><output id="settings-spacing-value" for="settings-quick-access-spacing">0%</output></div>
+                <input id="settings-quick-access-spacing" type="range" min="-8" max="100" step="1" value="0" aria-describedby="settings-spacing-hint">
+                <div class="settings-spacing-footer"><span id="settings-spacing-hint" data-settings-text="spacingHint">按屏幕高度比例调整；向左上移，向右下移。</span><mdui-button variant="text" id="settings-spacing-reset" data-settings-text="spacingReset">默认位置</mdui-button></div>
             </div>
             <h3 data-settings-text="weather">天气预设地区</h3>
             <div class="settings-districts">
@@ -4370,9 +4370,9 @@ function setBackgroundToCookie(value) {
         })();
     </script>
     <script src="js/app-info.js?v=account-copy-v4"></script>
-    <script src="js/settings.js?v=spacing-v1"></script>
+    <script src="js/settings.js?v=spacing-v3"></script>
     <script type="module" src="js/camera-background.js?v=source-priority-v11"></script>
-    <script type="module" src="js/sync.js?v=spacing-v18"></script>
+    <script type="module" src="js/sync.js?v=spacing-v19"></script>
     <script type="module" src="js/calendar.js?v=calendar-feishu-v31"></script>
     <script type="module" src="/js/discover.js?v=dismiss-v11"></script>
     <script src="/js/background-view.js?v=hover-450-v5"></script>

@@ -2,7 +2,7 @@ import {validateVault} from './calendar-vault-format.js';
 import {normalizeCities} from './weather-cities.js';
 import {parseCameraPreference} from './camera-background-model.js';
 // Preferences and an optional encrypted calendar vault travel between devices; auth cookies, plaintext credentials and live caches do not.
-export const PRESET_KEYS = ['bp_v7','custom_engines','last_engine','theme_mode','custom_rss','navi_city_stocks','navi_city_feed','navi_rss_expansion_v1','navi_language','hko_rain_area','navi_aqhi_station','navi_camera_background','navi_weather_cities','navi_calendar_preferences','navi_calendar_vault','navi_discover_platform','navi_quick_access_offset'];
+export const PRESET_KEYS = ['bp_v7','custom_engines','last_engine','theme_mode','custom_rss','navi_city_stocks','navi_city_feed','navi_rss_expansion_v1','navi_language','hko_rain_area','navi_aqhi_station','navi_camera_background','navi_weather_cities','navi_calendar_preferences','navi_calendar_vault','navi_discover_platform','navi_quick_access_offset','navi_quick_access_offset_vh'];
 export const COOKIE_KEYS = ['homepage_bg'];
 export const MAX_PRESET_BYTES = 180000;
 export function sanitizePreset(input) {
@@ -30,6 +30,8 @@ export function sanitizePreset(input) {
             if (['navi_city_feed','custom_engines'].includes(key) && Array.isArray(parsed)) throw new Error('预设设置格式不正确');
         }
     }
+    const relativeSpacing=result.localStorage.navi_quick_access_offset_vh;
+    if(relativeSpacing!==null && (!/^-?\d+$/.test(relativeSpacing)||Number(relativeSpacing)<-8||Number(relativeSpacing)>100))throw new Error('快捷访问相对间距设置不正确');
     const spacing=result.localStorage.navi_quick_access_offset;
     if(spacing!==null && (!/^-?\d+$/.test(spacing)||Number(spacing)<-60||Number(spacing)>4096||Number(spacing)%4!==0))throw new Error('快捷访问间距设置不正确');
     if(result.localStorage.navi_discover_platform!==null&&!['youtube','bilibili'].includes(result.localStorage.navi_discover_platform))throw new Error('影片平台设置不正确');

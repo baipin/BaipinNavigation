@@ -1,4 +1,4 @@
-import {sanitizePreset} from './preset-schema.js?v=spacing-v8';
+import {sanitizePreset} from './preset-schema.js?v=spacing-v9';
 
 // Change only the vault in the latest cloud revision, never upload local preferences.
 export async function removeCloudCalendarVault(request) {
