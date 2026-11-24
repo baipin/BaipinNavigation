@@ -1,3 +1,4 @@
+import {transferAction,TransferError,githubTransferStore} from '../server/transfer.js';
 import {createCipheriv,createDecipheriv,createHash,randomBytes,timingSafeEqual} from 'node:crypto';
 import {sanitizePreset,MAX_PRESET_BYTES} from '../js/preset-schema.js';
 
@@ -96,7 +97,7 @@ export default async function handler(req,res) {
     const url=new URL(req.url,'https://localhost'),action=url.searchParams.get('action') || 'status';
     const config=settings(),origin=new URL(config.redirect).origin;
     try {
-        const post=['push','clear','logout'].includes(action);
+        const post=['transfer-send','transfer-delete','transfer-clear','push','clear','logout'].includes(action);
         if(req.method!==(post?'POST':'GET')) {res.setHeader('Allow',post?'POST':'GET');throw new AuthError(405,'请求方法不支持');}
         if(post && req.headers.origin!==origin) throw new AuthError(403,'请求来源不正确');
         if(action==='logout') {setCookie(res,SESSION,'',0);return res.status(200).json({ok:true});}
@@ -124,7 +125,7 @@ export default async function handler(req,res) {
             if(value.length>3800) return redirect(res,'login-error');
             setCookie(res,SESSION,value,30*86400);return redirect(res,'connected');
         }
-        if(!['status','pull','push','clear'].includes(action)) throw new AuthError(404,'接口不存在');
+        if(!['transfer-list','transfer-read','transfer-send','transfer-delete','transfer-clear','status','pull','push','clear'].includes(action)) throw new AuthError(404,'接口不存在');
         let data;
         try {data=await session(req,res);} catch(error) {
             if(action==='status' && error.status===401) {setCookie(res,SESSION,'',0);return res.status(200).json({configured:true,authenticated:false,provider:'github',redirectUri:config.redirect});}
@@ -138,6 +139,7 @@ export default async function handler(req,res) {
             }
             return res.status(200).json({configured:true,authenticated:true,provider:'github',user:data.user,redirectUri:config.redirect});
         }
+  if(action.startsWith('transfer-'))return await transferAction(req,res,action,githubTransferStore(data,api));
         if(action==='pull') {const cloud=await readCloud(data);delete cloud.id;delete cloud.etag;delete cloud.onlyPreset;return res.status(200).json(cloud);}
         if(action==='clear'){
             const body=clearBody(req),current=await readCloud(data);
@@ -156,6 +158,6 @@ export default async function handler(req,res) {
         return res.status(200).json(await writeCloud(data,body));
     } catch(error) {
         if(action==='callback') return redirect(res,'login-error');
-        return res.status(error.status || 502).json({error:error instanceof AuthError?error.message:'GitHub 同步暂时不可用，请稍后重试'});
+        return res.status(error.status || 502).json({error:error instanceof TransferError || error instanceof AuthError?error.message:'GitHub 同步暂时不可用，请稍后重试'});
     }
 }

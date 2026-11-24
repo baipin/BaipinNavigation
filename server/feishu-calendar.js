@@ -1,3 +1,4 @@
+import {transferAction,TransferError,feishuTransferStore} from './transfer.js';
 import {feishuPresetStorage} from './feishu-preset-storage.js';
 import {sanitizePreset,MAX_PRESET_BYTES} from '../js/preset-schema.js';
 import {createHash,randomBytes,timingSafeEqual,randomUUID} from 'node:crypto';
@@ -26,13 +27,13 @@ export function feishuEvent(row,calendar){if(!row||row.status==='cancelled'||!ro
 }
 function eventBody(event){const e=validateEvent(event),time=value=>e.allDay?{date:value}:{timestamp:String(Math.floor(Date.parse(value)/1000)),timezone:'UTC'};return {summary:e.title,description:e.description,location:{name:e.location},start_time:time(e.start),end_time:time(e.end)};}
 const finish=(res,result,calendar=true)=>{res.statusCode=303;res.setHeader('Location','/?'+(calendar?'calendar':'sync')+'='+result+'&provider=feishu');return res.end();};
-async function download(data,path){const response=await fetch(API+path,{redirect:'follow',signal:AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+data.accessToken}});if(!response.ok)throw new CalendarError(response.status===401?401:502,'飞书预设下载失败，请重新登录或稍后重试');const size=Number(response.headers.get('content-length'));if(size>184096)throw new CalendarError(400,'飞书预设文件过大');const reader=response.body.getReader(),chunks=[];let total=0;try{while(true){const {value,done}=await reader.read();if(done)break;total+=value.byteLength;if(total>184096)throw new CalendarError(400,'飞书预设文件过大');chunks.push(Buffer.from(value));}}finally{await reader.cancel();}return Buffer.concat(chunks).toString('utf8');}
+async function download(data,path,limit=184096){const response=await fetch(API+path,{redirect:'follow',signal:AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+data.accessToken}});if(!response.ok)throw new CalendarError(response.status===401?401:502,'飞书预设下载失败，请重新登录或稍后重试');const size=Number(response.headers.get('content-length'));if(size>limit)throw new CalendarError(400,'飞书预设文件过大');const reader=response.body.getReader(),chunks=[];let total=0;try{while(true){const {value,done}=await reader.read();if(done)break;total+=value.byteLength;if(total>limit)throw new CalendarError(400,'飞书预设文件过大');chunks.push(Buffer.from(value));}}finally{await reader.cancel();}return Buffer.concat(chunks).toString('utf8');}
 const storage=feishuPresetStorage(call,download);
 export default async function feishuHandler(req,res){
  res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');const c=config(),url=new URL(req.url,ORIGIN),action=url.searchParams.get('action')||req.query?.action||'status';let callbackCalendar=false;
  try{
-  const allowed=['login','logout','pull','push','clear','status','calendar-login','callback','calendar-disconnect','calendar-list','calendar-events','calendar-save','calendar-delete'];if(!allowed.includes(action))throw new CalendarError(404,'飞书仅用于日历连接');
-  const post=['logout','push','clear','calendar-disconnect','calendar-save','calendar-delete'].includes(action);if(req.method!==(post?'POST':'GET'))throw new CalendarError(405,'请求方法不支持');if(post&&req.headers.origin!==ORIGIN)throw new CalendarError(403,'请求来源不正确');
+  const allowed=['transfer-list','transfer-read','transfer-send','transfer-delete','transfer-clear','login','logout','pull','push','clear','status','calendar-login','callback','calendar-disconnect','calendar-list','calendar-events','calendar-save','calendar-delete'];if(!allowed.includes(action))throw new CalendarError(404,'飞书仅用于日历连接');
+  const post=['transfer-send','transfer-delete','transfer-clear','logout','push','clear','calendar-disconnect','calendar-save','calendar-delete'].includes(action);if(req.method!==(post?'POST':'GET'))throw new CalendarError(405,'请求方法不支持');if(post&&req.headers.origin!==ORIGIN)throw new CalendarError(403,'请求来源不正确');
   if(action==='logout'){storeSession(res,COOKIE,null,c.key);return res.status(200).json({ok:true});}
   if(action==='calendar-disconnect'){const data=readSession(req,COOKIE,c.key);if(data){data.calendarDisconnected=true;storeSession(res,COOKIE,data,c.key);}return res.status(200).json({ok:true});}
   const configured=!!(c.id&&c.secret&&typeof c.key==='string'&&c.key.length>=32);if(!configured){if(action==='status')return res.status(200).json({configured:false,authenticated:false,calendarAuthorized:false});throw new CalendarError(503,'请配置 FEISHU_APP_ID 和 FEISHU_APP_SECRET；会话密钥至少 32 个字符');}
@@ -49,6 +50,7 @@ export default async function feishuHandler(req,res){
   }
   let data;try{data=await session(req,res);}catch(error){if(action==='status'&&error.status===401)return res.status(200).json({configured:true,authenticated:false,calendarAuthorized:false});throw error;}
   if(action==='status')return res.status(200).json({configured:true,authenticated:true,calendarAuthorized:calendarGranted(data),user:data.user});
+  if(action.startsWith('transfer-'))return await transferAction(req,res,action,feishuTransferStore(data,call,download));
   if(action==='pull'){const cloud=await storage.read(data);delete cloud.folder;delete cloud.id;return res.status(200).json(cloud);}
   if(action==='push'){if(!String(req.headers['content-type']||'').startsWith('application/json'))throw new CalendarError(415,'请使用 JSON 请求');const raw=typeof req.body==='string'?req.body:JSON.stringify(req.body||{});if(Buffer.byteLength(raw)>MAX_PRESET_BYTES+4096)throw new CalendarError(413,'预设文件过大');let body;try{body=JSON.parse(raw);}catch{throw new CalendarError(400,'预设格式不正确');}sanitizePreset(body.preset);return res.status(200).json(await storage.write(data,body));}
   if(action==='clear'){const body=calendarBody(req);if(body.confirm!==true||!(body.revision===null||typeof body.revision==='string'&&body.revision.length<=200))throw new CalendarError(400,'请确认清除云端预设');return res.status(200).json(await storage.clear(data,body));}
@@ -62,5 +64,5 @@ export default async function feishuHandler(req,res){
   if(action==='calendar-delete')await call(data,path+'/'+id(body.id),{method:'DELETE'});
   else await call(data,path+(body.id?'/'+id(body.id):'?idempotency_key='+randomUUID()),{method:body.id?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...eventBody(body.event),need_notification:false})});
   return res.status(200).json({ok:true});
- }catch(error){if(action==='callback')return finish(res,'login-error',callbackCalendar);return res.status(error instanceof CalendarError?error.status:502).json({error:error instanceof CalendarError?error.message:'飞书日历暂时不可用，请稍后重试'});}
+ }catch(error){if(action==='callback')return finish(res,'login-error',callbackCalendar);return res.status(error instanceof TransferError || error instanceof CalendarError?error.status:502).json({error:error instanceof TransferError || error instanceof CalendarError?error.message:'飞书日历暂时不可用，请稍后重试'});}
 }

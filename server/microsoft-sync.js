@@ -1,3 +1,4 @@
+import {transferAction,TransferError,microsoftTransferStore} from './transfer.js';
 import {calendarApi,calendarGranted,CalendarError,MICROSOFT_CALENDAR_SCOPE} from './calendar-service.js';
 import {createCipheriv,createDecipheriv,createHash,randomBytes,timingSafeEqual} from 'node:crypto';
 import {sanitizePreset,MAX_PRESET_BYTES} from '../js/preset-schema.js';
@@ -85,7 +86,7 @@ export default async function handler(req,res){
  res.setHeader('Cache-Control','no-store, max-age=0');res.setHeader('Referrer-Policy','no-referrer');
  const url=new URL(req.url,'https://localhost'),action=url.pathname==='/api/microsoft/callback'?'callback':url.searchParams.get('action') || req.query?.action || 'status',config=settings(),origin=new URL(config.redirect).origin;
  try{
-  const post=['push','clear','logout','calendar-save','calendar-delete','calendar-disconnect'].includes(action);if(req.method!==(post?'POST':'GET')){res.setHeader('Allow',post?'POST':'GET');throw new AuthError(405,'请求方法不支持');}
+  const post=['transfer-send','transfer-delete','transfer-clear','push','clear','logout','calendar-save','calendar-delete','calendar-disconnect'].includes(action);if(req.method!==(post?'POST':'GET')){res.setHeader('Allow',post?'POST':'GET');throw new AuthError(405,'请求方法不支持');}
   if(post && req.headers.origin!==origin)throw new AuthError(403,'请求来源不正确');
   if(action==='logout'){storeSession(res,null);setCookie(res,STATE,'',0);return res.status(200).json({ok:true});}
   if(!config.client || !config.secret){if(action==='status')return res.status(200).json({configured:false,authenticated:false,provider:'microsoft',redirectUri:config.redirect});throw new AuthError(503,'服务器未配置 MICROSOFT_CLIENT_ID 和 MICROSOFT_KEY');}
@@ -109,11 +110,12 @@ export default async function handler(req,res){
    const previous=unseal([0,1,2].map(i=>readCookie(req,SESSION+i)).join(''));
    storeSession(res,{scopes,calendarDisconnected:saved.calendar?false:previous?.user.id===info.id&&previous.calendarDisconnected===true,user:{id:info.id,name:String(info.displayName || info.userPrincipalName || 'Microsoft').slice(0,120),email:String(info.mail || info.userPrincipalName || '').slice(0,254),avatar:null},accessToken:token.access_token,refreshToken:token.refresh_token,accessExpires:Date.now()+Number(token.expires_in || 3600)*1000,expires:Date.now()+30*86400000});return finish('connected');
   }
-  if(!['status','pull','push','clear','calendar-list','calendar-events','calendar-save','calendar-delete','calendar-disconnect'].includes(action))throw new AuthError(404,'接口不存在');
+  if(!['transfer-list','transfer-read','transfer-send','transfer-delete','transfer-clear','status','pull','push','clear','calendar-list','calendar-events','calendar-save','calendar-delete','calendar-disconnect'].includes(action))throw new AuthError(404,'接口不存在');
   let data;try{data=await session(req,res);}catch(error){if(action==='status' && error.status===401){storeSession(res,null);return res.status(200).json({configured:true,authenticated:false,provider:'microsoft',redirectUri:config.redirect});}throw error;}
   if(action==='status')return res.status(200).json({configured:true,authenticated:true,provider:'microsoft',user:data.user,calendarAuthorized:!data.calendarDisconnected&&calendarGranted('microsoft',data.scopes),redirectUri:config.redirect});
   if(action==='calendar-disconnect'){data.calendarDisconnected=true;storeSession(res,data);return res.status(200).json({ok:true});}
   if(action.startsWith('calendar-'))return await calendarApi('microsoft',data,action,req,res,url);
+  if(action.startsWith('transfer-'))return await transferAction(req,res,action,microsoftTransferStore(data,graph));
   if(action==='pull'){const cloud=await readCloud(data);delete cloud.id;delete cloud.etag;return res.status(200).json(cloud);}
   if(action==='clear'){
    const body=clearBody(req),current=await readCloud(data);
@@ -126,5 +128,5 @@ export default async function handler(req,res){
   if(!String(req.headers['content-type'] || '').startsWith('application/json'))throw new AuthError(415,'请使用 JSON 请求');
   const raw=typeof req.body==='string'?req.body:JSON.stringify(req.body || {});if(Buffer.byteLength(raw)>MAX_PRESET_BYTES+4096)throw new AuthError(413,'预设文件过大');
   let body;try{body=JSON.parse(raw);sanitizePreset(body.preset);}catch{throw new AuthError(400,'预设格式不正确或文件过大');}return res.status(200).json(await writeCloud(data,body));
- }catch(error){if(action==='callback')return redirect(res,'login-error');return res.status(error.status || 502).json({error:error instanceof AuthError || error instanceof CalendarError?error.message:'Microsoft 同步暂时不可用，请稍后重试'});}
+ }catch(error){if(action==='callback')return redirect(res,'login-error');return res.status(error.status || 502).json({error:error instanceof TransferError || error instanceof AuthError || error instanceof CalendarError?error.message:'Microsoft 同步暂时不可用，请稍后重试'});}
 }

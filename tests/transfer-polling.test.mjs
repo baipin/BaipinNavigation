@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';import vm from 'node:vm';import {readFileSync} from 'node:fs';
+const source=readFileSync(new URL('../js/transfer.js',import.meta.url),'utf8');
+const load=source.slice(source.indexOf('async function load(){'),source.indexOf('async function operate('));
+const stop=source.match(/function stop\(\)\{[^\n]+/)[0],schedule=source.match(/function schedule\(\)\{[^\n]+/)[0];
+let calls=0,draws=0;const timers=new Map();let id=0;
+const context={dialog:{open:false},document:{hidden:false},active:{provider:'google',user:{id:'user'}},generation:0,controller:null,inFlight:false,working:false,timer:null,lastItems:[],AbortController,setTimeout(fn,ms){const key=++id;timers.set(key,{fn,ms});return key;},clearTimeout(key){timers.delete(key);},controls(){},draw(){draws++;},message(){},t:s=>s,request:async()=>{calls++;return {items:[]};}};
+context.current=()=>context.dialog.open&&!context.document.hidden&&!!context.active;
+vm.createContext(context);vm.runInContext(stop+'\n'+schedule+'\n'+load,context);
+await context.load();assert.equal(calls,0);assert.equal(timers.size,0);
+context.dialog.open=true;await context.load();assert.equal(calls,1);assert.equal(draws,1);assert.equal([...timers.values()][0].ms,15000);
+context.dialog.open=false;context.stop();assert.equal(timers.size,0);await context.load();assert.equal(calls,1);
+context.dialog.open=true;context.document.hidden=true;await context.load();assert.equal(calls,1);assert.equal(timers.size,0);
+context.document.hidden=false;let finish;context.request=()=>new Promise(resolve=>finish=resolve);const pending=context.load();context.dialog.open=false;context.stop();finish({items:[{id:'late'}]});await pending;assert.equal(draws,1);assert.equal(timers.size,0);
+console.log('PASS: no closed/hidden polling, 15-second open-only refresh and late response ignored after closing.');

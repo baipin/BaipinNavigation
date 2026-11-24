@@ -485,6 +485,30 @@
         #data-manage-dialog [hidden], #search-clear[hidden], #footer-account[hidden], #footer-avatar[hidden], #footer-account [hidden] { display:none !important; }
         #data-manage-dialog::part(panel) { display:flex; flex-direction:column; box-sizing:border-box; width:min(560px,calc(100vw - 32px)); height:min(680px,calc(100dvh - 48px)); max-width:calc(100vw - 32px); max-height:calc(100dvh - 48px); }
         .widgets-empty { display:none!important; }
+        #transfer-open[hidden],#settings-transfer[hidden],#transfer-dialog [hidden] { display:none!important; }
+        #transfer-dialog { z-index:2800; }
+        #transfer-dialog::part(panel) { display:flex; flex-direction:column; width:min(680px,calc(100vw - 24px)); max-height:calc(100dvh - 32px); background:rgb(var(--mdui-color-surface-container-high)); color:var(--text-main); }
+        #transfer-dialog::part(body) { min-width:0; overflow:auto; scrollbar-width:thin; scrollbar-color:#8887 transparent; }
+        .transfer-hint,.transfer-caution { font-size:.78rem; line-height:1.7; overflow-wrap:anywhere; white-space:pre-line; margin:0 0 12px; }
+        .transfer-caution { opacity:.7; }
+        .transfer-composer { padding:12px; border:1px solid #8885; border-radius:16px; }
+        #transfer-dialog textarea { display:block; box-sizing:border-box; width:100%; min-width:0; padding:12px; border:1px solid #8886; border-radius:12px; background:transparent; color:inherit; font:inherit; font-size:16px; resize:vertical; }
+        .transfer-composer-actions,.transfer-tools { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
+        .transfer-composer-actions mdui-button:last-child,.transfer-tools mdui-button-icon { margin-inline-start:auto; }
+        .transfer-selection:empty { display:none; }
+        @media(max-width:600px){#transfer-dialog{padding:12px}#transfer-dialog::part(panel){flex-shrink:0;box-sizing:border-box;width:calc(100vw - 24px);max-width:calc(100vw - 24px)}#transfer-dialog::part(body){padding:0 16px}#transfer-dialog::part(header){padding:20px 24px}}
+        .transfer-selection { font-size:.75rem; overflow-wrap:anywhere; min-width:0; flex:1 1 100px; }
+        .transfer-status { font-size:.8rem; line-height:1.6; }
+        .transfer-status.is-error { color:rgb(var(--mdui-color-error)); }
+        .transfer-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #8884; }
+        .transfer-item-content { flex:1; min-width:0; }
+        .transfer-item-content strong { display:block; font-size:.85rem; overflow-wrap:anywhere; }
+        .transfer-item-content small { display:block; margin-top:5px; font-size:.7rem; opacity:.7; }
+        .transfer-item>mdui-button-icon { flex:none; width:36px; height:36px; }
+        .transfer-clear-panel { margin-top:12px; padding:12px 16px; border:1px solid rgb(var(--mdui-color-outline)); border-radius:16px; font-size:.85rem; line-height:1.7; }
+        .transfer-clear-panel p { margin:0 0 8px; }
+        .transfer-detail { padding:12px; margin-top:12px; border-radius:16px; background:#8881; }
+        .transfer-detail mdui-button { margin-top:8px; }
         .settings-widget-disclosure { margin:20px 0; border:1px solid rgba(128,128,128,.25); border-radius:16px; }
         .settings-widget-disclosure summary { display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; list-style:none; font-size:.95rem; font-weight:500; border-radius:16px; }
         .settings-widget-disclosure summary::-webkit-details-marker { display:none; }
@@ -4492,7 +4516,8 @@ function setBackgroundToCookie(value) {
     <script src="js/app-info.js?v=account-copy-v4"></script>
     <script src="js/settings.js?v=widgets-folded-v5"></script>
     <script type="module" src="js/camera-background.js?v=source-priority-v11"></script>
-    <script type="module" src="js/sync.js?v=widgets-v21"></script>
+    <script type="module" src="js/sync.js?v=transfer-v22"></script>
+    <script type="module" src="js/transfer.js?v=transfer-v1"></script>
     <script type="module" src="js/calendar.js?v=calendar-map-icon-v35"></script>
     <script type="module" src="/js/discover.js?v=batch-history-v13"></script>
     <script type="module" src="/js/music.js?v=charts-v2"></script>

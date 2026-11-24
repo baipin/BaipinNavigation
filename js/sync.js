@@ -16,6 +16,7 @@ const selectedProvider=callbackProvider || localStorage.getItem('navi_sync_provi
 let provider=Object.hasOwn(providers,selectedProvider)?selectedProvider:'google';
 let account = null, busy = false, pending = null, configured = false, detailsRequested = false, authenticating = false;
 let statusMessage = '';
+window.naviSyncAccount=()=>({provider,user:!authenticating&&account?{...account}:null});
 const traditional = new Map([
     ['飛書 登录','飛書 登入'],['使用 飛書 登录','使用飛書登入'],['使用同一 飛書 账号同步多个设备','使用同一飛書帳戶同步多個裝置'],['飞书 登录','飛書 登入'],['使用 飞书 登录','使用飛書登入'],['使用同一 飞书 账号同步多个设备','使用同一飛書帳戶同步多個裝置'],['预设保存在你的飞书云空间 BaipinNavigation-Presets 文件夹。','預設儲存在你的飛書雲空間 BaipinNavigation-Presets 資料夾。'],['服务端尚未配置 FEISHU_APP_ID 和 FEISHU_APP_SECRET','伺服器尚未設定 FEISHU_APP_ID 及 FEISHU_APP_SECRET'],
     ['Microsoft 登录','Microsoft 登入'],['使用 Microsoft 登录','使用 Microsoft 登入'],

@@ -1,3 +1,4 @@
+import {transferAction,TransferError,googleTransferStore} from '../server/transfer.js';
 import siteContent from '../server/site-content.js';
 import feishuHandler from '../server/feishu-calendar.js';
 import canvasHandler from '../server/canvas-calendar.js';
@@ -131,7 +132,7 @@ export default async function handler(req,res) {
             if (action === 'status') return res.status(200).json({configured:false,authenticated:false,redirectUri:settings.redirect});
             throw new SyncError(503,'服务器未配置 GOOGLE_KEY');
         }
-        const post = ['push','clear','logout','calendar-save','calendar-delete','calendar-disconnect'].includes(action);
+        const post = ['transfer-send','transfer-delete','transfer-clear','push','clear','logout','calendar-save','calendar-delete','calendar-disconnect'].includes(action);
         if (req.method !== (post?'POST':'GET')) { res.setHeader('Allow',post?'POST':'GET'); throw new SyncError(405,'请求方法不支持'); }
         if (post && req.headers.origin !== origin) throw new SyncError(403,'请求来源不正确');
         if (['login','calendar-login'].includes(action)) {
@@ -163,7 +164,7 @@ export default async function handler(req,res) {
             return finish('connected');
         }
         if (action === 'logout') { saveSession(res,null); return res.status(200).json({ok:true}); }
-        if (!['status','pull','push','clear','calendar-list','calendar-events','calendar-save','calendar-delete','calendar-disconnect'].includes(action)) throw new SyncError(404,'接口不存在');
+        if (!['transfer-list','transfer-read','transfer-send','transfer-delete','transfer-clear','status','pull','push','clear','calendar-list','calendar-events','calendar-save','calendar-delete','calendar-disconnect'].includes(action)) throw new SyncError(404,'接口不存在');
         let data;
         try { data = await session(req,res); }
         catch (error) {
@@ -180,6 +181,7 @@ export default async function handler(req,res) {
         }
         if(action==='calendar-disconnect'){data.calendarDisconnected=true;saveSession(res,data);return res.status(200).json({ok:true});}
         if(action.startsWith('calendar-'))return await calendarApi('google',data,action,req,res,url,{refreshAccess:()=>refreshGoogleSession(data,res)});
+  if(action.startsWith('transfer-'))return await transferAction(req,res,action,googleTransferStore(data,drive));
         if (action === 'pull') {
             const cloud = await readCloud(data);
             delete cloud.id; delete cloud.etag;
@@ -203,6 +205,6 @@ export default async function handler(req,res) {
     } catch (error) {
         // Never include OAuth tokens, the client secret or Google's raw errors in responses/logs.
         if (action === 'callback') return redirect(res,'/?sync=login-error');
-        return res.status(error.status || 502).json({error:error instanceof SyncError || error instanceof CalendarError ? error.message : '同步服务暂时不可用，请稍后重试'});
+        return res.status(error.status || 502).json({error:error instanceof TransferError || error instanceof SyncError || error instanceof CalendarError ? error.message : '同步服务暂时不可用，请稍后重试'});
     }
 }

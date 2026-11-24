@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {transferAction,makeTransfer,transferMeta,TRANSFER_TTL,TRANSFER_MAX_FILE,googleTransferStore,githubTransferStore,microsoftTransferStore,feishuTransferStore} from '../server/transfer.js';
+const cloud=new Map(),removed=[];
+const store={async list(){return [...cloud].map(([id,row])=>({id,name:row.name,size:Buffer.byteLength(row.raw)}));},async create(name,raw){cloud.set(randomUUID(),{name,raw});},async read(row){return cloud.get(row.id).raw;},async remove(row){removed.push(row.id);cloud.delete(row.id);}};
+async function call(action,body,id,storage=store){const res={status(n){this.code=n;return this;},json(value){this.body=value;return this;}};await transferAction({url:'/api/sync?'+new URLSearchParams({action,...(id?{id}:{})}),headers:{'content-type':'application/json'},body},res,action,storage);return res.body;}
+assert.equal(transferMeta('baipin-navigation-presets-v1.json','preset'),null);
+cloud.set('preset',{name:'baipin-navigation-presets-v1.json',raw:'{"keep":true}'});
+await Promise.all([call('transfer-send',{kind:'text',text:'设备甲 <script> 原样文字'}),call('transfer-send',{kind:'text',text:'设备乙同时发送'})]);
+let rows=(await call('transfer-list')).items;assert.equal(rows.length,2);assert.ok(!JSON.stringify(rows).includes('base64'));
+assert.equal((await call('transfer-read',null,rows[0].id)).kind,'text');
+const bytes=Buffer.from([0,255,128,11]);await call('transfer-send',{kind:'file',name:'示例.dat',base64:bytes.toString('base64')});
+rows=(await call('transfer-list')).items;const file=rows.find(x=>x.kind==='file'),record=await call('transfer-read',null,file.id);assert.deepEqual(Buffer.from(record.base64,'base64'),bytes);
+await call('transfer-delete',{id:file.id});await assert.rejects(()=>call('transfer-read',null,file.id),e=>e.status===404);assert.ok(cloud.has('preset'));
+const expired=makeTransfer({kind:'text',text:'expired'},Date.now()-TRANSFER_TTL-1);cloud.set('expired',{name:expired.name,raw:JSON.stringify(expired.record)});await call('transfer-list');assert.ok(!cloud.has('expired'));assert.ok(removed.includes('expired'));
+for(const body of [{kind:'text',text:''},{kind:'text',text:'x'.repeat(20001)},{kind:'file',name:'../test',base64:'YQ=='},{kind:'file',name:'a',base64:'@@=='},{kind:'file',name:'a',base64:Buffer.alloc(TRANSFER_MAX_FILE+1).toString('base64')}])await assert.rejects(()=>call('transfer-send',body));
+await assert.rejects(()=>call('transfer-read',null,'preset'),e=>e.status===404);
+const bad=makeTransfer({kind:'text',text:'ok'});cloud.set('bad',{name:bad.name,raw:JSON.stringify({...bad.record,id:'changed'})});await assert.rejects(()=>call('transfer-read',null,'bad'),e=>e.status===400);cloud.delete('bad');
+for(let i=0;i<18;i++)await call('transfer-send',{kind:'text',text:'row'+i});assert.equal((await call('transfer-list')).items.length,20);await assert.rejects(()=>call('transfer-send',{kind:'text',text:'overflow'}),e=>e.status===409);
+let result=await call('transfer-list',null,null,{...store,async list(){return [{id:'expired',name:expired.name}];},async remove(){throw Error();}});assert.equal(result.cleanupPending,true);assert.equal(result.items.length,0);
+await assert.rejects(()=>call('transfer-clear',{confirm:false}),e=>e.status===400);
+const cleared=await call('transfer-clear',{confirm:true});assert.equal(cleared.deleted,20);assert.equal(cleared.remaining,0);assert.equal((await call('transfer-list')).items.length,0);assert.ok(cloud.has('preset'));
+// Provider adapters create independent files and never reuse a preset filename.
+const entry=makeTransfer({kind:'text',text:'adapter test'}),calls=[];
+const drive=async(data,url,options={})=>{calls.push({url,options});return new Response(JSON.stringify({files:[{id:'g1',name:entry.name}]}));};
+const google=googleTransferStore({accessToken:'test'},drive);assert.equal((await google.list())[0].id,'g1');await google.create(entry.name,JSON.stringify(entry.record));assert.ok(calls.at(-1).options.body.includes('appDataFolder'));assert.ok(!calls.at(-1).options.body.includes('presets-v1'));
+const own={id:'abc',public:false,owner:{id:'test'},description:'Baipin Navigation temporary transfer (v1)',files:{[entry.name]:{content:JSON.stringify(entry.record)}}};
+const github=githubTransferStore({user:{id:'test'},accessToken:'test'},async(token,path,options={})=>{calls.push({path,options});return new Response(JSON.stringify(path.includes('?')?[own]:own));});
+const gistRows=await github.list();assert.equal(gistRows.length,1);assert.equal((JSON.parse(await github.read(gistRows[0]))).text,'adapter test');await github.remove(gistRows[0]);assert.equal(calls.at(-1).options.method,'DELETE');
+const wrong=githubTransferStore({user:{id:'other'},accessToken:'test'},async()=>new Response(JSON.stringify(own)));await assert.rejects(()=>wrong.remove({id:'abc',name:entry.name}),e=>e.status===403);
+const graph=microsoftTransferStore({},async(data,path,options={})=>{calls.push({path,options});return new Response(JSON.stringify({value:[{id:'m1',name:entry.name}]}));});assert.equal((await graph.list())[0].id,'m1');await graph.create(entry.name,'{}');assert.ok(calls.at(-1).path.includes('approot:'));assert.equal(calls.at(-1).options.method,'PUT');
+const feishu=feishuTransferStore({},async(data,path,options={})=>{calls.push({path,options});if(path.startsWith('/drive/v1/files?')){const folder=new URL(path,'https://example.com').searchParams.get('folder_token');return {files:folder?[{type:'file',token:'f1',name:entry.name}]:[{type:'folder',name:'BaipinNavigation-Transfers',token:'folder1'}]};}return {file_token:'f2'};},async()=>JSON.stringify(entry.record));assert.equal((await feishu.list())[0].id,'f1');await feishu.create(entry.name,'{}');assert.equal(calls.at(-1).options.body.get('parent_node'),'folder1');
+console.log('PASS: concurrent device sends, binary roundtrip, TTL cleanup, capacity, unsafe input, unrelated preset isolation and four cloud adapters.');
