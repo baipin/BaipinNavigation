@@ -487,6 +487,9 @@
         .widgets-empty { display:none!important; }
         #transfer-open[hidden],#settings-transfer[hidden],#transfer-dialog [hidden] { display:none!important; }
         #transfer-dialog { z-index:2800; }
+        #transfer-login-notice { flex-wrap:nowrap; width:max-content; min-width:0; max-width:calc(100vw - 24px); }
+        #transfer-login-notice::part(message) { flex:1; min-width:0; }
+        #transfer-login-notice::part(action-group) { flex:none; }
         #transfer-open,.transfer-headline mdui-button-icon { color:inherit; }
         .transfer-headline { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; }
         .transfer-headline mdui-button-icon { flex:none; }
@@ -4536,7 +4539,7 @@ function setBackgroundToCookie(value) {
     <script src="js/settings.js?v=widgets-folded-v5"></script>
     <script type="module" src="js/camera-background.js?v=source-priority-v11"></script>
     <script type="module" src="js/sync.js?v=transfer-v22"></script>
-    <script type="module" src="js/transfer.js?v=transfer-v2"></script>
+    <script type="module" src="js/transfer.js?v=transfer-v3"></script>
     <script type="module" src="js/calendar.js?v=calendar-map-icon-v35"></script>
     <script type="module" src="/js/discover.js?v=batch-history-v13"></script>
     <script type="module" src="/js/music.js?v=charts-v2"></script>
