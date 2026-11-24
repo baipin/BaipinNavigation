@@ -334,6 +334,7 @@
     const oldTabs=stockDialog.querySelector('.city-feed-settings-tabs'),tabs=document.createElement('mdui-tabs');tabs.className='city-feed-material-tabs';tabs.value='display';tabs.fullWidth=true;
     for(const key of ['display','stocks']){const tab=document.createElement('mdui-tab');tab.value=key;tab.dataset.panel=key;tabs.append(tab);}oldTabs.replaceWith(tabs);
     document.body.append(stockDialog);
+    stockDialog.addEventListener('closed',()=>{if(stockDialog.parentElement!==document.body)document.body.append(stockDialog);});
     let draftSymbols=[];
     function switchSettingsPanel(panel) {
         stockDialog.querySelectorAll('[data-settings-panel]').forEach(node=>node.hidden=node.dataset.settingsPanel!==panel);
@@ -405,6 +406,10 @@
         stockDialog.querySelector('.city-feed-rss-hint').textContent=text('这里只选择 CITY FEED 显示哪些 RSS。RSS 列表的添加、编辑和移除，请到上方「香港新闻」容器的 RSS 图标管理；这些设置均支持导入导出。','這裡只選擇 CITY FEED 顯示哪些 RSS。RSS 清單的新增、編輯和移除，請到上方「香港新聞」容器的 RSS 圖示管理；這些設定均支援匯入匯出。');
         stockDialog.querySelector('.city-feed-stock-error').textContent='';stockDialog.querySelector('.city-feed-stock-feedback').textContent='';
         ['reset','cancel','save'].forEach((action,index)=> {stockDialog.querySelector('[data-stock-action="'+action+'"]').textContent=text(['恢复全部默认','取消','保存'][index],['恢復全部預設','取消','儲存'][index]);});
+        // Native fullscreen only paints descendants of its fullscreen element.
+        // Keep the settings modal inside that element before MDUI activates it.
+        const modalHost=expanded?section:document.body;
+        if(stockDialog.parentElement!==modalHost)modalHost.append(stockDialog);
         syncRssControls();switchSettingsPanel('display');stockDialog.open=true;
     });
     function applySettings() {

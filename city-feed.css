@@ -326,7 +326,7 @@
 .city-feed-face > .city-feed-name,.city-feed-face > .city-feed-price,.city-feed-face > .city-feed-change { position:relative; z-index:1; text-shadow:0 1px 3px #000; }
 
 /* MDUI owns modal focus, entrance/exit animation and the overlay. */
-mdui-dialog.city-feed-stock-dialog { width:auto; max-height:none; padding:0; border:0; background:transparent; color:var(--text-main); overflow:visible; z-index:2700; --mdui-color-surface-container-high:255,255,255; }
+mdui-dialog.city-feed-stock-dialog { width:auto; max-height:none; padding:0; border:0; background:transparent; color:var(--text-main); overflow:visible; z-index:11000; --mdui-color-surface-container-high:255,255,255; }
 .mdui-theme-dark mdui-dialog.city-feed-stock-dialog { --mdui-color-surface-container-high:30,30,35; }
 mdui-dialog.city-feed-stock-dialog::part(panel) { width:min(680px,calc(100vw - 24px)); height:min(760px,calc(100dvh - 32px)); max-height:calc(100dvh - 32px); display:flex; flex-direction:column; border-radius:28px; background:rgb(var(--mdui-color-surface-container-high)); }
 mdui-dialog.city-feed-stock-dialog::part(body) { flex:1; min-height:0; overflow:auto; scrollbar-width:thin; scrollbar-color:rgba(128,128,128,.45) transparent; padding:0 24px; }
