@@ -85,7 +85,7 @@ function render(){
  clearAll.textContent=t('清空暂存区','清空暫存區');clearHint.textContent=t('清空当前账号的全部传输文字和文件？所有设备将无法再接收这些内容。预设和日历不受影响。','清空目前帳戶的所有傳輸文字及檔案？所有裝置將無法再接收這些內容。預設及日曆不受影響。');clearCancel.textContent=t('取消','取消');clearConfirm.textContent=t('确认清空','確認清空');
  const label=t('传输助手','傳輸助手');header.title=label;header.setAttribute('aria-label',label);settings.textContent=label;title.textContent=label;
  text.placeholder=t('输入文字（最多 20,000 字）；文件请单独发送','輸入文字（最多 20,000 字）；檔案請單獨傳送');text.setAttribute('aria-label',t('待传送文字','待傳送文字'));pick.textContent=t('选择小文件','選擇小檔案');clearFile.setAttribute('aria-label',t('取消所选文件','取消所選檔案'));send.textContent=t('发送','傳送');heading.textContent=t('云端暂存区','雲端暫存區');close.textContent=t('关闭','關閉');refresh.setAttribute('aria-label',t('刷新暂存区','更新暫存區'));
- info.textContent=(active?providers[active.provider][0]+' · '+(active.user.email||active.user.name||'')+'\n':'')+t('同一平台、同一账号的设备可互传。文件 ≤512 KB，最多 20 项，保留 24 小时。仅窗口打开且页面可见时每 15 秒更新。内容不加入预设或 JSON 备份。','同一平台、同一帳戶的裝置可互傳。檔案 ≤512 KB，最多 20 項，保留 24 小時。僅視窗開啟且頁面可見時每 15 秒更新。內容不加入預設或 JSON 備份。');
+ info.textContent=(active?providers[active.provider][0]+' · '+(active.user.email||active.user.name||'')+'\n':'')+t('同一平台、同一账号的设备可互传。文件 ≤512 KB，最多 20 项，保留 24 小时。每 15 秒自动更新一次。','同一平台、同一帳戶的裝置可互傳。檔案 ≤512 KB，最多 20 項，保留 24 小時。每 15 秒自動更新一次。');
  caution.textContent=t('您选择的登录平台可能为您另留历史版本或回收站。','您選擇的登入平台可能為您另留歷史版本或回收站。')+(active?.provider==='github'?t(' GitHub 使用 Secret Gist，知道链接的人可读取内容，请勿传送敏感资料。',' GitHub 使用 Secret Gist，知道連結的人可讀取內容，請勿傳送敏感資料。'):active?.provider==='feishu'?t(' 飞书文件沿用云空间访问权限。',' 飛書檔案沿用雲空間存取權限。'):'');
  if(dialog.open&&identity(state)!==identity(active)){stop();dialog.open=false;}
 }
