@@ -2,7 +2,7 @@ const providers={google:['Google','/api/sync'],github:['GitHub','/api/github'],m
 const t=(sc,tc)=>document.documentElement.lang==='zh-CN'?sc:tc;
 const el=(tag,text)=>{const node=document.createElement(tag);if(text)node.textContent=text;return node;};
 const dialog=el('mdui-dialog');dialog.id='transfer-dialog';dialog.setAttribute('close-on-overlay-click','');
-const title=el('span');title.slot='headline';
+const title=el('span');const headline=el('div');headline.slot='headline';headline.className='transfer-headline';
 const info=el('p');info.className='transfer-hint';const caution=el('p');caution.className='transfer-caution';
 const composer=el('div');composer.className='transfer-composer';const text=el('textarea');text.rows=3;text.maxLength=20000;
 const actions=el('div');actions.className='transfer-composer-actions';
@@ -17,9 +17,24 @@ const clearPanel=el('div');clearPanel.className='transfer-clear-panel';clearPane
 const progress=el('mdui-linear-progress');progress.hidden=true;
 const status=el('p');status.className='transfer-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
 const list=el('div');list.className='transfer-list';const detail=el('div');detail.className='transfer-detail';detail.hidden=true;
-const close=el('mdui-button');close.slot='action';close.variant='text';close.onclick=()=>dialog.open=false;
-actions.append(pick,selection,clearFile,send);composer.append(text,file,actions);dialog.append(title,info,caution,composer,tools,clearPanel,progress,status,list,detail,close);document.body.append(dialog);
-const header=el('mdui-button-icon');header.id='transfer-open';header.icon='devices';header.hidden=true;
+const close=el('mdui-button-icon');close.icon='close';close.onclick=()=>dialog.open=false;headline.append(title,close);
+const history=el('div');history.className='transfer-history';history.append(clearPanel,status,list,detail);
+actions.append(pick,selection,clearFile,send);composer.append(text,file,actions);dialog.append(headline,info,caution,tools,progress,history,composer);document.body.append(dialog);
+const loginNotice=el('mdui-snackbar');loginNotice.autoCloseDelay=5000;loginNotice.closeable=true;document.body.append(loginNotice);
+// iOS and Android keyboards can resize only the visual viewport, leaving 100dvh unchanged.
+let viewportFrame=0;
+function fitViewport(){
+ cancelAnimationFrame(viewportFrame);viewportFrame=requestAnimationFrame(()=>{
+  if(!dialog.open)return;const viewport=window.visualViewport;
+  dialog.style.setProperty('--transfer-viewport-height',`${viewport?.height||window.innerHeight}px`);
+  dialog.style.setProperty('--transfer-viewport-top',`${viewport?.offsetTop||0}px`);
+ });
+}
+function watchViewport(){window.visualViewport?.addEventListener('resize',fitViewport);window.visualViewport?.addEventListener('scroll',fitViewport);window.addEventListener('resize',fitViewport);fitViewport();}
+function unwatchViewport(){window.visualViewport?.removeEventListener('resize',fitViewport);window.visualViewport?.removeEventListener('scroll',fitViewport);window.removeEventListener('resize',fitViewport);cancelAnimationFrame(viewportFrame);dialog.classList.remove('is-composing');}
+text.addEventListener('focus',()=>{dialog.classList.add('is-composing');fitViewport();});
+text.addEventListener('blur',()=>{dialog.classList.remove('is-composing');fitViewport();});
+const header=el('mdui-button-icon');header.id='transfer-open';header.icon='devices';
 document.getElementById('data-manage-btn').before(header);
 const settings=el('mdui-button');settings.variant='outlined';settings.icon='devices';settings.id='settings-transfer';settings.hidden=true;document.querySelector('#settings-calendar')?.after(settings);
 let controller=null,timer=null,active=null,generation=0,inFlight=false,working=false,lastItems=[];
@@ -81,15 +96,15 @@ send.onclick=()=>void operate(async()=>{
 refresh.onclick=()=>void load();
 clearConfirm.onclick=()=>void operate(async()=>{const result=await request('transfer-clear',{confirm:true});if(!current())return;clearPanel.hidden=true;detail.hidden=true;detail.replaceChildren();const latest=await request('transfer-list');if(!current())return;lastItems=latest.items||[];message(result.remaining?t('部分项目未能删除，请再次清理或稍后重试','部分項目未能刪除，請再次清理或稍後重試'):t('已清空当前账号的传输暂存区','已清空目前帳戶的傳輸暫存區'),!!result.remaining);});
 function render(){
- const state=account(),signed=!!state?.user;header.hidden=settings.hidden=!signed;
+ const state=account(),signed=!!state?.user;settings.hidden=!signed;
  clearAll.textContent=t('清空暂存区','清空暫存區');clearHint.textContent=t('清空当前账号的全部传输文字和文件？所有设备将无法再接收这些内容。预设和日历不受影响。','清空目前帳戶的所有傳輸文字及檔案？所有裝置將無法再接收這些內容。預設及日曆不受影響。');clearCancel.textContent=t('取消','取消');clearConfirm.textContent=t('确认清空','確認清空');
  const label=t('传输助手','傳輸助手');header.title=label;header.setAttribute('aria-label',label);settings.textContent=label;title.textContent=label;
- text.placeholder=t('输入文字（最多 20,000 字）；文件请单独发送','輸入文字（最多 20,000 字）；檔案請單獨傳送');text.setAttribute('aria-label',t('待传送文字','待傳送文字'));pick.textContent=t('选择小文件','選擇小檔案');clearFile.setAttribute('aria-label',t('取消所选文件','取消所選檔案'));send.textContent=t('发送','傳送');heading.textContent=t('云端暂存区','雲端暫存區');close.textContent=t('关闭','關閉');refresh.setAttribute('aria-label',t('刷新暂存区','更新暫存區'));
+ text.placeholder=t('输入文字（最多 20,000 字）；文件请单独发送','輸入文字（最多 20,000 字）；檔案請單獨傳送');text.setAttribute('aria-label',t('待传送文字','待傳送文字'));pick.textContent=t('选择小文件','選擇小檔案');clearFile.setAttribute('aria-label',t('取消所选文件','取消所選檔案'));send.textContent=t('发送','傳送');heading.textContent=t('云端暂存区','雲端暫存區');close.title=t('关闭','關閉');close.setAttribute('aria-label',close.title);refresh.setAttribute('aria-label',t('刷新暂存区','更新暫存區'));
  info.textContent=(active?providers[active.provider][0]+' · '+(active.user.email||active.user.name||'')+'\n':'')+t('同一平台、同一账号的设备可互传。文件 ≤512 KB，最多 20 项，保留 24 小时。每 15 秒自动更新一次。','同一平台、同一帳戶的裝置可互傳。檔案 ≤512 KB，最多 20 項，保留 24 小時。每 15 秒自動更新一次。');
  caution.textContent=t('您选择的登录平台可能为您另留历史版本或回收站。','您選擇的登入平台可能為您另留歷史版本或回收站。')+(active?.provider==='github'?t(' GitHub 使用 Secret Gist，知道链接的人可读取内容，请勿传送敏感资料。',' GitHub 使用 Secret Gist，知道連結的人可讀取內容，請勿傳送敏感資料。'):active?.provider==='feishu'?t(' 飞书文件沿用云空间访问权限。',' 飛書檔案沿用雲空間存取權限。'):'');
  if(dialog.open&&identity(state)!==identity(active)){stop();dialog.open=false;}
 }
-function open(){const state=account();if(!state?.user)return;stop();active={...state};clearPanel.hidden=true;lastItems=[];detail.hidden=true;detail.replaceChildren();text.value='';file.value='';renderSelection();render();draw();dialog.open=true;}
+function open(){const state=account();if(!state?.user){loginNotice.textContent=t('请先在设置中登录同步账号，再使用传输助手。','請先在設定中登入同步帳戶，再使用傳輸助手。');loginNotice.open=true;return;}stop();active={...state};clearPanel.hidden=true;lastItems=[];detail.hidden=true;detail.replaceChildren();text.value='';file.value='';renderSelection();render();draw();dialog.open=true;}
 header.onclick=open;settings.onclick=()=>{const settingsDialog=document.getElementById('data-manage-dialog');if(settingsDialog.open){settingsDialog.addEventListener('closed',open,{once:true});settingsDialog.open=false;}else open();};
-dialog.addEventListener('opened',()=>void load());dialog.addEventListener('close',stop);dialog.addEventListener('closed',()=>{stop();active=null;lastItems=[];list.replaceChildren();detail.replaceChildren();text.value='';file.value='';});
+dialog.addEventListener('open',watchViewport);dialog.addEventListener('opened',()=>{fitViewport();void load();});dialog.addEventListener('close',()=>{stop();unwatchViewport();});dialog.addEventListener('closed',()=>{stop();active=null;lastItems=[];list.replaceChildren();detail.replaceChildren();text.value='';file.value='';});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();else if(dialog.open)void load();});document.addEventListener('navi-sync-account-change',render);new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});render();
