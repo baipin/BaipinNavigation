@@ -2458,7 +2458,7 @@ function setBackgroundToCookie(value) {
                 const payload=await response.json();
                 document.querySelectorAll('[data-city-line]').forEach(el=>{
                     const line=payload.lines?.[el.dataset.cityLine],status=line?.status;
-                    el.textContent=({green:'正常',yellow:'服務受影響',red:'服務嚴重受阻'})[status]||'暫無法確認';
+                    el.textContent=({green:'正常',yellow:'服務受阻',red:'服務嚴重受阻'})[status]||'暫無法確認';
                     el.className='city-rail-status '+(status==='green'?'good':['yellow','red'].includes(status)?'warn':'offline');
                     el.title=el.textContent+(payload.updatedAt?' · 港鐵更新 '+new Date(payload.updatedAt).toLocaleString('zh-HK'):'');
                     el.closest('a').href=line?.url||'https://www.mtr.com.hk/alert/alert_simpletxt_title_tc.html';

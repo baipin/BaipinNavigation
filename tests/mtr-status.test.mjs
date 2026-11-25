@@ -9,6 +9,6 @@ const {readFileSync}=await import('node:fs');const {default:vm}=await import('no
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');const fn=html.slice(html.indexOf('async function updateCityRails()'),html.indexOf('const cityBusCache',html.indexOf('async function updateCityRails()')));
 const link={href:''},row={dataset:{cityLine:'TML'},closest:()=>link};let live;
 const context={cityRailLines:[['TML','HUH','屯馬線','#9a3b26']],document:{getElementById:()=>({}),querySelectorAll:()=>[row]},fetch:async()=>({ok:true,json:async()=>result}),cityLive:(...args)=>live=args,Date};vm.createContext(context);vm.runInContext(fn,context);
-await context.updateCityRails();assert.equal(row.textContent,'服務受影響');assert.ok(row.className.endsWith('warn'));assert.ok(link.href.endsWith('#6723'));
+await context.updateCityRails();assert.equal(row.textContent,'服務受阻');assert.ok(row.className.endsWith('warn'));assert.ok(link.href.endsWith('#6723'));
 context.fetch=async()=>{throw Error('offline')};await context.updateCityRails();assert.equal(row.textContent,'暫無法確認');assert.equal(live[1],'offline');
 console.log('PASS: displayed TML warning and offline failure never reported as normal.');
