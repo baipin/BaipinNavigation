@@ -1,0 +1,39 @@
+<remarks>
+    <remark_en><![CDATA[Updates will be provided for train service disruptions*, adjustments or enhancements. Please refer to the latest Traffic News.<br/><br/>*Including Heavy Rail lines with an estimated additional travelling time of more than 20 minutes<br/>]]></remark_en>
+    <remark_tc><![CDATA[當列車服務受阻* 、需調整或加強服務時，我們會適時提供相關資訊。請留意最新車務狀況。<br/><br/>*包括重鐵綫路預計額外行車時間超過20分鐘<br/>]]></remark_tc>
+    <legend_remark>
+        <id>1</id>
+        <color>green</color>
+        <name_en><![CDATA[Normal Service]]></name_en>
+        <name_tc><![CDATA[服務正常]]></name_tc>
+    </legend_remark>
+    <legend_remark>
+        <id>2</id>
+        <color>yellow</color>
+        <name_en><![CDATA[Service Delay – Additional waiting and travelling time; or Service gradually resuming]]></name_en>
+        <name_tc><![CDATA[服務延誤 – 額外候車及行車時間；或服務逐步回復正常]]></name_tc>
+    </legend_remark>
+    <legend_remark>
+        <id>3</id>
+        <color>red</color>
+        <name_en><![CDATA[Service Disruption*]]></name_en>
+        <name_tc><![CDATA[服務受阻*]]></name_tc>
+    </legend_remark>
+    <legend_remark>
+        <id>4</id>
+        <color>grey</color>
+        <name_en><![CDATA[Non-service hours]]></name_en>
+        <name_tc><![CDATA[非服務時間]]></name_tc>
+    </legend_remark>
+    <legend_remark>
+        <color>pink</color>
+        <name_en><![CDATA[Service delay or disruption]]></name_en>
+        <name_tc><![CDATA[服務延誤或受阻]]></name_tc>
+    </legend_remark>
+    <legend_remark>
+        <id>5</id>
+        <color>typhoon</color>
+        <name_en><![CDATA[Tropical Cyclone Warning Signals issued]]></name_en>
+        <name_tc><![CDATA[熱帶氣旋警告信號生效]]></name_tc>
+    </legend_remark>
+</remarks>
