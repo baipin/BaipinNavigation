@@ -2451,37 +2451,25 @@ function setBackgroundToCookie(value) {
         }
         async function updateCityRails() {
             const wrap = document.getElementById('city-rails');
-            wrap.innerHTML = cityRailLines.map(([code, station, name, colour]) => `<a class="city-rail" href="https://www.mtr.com.hk/ch/customer/main/index.html" target="_blank" rel="noreferrer"><span class="city-rail-color" style="background:${colour}"></span><span class="city-rail-name">${name}</span><span class="city-rail-status" data-city-line="${code}">读取中</span></a>`).join('');
-            const results = await Promise.all(cityRailLines.map(async ([code, station]) => {
-                try {
-                    const response = await fetch(cityApi.mtr + '?line=' + code + '&sta=' + station + '&lang=TC&_=' + Date.now(), { cache: 'no-store' });
-                    let payload = await response.json();
-                    if (code === 'AEL' && !(payload.status === 1 && payload.data?.[code + '-' + station])) {
-                        const fallbackResponse = await fetch(cityApi.mtr + '?line=AEL&sta=KOW&lang=TC&_=' + Date.now(), { cache: 'no-store' });
-                        if (fallbackResponse.ok) payload = await fallbackResponse.json();
-                    }
-                    const data = payload.data?.[code + '-' + station] || (code === 'AEL' ? payload.data?.['AEL-KOW'] : null);
-                    const message = String(payload.message || '').trim();
-                    const hasAlertMessage = message && !/^successful$/i.test(message);
-                    if (Number(payload.status) === 0 || hasAlertMessage) {
-                        return { text:hasAlertMessage ? message : '服務受影響', className:'warn' };
-                    }
-                    if (data?.Isdelay === 'Y' || data?.isdelay === 'Y') {
-                        return { text:hasAlertMessage ? message : '列車延誤', className:'warn' };
-                    }
-                    if (Number(payload.status) === 1 && data) return { text:'正常', className:'good' };
-                    if (code === 'DRL') return { text:'非營運', className:'warn' };
-                    return { text:'暫無資料', className:'offline' };
-                } catch (error) { return '暂无资料'; }
-            }));
-            document.querySelectorAll('[data-city-line]').forEach((el, index) => {
-                const result = typeof results[index] === 'string' ? { text:results[index], className:'offline' } : results[index];
-                el.textContent = result.text;
-                el.title = result.text;
-                el.className = 'city-rail-status ' + result.className;
-            });
-            cityLive('city-rail-live', 'online', '在线');
+            wrap.innerHTML = cityRailLines.map(([code, station, name, colour]) => `<a class="city-rail" href="https://www.mtr.com.hk/alert/alert_simpletxt_title_tc.html" target="_blank" rel="noreferrer"><span class="city-rail-color" style="background:${colour}"></span><span class="city-rail-name">${name}</span><span class="city-rail-status" data-city-line="${code}">读取中</span></a>`).join('');
+            try {
+                const response = await fetch('/api/sync?content=mtr-status&_='+Date.now(),{cache:'no-store'});
+                if(!response.ok)throw Error('MTR service status unavailable');
+                const payload=await response.json();
+                document.querySelectorAll('[data-city-line]').forEach(el=>{
+                    const line=payload.lines?.[el.dataset.cityLine],status=line?.status;
+                    el.textContent=({green:'正常',yellow:'服務受影響',red:'服務嚴重受阻'})[status]||'暫無法確認';
+                    el.className='city-rail-status '+(status==='green'?'good':['yellow','red'].includes(status)?'warn':'offline');
+                    el.title=el.textContent+(payload.updatedAt?' · 港鐵更新 '+new Date(payload.updatedAt).toLocaleString('zh-HK'):'');
+                    el.closest('a').href=line?.url||'https://www.mtr.com.hk/alert/alert_simpletxt_title_tc.html';
+                });
+                cityLive('city-rail-live','online','在線');
+            } catch {
+                document.querySelectorAll('[data-city-line]').forEach(el=>{el.textContent='暫無法確認';el.title='請查看港鐵官方車務資訊';el.className='city-rail-status offline';});
+                cityLive('city-rail-live','offline','暫無資料');
+            }
         }
+
         const cityBusCache = { stops: null };
         const cityRainStations = [
             { id:'RF001', name:'流浮山', lat:22.468, lon:113.984 }, { id:'RF002', name:'湿地公园', lat:22.466, lon:114.006 },
