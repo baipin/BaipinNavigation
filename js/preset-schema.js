@@ -31,7 +31,7 @@ export function sanitizePreset(input) {
         }
     }
     if(result.localStorage.navi_music_charts!==null){const charts=JSON.parse(result.localStorage.navi_music_charts);if(!charts||Array.isArray(charts)||typeof charts!=='object'||Object.entries(charts).some(([key,value])=>!(key==='apple'?['hk','tw','us','jp']:key==='qq'?['hot','rising','new','mainland']:[]).includes(value)))throw new Error('音乐榜单设置不正确');}
-    if(result.localStorage.navi_widgets!==null){const widgets=JSON.parse(result.localStorage.navi_widgets);const ids=['quick','poem','weather','calendar','news','feed','journeys','rails','flights','traffic','bus','aed','holidays','boundary','repos','videos','music','finance'];if(!widgets||Array.isArray(widgets)||typeof widgets!=='object'||Object.entries(widgets).some(([key,value])=>!ids.includes(key)||typeof value!=='boolean'))throw new Error('小工具设置不正确');}
+    if(result.localStorage.navi_widgets!==null){const widgets=JSON.parse(result.localStorage.navi_widgets);const ids=['election','quick','poem','weather','calendar','news','feed','journeys','rails','flights','traffic','bus','aed','holidays','boundary','repos','videos','music','finance'];if(!widgets||Array.isArray(widgets)||typeof widgets!=='object'||Object.entries(widgets).some(([key,value])=>!ids.includes(key)||typeof value!=='boolean'))throw new Error('小工具设置不正确');}
     if(result.localStorage.navi_music_platform!==null&&!['apple','qq'].includes(result.localStorage.navi_music_platform))throw new Error('音乐平台设置不正确');
     const relativeSpacing=result.localStorage.navi_quick_access_offset_vh;
     if(relativeSpacing!==null && (!/^-?\d+$/.test(relativeSpacing)||Number(relativeSpacing)<-8||Number(relativeSpacing)>100))throw new Error('快捷访问相对间距设置不正确');
