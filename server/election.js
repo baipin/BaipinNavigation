@@ -1,3 +1,4 @@
+import {loadPoliwave,POLIWAVE_PAGE} from './poliwave.js';
 // Election-day board. Source discovery follows links actually published by the CEC.
 // No assumed election-results endpoint, party totals or winner declarations.
 const HOME='https://www.cec.gov.tw/';
@@ -38,13 +39,13 @@ export function electionPhase(now=Date.now()){return now<Date.parse(EVENT.opens)
 async function get(url,json=false){const response=await fetch(url,{signal:AbortSignal.timeout(8000),cache:'no-store',redirect:'error'});if(!response.ok)throw Error('source unavailable');const body=await response.text();if(body.length>2500000)throw Error('source too large');return json?JSON.parse(body):body;}
 let cached=null,pending=null;
 async function snapshot(){
- const [home,menu,news]=await Promise.allSettled([get(HOME),get(MENU,true),get(NEWS,true)]);
- if(home.status==='rejected'&&menu.status==='rejected')throw Error('CEC unavailable');
+ const [home,menu,news,poliwave]=await Promise.allSettled([get(HOME),get(MENU,true),get(NEWS,true),loadPoliwave()]);
+ if(home.status==='rejected'&&menu.status==='rejected'&&poliwave.status==='rejected')throw Error('CEC unavailable');
  const links=discoverResults(menu.status==='fulfilled'?menu.value:[],home.status==='fulfilled'?home.value:'');
  let races=[],resultsSource=null;
- for(const url of electionPhase()==='awaiting'?links:[]){try{const parsed=readResultTables(await get(url));if(parsed.length){races=parsed;resultsSource=url;break;}}catch{}}
+ for(const url of poliwave.status==='rejected'&&electionPhase()==='awaiting'?links:[]){try{const parsed=readResultTables(await get(url));if(parsed.length){races=parsed;resultsSource=url;break;}}catch{}}
  const announcements=(news.status==='fulfilled'&&Array.isArray(news.value)?news.value:[]).slice(0,4).map(row=>({title:plain(row.title).slice(0,220),date:String(row.updTime||row.begTime||'').slice(0,8),url:officialLink(row.link)||INFO}));
- return {event:EVENT,phase:electionPhase(),resultsAvailable:races.length>0,races,resultsSource,resultsPage:links[0]||null,announcements,checkedAt:new Date().toISOString()};
+ return {event:EVENT,phase:electionPhase(),resultsAvailable:races.length>0,races,resultsSource,resultsPage:POLIWAVE_PAGE,provider:'poliwave',providerState:poliwave.status==='fulfilled'?'connected':poliwave.reason?.code||'unavailable',...(races.length?{provider:'cec',resultsPage:resultsSource}:{}),...(poliwave.status==='fulfilled'?poliwave.value:{}),announcements,checkedAt:new Date().toISOString()};
 }
 export default async function election(req,res){
  res.setHeader('Cache-Control','no-store');if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'Method not allowed'});}
