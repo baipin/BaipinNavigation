@@ -1,11 +1,12 @@
-import {loadPoliwave,POLIWAVE_PAGE} from './poliwave.js';
+import {loadSetnResults,SETN_PAGE} from './setn-election.js';
+import {ELECTION_EVENT as EVENT,electionPhase} from '../js/election-time.js';
+export {EVENT,electionPhase};
 // Election-day board. Source discovery follows links actually published by the CEC.
 // No assumed election-results endpoint, party totals or winner declarations.
 const HOME='https://www.cec.gov.tw/';
 const INFO='https://info.cec.gov.tw/vote2026/';
 const MENU=INFO+'static/contentJson/menu.json';
 const NEWS=INFO+'static/contentJson/article/tag/1.json';
-export const EVENT={id:'tw-local-2026',date:'2026-11-28',opens:'2026-11-28T08:00:00+08:00',closes:'2026-11-28T16:00:00+08:00',ends:'2026-11-29T00:00:00+08:00',source:INFO};
 const decode=value=>String(value||'').replace(/&(?:nbsp|amp|lt|gt|quot|#39);/g,x=>({'&nbsp;':' ','&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&#39;':"'"})[x]);
 const plain=value=>decode(String(value||'').replace(/<[^>]*>/g,' ')).replace(/\s+/g,' ').trim();
 export function officialLink(value,base=HOME){if(!value)return null;try{const u=new URL(decode(value),base);return u.protocol==='https:'&&(u.hostname==='cec.gov.tw'||u.hostname.endsWith('.cec.gov.tw'))&&!u.username&&!u.password?u.href:null;}catch{return null;}}
@@ -35,21 +36,20 @@ export function readResultTables(html){
  }
  return races.filter(race=>race.candidates.length).map(race=>({...race,candidates:race.candidates.sort((a,b)=>b.votes-a.votes)}));
 }
-export function electionPhase(now=Date.now()){return now<Date.parse(EVENT.opens)?'upcoming':now<Date.parse(EVENT.closes)?'voting':now<Date.parse(EVENT.ends)?'awaiting':'ended';}
 async function get(url,json=false){const response=await fetch(url,{signal:AbortSignal.timeout(8000),cache:'no-store',redirect:'error'});if(!response.ok)throw Error('source unavailable');const body=await response.text();if(body.length>2500000)throw Error('source too large');return json?JSON.parse(body):body;}
 let cached=null,pending=null;
 async function snapshot(){
- const [home,menu,news,poliwave]=await Promise.allSettled([get(HOME),get(MENU,true),get(NEWS,true),loadPoliwave()]);
- if(home.status==='rejected'&&menu.status==='rejected'&&poliwave.status==='rejected')throw Error('CEC unavailable');
+ const [home,menu,news,media]=await Promise.allSettled([get(HOME),get(MENU,true),get(NEWS,true),loadSetnResults({counting:electionPhase()==='counting'})]);
+ if(home.status==='rejected'&&menu.status==='rejected'&&media.status==='rejected')throw Error('CEC unavailable');
  const links=discoverResults(menu.status==='fulfilled'?menu.value:[],home.status==='fulfilled'?home.value:'');
  let races=[],resultsSource=null;
- for(const url of poliwave.status==='rejected'&&electionPhase()==='awaiting'?links:[]){try{const parsed=readResultTables(await get(url));if(parsed.length){races=parsed;resultsSource=url;break;}}catch{}}
+ for(const url of media.status==='rejected'&&electionPhase()==='counting'?links:[]){try{const parsed=readResultTables(await get(url));if(parsed.length){races=parsed;resultsSource=url;break;}}catch{}}
  const announcements=(news.status==='fulfilled'&&Array.isArray(news.value)?news.value:[]).slice(0,4).map(row=>({title:plain(row.title).slice(0,220),date:String(row.updTime||row.begTime||'').slice(0,8),url:officialLink(row.link)||INFO}));
- return {event:EVENT,phase:electionPhase(),resultsAvailable:races.length>0,races,resultsSource,resultsPage:POLIWAVE_PAGE,provider:'poliwave',providerState:poliwave.status==='fulfilled'?'connected':poliwave.reason?.code||'unavailable',...(races.length?{provider:'cec',resultsPage:resultsSource}:{}),...(poliwave.status==='fulfilled'?poliwave.value:{}),announcements,checkedAt:new Date().toISOString()};
+ return {event:EVENT,phase:electionPhase(),resultsAvailable:races.length>0,races,resultsSource,resultsPage:SETN_PAGE,provider:'setn',providerState:media.status==='fulfilled'?'connected':'unavailable',...(races.length?{provider:'cec',providerState:'connected',resultsPage:resultsSource,attribution:'中央選舉委員會'}:{}),...(media.status==='fulfilled'?media.value:{}),announcements,checkedAt:new Date().toISOString()};
 }
 export default async function election(req,res){
  res.setHeader('Cache-Control','no-store');if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'Method not allowed'});}
  if(electionPhase()==='ended')return res.status(200).json({event:EVENT,phase:'ended',resultsAvailable:false,races:[]});
- try{if(!cached||Date.now()-cached.at>60000){pending??=snapshot().then(data=>{cached={at:Date.now(),data};return data;}).finally(()=>pending=null);await pending;}return res.status(200).json({...cached.data,phase:electionPhase()});}
+ try{if(!cached||Date.now()-cached.at>30000||cached.phase!==electionPhase()){pending??=snapshot().then(data=>{cached={at:Date.now(),phase:electionPhase(),data};return data;}).finally(()=>pending=null);await pending;}return res.status(200).json({...cached.data,phase:electionPhase(),serverTime:new Date().toISOString()});}
  catch{return res.status(502).json({event:EVENT,error:'選舉資料暫時無法讀取；請查看中選會官方資訊。'});}
 }
