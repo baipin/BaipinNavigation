@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {monthDays,weekDays,calendarDisplayRange,dayEvents,timedEventLayout} from '../js/calendar-expanded-model.js';
+const days=monthDays(new Date(2026,10,1));assert.equal(days.length,42);assert.equal(days[0],'2026-11-01');assert.equal(days.at(-1),'2026-12-12');assert.ok(monthDays(new Date(2024,1,1)).includes('2024-02-29'));assert.deepEqual(weekDays('2027-01-01'),['2026-12-27','2026-12-28','2026-12-29','2026-12-30','2026-12-31','2027-01-01','2027-01-02']);
+const range=calendarDisplayRange(new Date(2026,10,1));assert.equal(new Date(range.start).getHours(),0);assert.equal(new Date(range.end).getDate(),13);
+const event=(id,h,m,endH,endM)=>({id,title:id,start:new Date(2026,10,28,h,m).toISOString(),end:new Date(2026,10,28,endH,endM).toISOString(),allDay:false});
+const a=event('a',9,0,11,0),b=event('b',9,30,10,0),c=event('c',11,0,12,0),due={...event('due',13,0,13,0),due:true};
+const layout=timedEventLayout([a,b,c,due],'2026-11-28');assert.equal(layout[0].columns,2);assert.notEqual(layout[0].lane,layout[1].lane);assert.equal(layout[2].columns,1);assert.equal(layout[3].layoutEnd-layout[3].start,30);
+const all={id:'all',allDay:true,start:'2026-11-28',end:'2026-11-29'};assert.equal(dayEvents([all],'2026-11-29').length,0);assert.equal(dayEvents([a,all],'2026-11-28')[0].id,'all');assert.equal(timedEventLayout([all],'2026-11-28').length,0);
+const cross={...a,start:new Date(2026,10,27,23).toISOString(),end:new Date(2026,10,28,2).toISOString()};assert.equal(timedEventLayout([cross],'2026-11-28')[0].start,0);assert.equal(timedEventLayout([cross],'2026-11-27')[0].end,1440);assert.deepEqual(timedEventLayout([{...a,start:'invalid'}],'2026-11-28'),[]);
+console.log('PASS: month/week boundaries, leap day, all-day exclusion, overlapping lanes, adjacent events, Due visibility and cross-midnight clipping.');
