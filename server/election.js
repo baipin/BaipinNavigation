@@ -1,3 +1,4 @@
+import councilElection from './council-election.js';
 import {loadSetnResults,SETN_PAGE} from './setn-election.js';
 import {ELECTION_EVENT as EVENT,electionPhase} from '../js/election-time.js';
 export {EVENT,electionPhase};
@@ -49,6 +50,7 @@ async function snapshot(){
 }
 export default async function election(req,res){
  res.setHeader('Cache-Control','no-store');if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'Method not allowed'});}
+ if(req.query?.council==='1'||new URL(req.url||'/','https://123.baipon.com').searchParams.get('council')==='1')return councilElection(req,res);
  if(electionPhase()==='ended')return res.status(200).json({event:EVENT,phase:'ended',resultsAvailable:false,races:[]});
  try{if(!cached||Date.now()-cached.at>30000||cached.phase!==electionPhase()){pending??=snapshot().then(data=>{cached={at:Date.now(),phase:electionPhase(),data};return data;}).finally(()=>pending=null);await pending;}return res.status(200).json({...cached.data,phase:electionPhase(),serverTime:new Date().toISOString()});}
  catch{return res.status(502).json({event:EVENT,error:'選舉資料暫時無法讀取；請查看中選會官方資訊。'});}

@@ -1,3 +1,6 @@
+import {createCouncilTicker} from './council-ticker.js';
+import {createElectionMap} from './election-map.js';
+import {partyColor,electionPage,rankedCandidates} from './election-display.js';
 import {ELECTION_EVENT,electionPhase,electionVisible} from './election-time.js';
 const DAY=ELECTION_EVENT.date,END=Date.parse(ELECTION_EVENT.ends);
 let serverOffset=0;const now=()=>Date.now()+serverOffset;
@@ -9,41 +12,65 @@ const enabled=()=>today()&&window.naviWidgets?.enabled('election')!==false;
 const icon=name=>{const el=node('span',name,'material-icons');el.setAttribute('aria-hidden','true');return el;};
 const card=node('div',null,'card-glass election-card'),head=node('div',null,'election-head'),title=node('strong'),subtitle=node('p'),heading=node('div');heading.append(title,subtitle);
 const details=node('mdui-button');details.variant='tonal';details.icon='how_to_vote';const refresh=node('mdui-button-icon');refresh.icon='refresh';head.append(icon('how_to_vote'),heading,refresh,details);
-const phaseLabel=node('strong',null,'election-phase');phaseLabel.setAttribute('role','status');const summary=node('div',null,'election-summary'),meta=node('small',null,'election-meta');card.append(head,phaseLabel,summary,meta);board.append(card);
+const phaseLabel=node('strong',null,'election-phase');phaseLabel.setAttribute('role','status');const summary=node('div',null,'election-summary'),meta=node('small',null,'election-meta');const rotation=node('div',null,'election-rotation'),previous=node('mdui-button-icon'),next=node('mdui-button-icon'),pause=node('mdui-button-icon'),pageLabel=node('small');previous.icon='chevron_left';next.icon='chevron_right';rotation.append(previous,pageLabel,next,pause);card.append(head,phaseLabel,summary,rotation,meta);board.append(card);const councilHost=node('section',null,'election-council');card.insertBefore(councilHost,meta);const councilTicker=createCouncilTicker(councilHost);
 const dialog=node('mdui-dialog');dialog.id='election-dialog';dialog.setAttribute('close-on-overlay-click','');const dialogHead=node('div',null,'election-dialog-head');dialogHead.slot='headline';const dialogTitle=node('span'),close=node('mdui-button-icon');close.icon='close';close.onclick=()=>dialog.open=false;dialogHead.append(dialogTitle,close);
-const dialogPhase=node('strong',null,'election-phase');dialogPhase.setAttribute('role','status');const intro=node('p'),select=node('select'),results=node('div'),sources=node('div',null,'election-sources'),news=node('div',null,'election-announcements');select.className='election-select';dialog.append(dialogHead,dialogPhase,intro,select,results,news,sources);document.body.append(dialog);
+const dialogPhase=node('strong',null,'election-phase');dialogPhase.setAttribute('role','status');const intro=node('p'),select=node('select'),results=node('div'),sources=node('div',null,'election-sources'),news=node('div',null,'election-announcements');select.className='election-select';const mapHost=node('section',null,'election-map');dialog.append(dialogHead,dialogPhase,intro,mapHost,select,results,news,sources);const map=createElectionMap(mapHost,name=>{selected=name;render();results.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});});document.body.append(dialog);
 let data=null,error='',timer=null,controller=null,loading=false,visible=false,selected='';
+let pageIndex=0,rotationTimer=null,flipTimer=null,flipRevision=0,paused=false;
+const wide=matchMedia('(min-width:1000px)');
+const pageSize=()=>wide.matches?4:2;
+const candidatePages=()=>Math.ceil((data?.races?.length||0)/pageSize());
+wide.addEventListener('change',()=>{stopRotation();render();});
+const flipClass=(name,add)=>summary.querySelectorAll('.election-race').forEach(el=>el.classList[add?'add':'remove'](name));
+function stopRotation(){clearTimeout(rotationTimer);rotationTimer=null;clearTimeout(flipTimer);flipTimer=null;flipRevision++;flipClass('election-flip-out',false);flipClass('election-flip-in',false);summary.setAttribute('aria-busy','false');}
+function scheduleRotation(){councilTicker.setActive(enabled()&&visible&&!document.hidden&&!dialog.open);clearTimeout(rotationTimer);rotationTimer=null;if(enabled()&&visible&&!document.hidden&&!dialog.open&&!paused&&candidatePages()>1)rotationTimer=setTimeout(()=>turnPage(1),6000);}
+function renderSummary(){
+ summary.classList.remove('election-flip-out','election-flip-in');summary.replaceChildren();
+ const page=electionPage(data?.races||[],pageIndex,pageSize()),pages=page.pages;pageIndex=page.page;
+ for(const race of page.items){const item=candidateList(race,true);item.tabIndex=0;item.setAttribute('role','button');item.setAttribute('aria-label',race.name+' · '+t('查看开票详情','查看開票詳情'));item.onclick=event=>{event.stopPropagation();selected=race.name;show();};item.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();selected=race.name;show();}};summary.append(item);}
+ rotation.hidden=pages<2;pageLabel.textContent=(pageIndex+1)+' / '+pages;
+ previous.setAttribute('aria-label',t('上一组县市','上一組縣市'));next.setAttribute('aria-label',t('下一组县市','下一組縣市'));pause.icon=paused?'play_arrow':'pause';pause.setAttribute('aria-label',paused?t('继续轮播','繼續輪播'):t('暂停轮播','暫停輪播'));pause.setAttribute('aria-pressed',String(paused));summary.setAttribute('aria-busy','false');scheduleRotation();
+}
+function turnPage(direction){
+ stopRotation();const pages=candidatePages();if(pages<2)return;
+ const revision=flipRevision;const advance=()=>{if(revision!==flipRevision)return;pageIndex=pageIndex+direction;renderSummary();flipClass('election-flip-in',true);};
+ if(matchMedia('(prefers-reduced-motion: reduce)').matches){advance();return;}
+ summary.setAttribute('aria-busy','true');flipClass('election-flip-out',true);flipTimer=setTimeout(advance,180);
+}
+for(const [button,action]of [[previous,()=>turnPage(-1)],[next,()=>turnPage(1)],[pause,()=>{stopRotation();paused=!paused;renderSummary();}]])button.onclick=event=>{event.stopPropagation();action();};
+
 const dates=value=>value?new Date(value).toLocaleTimeString(document.documentElement.lang==='zh-CN'?'zh-CN':'zh-HK',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Taipei'}):'';
 function phase(){return ({upcoming:t('投票尚未开始 · 08:00 开始','投票尚未開始 · 08:00 開始'),voting:t('投票进行中 · 16:00 截止','投票進行中 · 16:00 截止'),counting:t('开票进行中','開票進行中'),ended:t('开票日展示已结束','開票日展示已結束')})[electionPhase(now())];}
-function candidateList(race,compact=false){const block=node('article',null,'election-race');block.append(node('strong',race.name));if(!compact){const state=({awaiting:t('等待开票','等待開票'),tied:t('票数相同','票數相同'),leading:t('开票中','開票中'),won:t('来源已判定','來源已判定')})[race.status];if(state)block.append(node('small',state+(race.counted!==null&&race.counted!==undefined?' · '+race.counted.toFixed(1)+'% '+t('投票站已报告','投票站已報告'):''),'election-meta'));}const candidates=compact?race.candidates.slice(0,2):race.candidates;for(const candidate of candidates){const row=node('div',null,'election-candidate'),name=node('span',candidate.name),votes=node('strong',candidate.votes===null||candidate.votes===undefined?'—':Number(candidate.votes).toLocaleString());if(candidate.party)name.append(node('small',candidate.party));row.append(name,votes);block.append(row);}return block;}
+function candidateList(race,compact=false,offset=0){const block=node('article',null,'election-race');block.append(node('strong',race.name));if(!compact){const state=({awaiting:t('等待开票','等待開票'),tied:t('票数相同','票數相同'),leading:t('开票中','開票中'),won:t('来源已判定','來源已判定')})[race.status];if(state)block.append(node('small',state+(race.counted!==null&&race.counted!==undefined?' · '+race.counted.toFixed(1)+'% '+t('投票站已报告','投票站已報告'):''),'election-meta'));}const candidates=compact?electionPage(rankedCandidates(race.candidates),offset,2).items:rankedCandidates(race.candidates);const rows=compact?node('div',null,'election-candidates'):block;if(compact)block.append(rows);for(const candidate of candidates){const row=node('div',null,'election-candidate');row.style.setProperty('--election-party',partyColor(candidate.party));const name=node('span',candidate.name),votes=node('strong',candidate.votes===null||candidate.votes===undefined?'—':Number(candidate.votes).toLocaleString());if(candidate.party)name.append(node('small',candidate.party));row.append(name,votes);rows.append(row);}return block;}
 function source(label,url){try{if(!/^https:$/.test(new URL(url).protocol))return;}catch{return;}const a=node('a',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.append(icon('open_in_new'));sources.append(a);}
 function render(){
  board.hidden=!enabled();title.textContent=t('台湾九合一 · 县市长选举','台灣九合一 · 縣市長選舉');dialogTitle.textContent=t('2026 台湾地方选举看板','2026 台灣地方選舉看板');details.textContent=t('查看详情','查看詳情');close.setAttribute('aria-label',t('关闭','關閉'));refresh.setAttribute('aria-label',t('刷新选举资料','更新選舉資料'));select.setAttribute('aria-label',t('选择县市','選擇縣市'));subtitle.textContent='2026.11.28 · UTC+8';
- summary.replaceChildren();sources.replaceChildren();news.replaceChildren();results.replaceChildren();select.replaceChildren();
+ stopRotation();rotation.hidden=true;summary.replaceChildren();sources.replaceChildren();news.replaceChildren();results.replaceChildren();select.replaceChildren();
  const hasBallot=!!data?.races?.length;
  const providerMessage=data?.providerState==='partial'?t('部分地区暂未读取成功，将自动重试。','部分地區暫未讀取成功，將自動重試。'):data?.providerState&&data.providerState!=='connected'?t('开票资料源暂不可用，请查看来源页面。','開票資料源暫不可用，請查看來源頁面。'):'';
  phaseLabel.textContent=dialogPhase.textContent=phase();
- if(hasBallot){for(const race of data.races.slice(0,6))summary.append(candidateList(race,true));if(providerMessage)summary.append(node('p',providerMessage,'election-empty'));}
+ if(hasBallot){renderSummary();}
  else{const message=node('div',null,'election-wait');message.append(icon(error?'cloud_off':'schedule'),node('strong',error?t('暂时无法读取','暫時無法讀取'):phase()),node('span',error||providerMessage||t('票数尚未公布，公布前不显示估算或模拟票数。','票數尚未公布，公布前不顯示估算或模擬票數。')));summary.append(message);}
- meta.textContent=(data?.checkedAt?t('检查时间 ','檢查時間 ')+dates(data.checkedAt)+' · ':'')+(data?.provider==='cec'?t('中央选举委员会','中央選舉委員會'):t('三立新闻网','三立新聞網'))+' · '+t('每 30 秒更新 · 点按查看详情','每 30 秒更新 · 點按查看詳情');
+ meta.textContent=(providerMessage?providerMessage+' · ':'')+(data?.checkedAt?t('检查时间 ','檢查時間 ')+dates(data.checkedAt)+' · ':'')+(data?.provider==='cec'?t('中央选举委员会','中央選舉委員會'):t('三立新闻网','三立新聞網'))+' · '+t('每 30 秒更新 · 点按查看详情','每 30 秒更新 · 點按查看詳情');
  intro.textContent=hasBallot?t('票数来自三立新闻网公开开票页面，尚未开票的县市显示 —。媒体即时票数可能更正，领先不等于当选，正式结果以中选会为准。','票數來自三立新聞網公開開票頁面，尚未開票的縣市顯示 —。媒體即時票數可能更正，領先不等於當選，正式結果以中選會為準。'):t('投票时间为 08:00–16:00（台湾时间）。目前尚无本站可读取的开票票数；以下入口可查看选务与开票发布情况。','投票時間為 08:00–16:00（台灣時間）。目前尚無本站可讀取的開票票數；以下入口可查看選務與開票發布情況。');
  select.hidden=!hasBallot;
  if(hasBallot){for(const race of data.races){const option=node('option',race.name);option.value=race.name;select.append(option);}if(!data.races.some(race=>race.name===selected))selected=data.races[0].name;select.value=selected;const race=data.races.find(race=>race.name===selected);if(race)results.append(candidateList(race));}
  else{results.append(node('p',error||providerMessage||phase(),'election-empty'));}
  if(data?.announcements?.length){news.append(node('h3',t('中选会公告','中選會公告')));for(const item of data.announcements){const a=node('a',item.title);a.href=item.url;a.target='_blank';a.rel='noopener noreferrer';a.append(icon('open_in_new'));news.append(a);}}
+ if(dialog.open)map.render(data?.races||[]);
  source(t('三立即时开票','三立即時開票'),'https://elect.setn.com/2026/vote');
  if(data?.resultsPage&&data.provider==='cec')source(t('官方开票页面','官方開票頁面'),data.resultsPage);
  if(data?.attribution)sources.append(node('small',data.attribution,'election-meta'));
  if(data?.sourceTime)sources.append(node('small',t('来源更新时间 ','來源更新時間 ')+dates(data.sourceTime),'election-meta'));
  source(t('中选会选举专区','中選會選舉專區'),'https://info.cec.gov.tw/vote2026/');source(t('中央社即时开票','中央社即時開票'),'https://www.cna.com.tw/topic/newstopic/5144.aspx');
 }
-function stop(){clearTimeout(timer);timer=null;controller?.abort();controller=null;}
+function stop(){councilTicker.setActive(false);stopRotation();clearTimeout(timer);timer=null;controller?.abort();controller=null;}
 function active(){return enabled()&&!document.hidden&&(visible||dialog.open);}
 function schedule(){clearTimeout(timer);if(active())timer=setTimeout(()=>void load(),30000);}
 async function load(){if(!active()||loading)return;loading=true;error='';refresh.loading=true;controller=new AbortController();try{const response=await fetch('/api/sync?content=election',{cache:'no-store',signal:controller.signal});if(!response.ok)throw Error();const result=await response.json();if(!result.event||result.event.date!==DAY)throw Error();if(!active())return;data=result;const stamp=Date.parse(result.serverTime);if(Number.isFinite(stamp))serverOffset=stamp-Date.now();}catch(err){if(err.name!=='AbortError'){error=t('选举资料暂时无法读取，请查看官方页面。','選舉資料暫時無法讀取，請查看官方頁面。');data=null;}}finally{loading=false;controller=null;refresh.loading=false;render();schedule();}}
-function show(){if(!enabled())return;dialog.open=true;render();void load();}
+function show(){if(!enabled())return;councilTicker.setActive(false);dialog.open=true;render();void load();}
 card.addEventListener('click',event=>{if(!event.composedPath().includes(refresh))show();});details.onclick=event=>{event.stopPropagation();show();};refresh.onclick=event=>{event.stopPropagation();void load();};select.onchange=()=>{selected=select.value;render();};
-dialog.addEventListener('closed',()=>{if(!visible)stop();else schedule();});
-const observer=new IntersectionObserver(([entry])=>{visible=entry.isIntersecting;if(active())void load();else stop();},{rootMargin:'150px'});observer.observe(board);
-document.addEventListener('visibilitychange',()=>{if(active())void load();else stop();});document.addEventListener('navi-widgets-change',()=>{render();if(active())void load();else stop();});new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+dialog.addEventListener('closed',()=>{if(!visible)stop();else schedule();scheduleRotation();});dialog.addEventListener('open',stopRotation);
+const observer=new IntersectionObserver(([entry])=>{visible=entry.isIntersecting;if(active())void load();else stop();scheduleRotation();},{rootMargin:'150px'});observer.observe(board);
+document.addEventListener('visibilitychange',()=>{if(active()){void load();scheduleRotation();}else stop();});document.addEventListener('navi-widgets-change',()=>{render();if(active())void load();else stop();});new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
 render();let currentPhase=electionPhase(now());const phaseTimer=setInterval(()=>{if(!today()){stop();board.hidden=true;dialog.open=false;observer.disconnect();clearInterval(phaseTimer);return;}const next=electionPhase(now());phaseLabel.textContent=dialogPhase.textContent=phase();if(next!==currentPhase){currentPhase=next;render();void load();}},1000);
