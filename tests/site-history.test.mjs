@@ -4,7 +4,7 @@ import {execFileSync} from 'node:child_process';
 const root=new URL('../',import.meta.url);
 const data=JSON.parse(await readFile(new URL('data/version-history.json',root),'utf8'));
 const history=await readFile(new URL('history.html',root),'utf8');
-assert.ok(history.includes('覆检日期：2026 年 11 月 24 日'));assert.ok(history.includes('覆檢日期：2026 年 11 月 24 日'));assert.ok(!history.includes('data-legal-text="method"'));assert.ok(data.entries.length>=20);let previous='9999-12-31';
+assert.ok(history.includes('覆检日期：2026 年 11 月 28 日'));assert.ok(history.includes('覆檢日期：2026 年 11 月 28 日'));assert.ok(!history.includes('data-legal-text="method"'));assert.ok(data.entries.length>=20);let previous='9999-12-31';
 for(const entry of data.entries){
  const stamp=execFileSync('git',['show','-s','--format=%aI',entry.commit],{cwd:root,encoding:'utf8'}).trim();
  const date=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Hong_Kong',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(stamp));
