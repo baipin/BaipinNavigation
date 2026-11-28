@@ -64,6 +64,6 @@
 
 ## 独立目录约定
 
-当前公开地址是 `/archive/election-taiwan-local-2026/`。本目录 `js/`、`css/`、`data/`、`img/parties/` 均为本次活动固定副本，运行不依赖其他选举的组件。仅导航站通用 logo、Material 图标／MDUI、`legal.css`、`js/legal.js` 与背景设置使用全站资源。`/election.html` 与 `/election-taiwan-local-2026.html` 由 Vercel 永久跳转到此目录，保留查询参数。通用原型仍在`features/election/` 目录，供下次重新接入直播；当前首页完全不加载它们。
+当前公开地址是 `/archive/election-taiwan-local-2026/`。本目录 `js/`、`css/`、`data/`、`img/parties/` 均为本次活动固定副本，运行不依赖其他选举的组件。仅导航站通用 logo、Material 图标／MDUI、`legal.css`、`js/legal.js` 与背景设置使用全站资源。旧页面已经移除，不设置重定向；站内链接统一指向当前目录。通用原型仍在`features/election/` 目录，供下次重新接入直播；当前首页完全不加载它们。
 
 可复用结构的维护入口为 [`../../features/election/README.md`](../../features/election/README.md)。独立存档只更正其自身错误，不随新活动修改。

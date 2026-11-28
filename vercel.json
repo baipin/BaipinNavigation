@@ -40,27 +40,7 @@
   "functions": {
     "api/sync.js": {
       "maxDuration": 60,
-      "includeFiles": [
-        "archive/election-taiwan-local-2026/data/archive-2026.json",
-        "features/election/data/**"
-      ]
+      "includeFiles": "{archive/election-taiwan-local-2026/data/archive-2026.json,features/election/data/**}"
     }
-  },
-  "redirects": [
-    {
-      "source": "/election.html",
-      "destination": "/archive/election-taiwan-local-2026/",
-      "permanent": true
-    },
-    {
-      "source": "/election-taiwan-local-2026.html",
-      "destination": "/archive/election-taiwan-local-2026/",
-      "permanent": true
-    },
-    {
-      "source": "/elections/taiwan-local-2026/:path*",
-      "destination": "/archive/election-taiwan-local-2026/:path*",
-      "permanent": true
-    }
-  ]
+  }
 }
