@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-11-28T16:18:35.651Z",
+  "status": "FINISHED",
+  "provider": "tvbs",
+  "mayorDistricts": 22,
+  "councilDistricts": 221,
+  "unmarkedDistricts": [],
+  "snapshot": "/archive/election-taiwan-local-2026/data/archive-2026.json",
+  "sourceTimes": {
+    "mayor": "2026-11-28T16:09:44.071Z",
+    "council": "2026-11-28T16:11:42.984Z"
+  },
+  "note": "Media finished-counting snapshot, not the final CEC announcement."
+}

@@ -1,0 +1,2 @@
+const notice=document.getElementById('election-archive-notice'),close=document.getElementById('election-archive-dismiss');
+if(notice&&close){const labels=()=>close.setAttribute('aria-label',document.documentElement.lang==='zh-CN'?'关闭存档提示':'關閉存檔提示');labels();new MutationObserver(labels).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});close.addEventListener('click',()=>{notice.hidden=true;document.querySelector('header>a')?.focus({preventScroll:true});});}

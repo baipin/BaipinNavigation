@@ -1,93 +1,14 @@
 {
-  "checkedAt": "2026-11-28T15:54:54.124Z",
-  "timezone": "Asia/Hong_Kong",
-  "sources": [
-    {
-      "provider": "tvbs",
-      "kind": "mayor",
-      "url": "https://news.tvbs.com.tw/events/2026election/json/2026/mayor.json",
-      "status": "COUNTING",
-      "sourceTime": "2026-11-28T15:47:42.781Z",
-      "districts": 22,
-      "unmarkedDistricts": [],
-      "seats": [
-        {
-          "party": "民主進步黨",
-          "seats": 10
-        },
-        {
-          "party": "中國國民黨",
-          "seats": 11
-        },
-        {
-          "party": "無黨籍及未經政黨推薦",
-          "seats": 1
-        }
-      ]
-    },
-    {
-      "provider": "tvbs",
-      "kind": "councilor",
-      "url": "https://news.tvbs.com.tw/events/2026election/json/2026/councilor.json",
-      "status": "COUNTING",
-      "sourceTime": "2026-11-28T15:47:43.250Z",
-      "districts": 221,
-      "unmarkedDistricts": [
-        "新竹縣第1選舉區",
-        "新竹縣第2選舉區",
-        "新竹縣第12選舉區",
-        "新竹縣第13選舉區",
-        "新竹縣第14選舉區"
-      ],
-      "seats": [
-        {
-          "party": "民主進步黨",
-          "seats": 305
-        },
-        {
-          "party": "中國國民黨",
-          "seats": 339
-        },
-        {
-          "party": "無黨籍及未經政黨推薦",
-          "seats": 217
-        },
-        {
-          "party": "台灣民眾黨",
-          "seats": 32
-        },
-        {
-          "party": "社會民主黨",
-          "seats": 1
-        },
-        {
-          "party": "時代力量",
-          "seats": 3
-        },
-        {
-          "party": "新黨",
-          "seats": 1
-        },
-        {
-          "party": "親民黨",
-          "seats": 2
-        },
-        {
-          "party": "勞動黨",
-          "seats": 2
-        },
-        {
-          "party": "台聯黨",
-          "seats": 1
-        }
-      ]
-    },
-    {
-      "provider": "setn",
-      "kind": "mayor",
-      "url": "https://elect.setn.com/2026/vote",
-      "districts": 22,
-      "unmarkedDistricts": []
-    }
-  ]
+  "checkedAt": "2026-11-28T16:18:35.651Z",
+  "status": "FINISHED",
+  "provider": "tvbs",
+  "mayorDistricts": 22,
+  "councilDistricts": 221,
+  "unmarkedDistricts": [],
+  "snapshot": "/archive/election-taiwan-local-2026/data/archive-2026.json",
+  "sourceTimes": {
+    "mayor": "2026-11-28T16:09:44.071Z",
+    "council": "2026-11-28T16:11:42.984Z"
+  },
+  "note": "Media finished-counting snapshot, not the final CEC announcement."
 }
