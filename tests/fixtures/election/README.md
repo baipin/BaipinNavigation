@@ -7,3 +7,5 @@ The page's refresh()/getUrl() code declares:
 These are unmodified source fragments. They contain 22 districts and 81 candidates, with zero placeholders before counting. Tests that replace a votes-number value are explicitly synthetic scenarios, not observed results or predictions.
 
 `setn-council-taipei-1.html` is the public Taipei council District 1 fragment (trailing whitespace normalized) from `/2026/vote/getcouncilmember?element=sub&reg=six-cities&city=taipei-city&dist=81010000`, captured 2026-11-28. Zero counts remain placeholders until actual reporting; no winner flag is inferred.
+
+`tvbs-mayor.json` and `tvbs-council.json` contain the first three actual district objects (other districts omitted for fixture size) from the public TVBS page-referenced `/events/2026election/json/2026/mayor.json` and `councilor.json`, captured 2026-11-28. Fields and counts in the retained objects are unchanged. TVBS councillor.js supplies partyName/profileName/votes/elected and district identifiers. CNA test tables are synthetic validation cases based on its published sheets-api.js, not claimed live election data.

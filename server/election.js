@@ -1,3 +1,6 @@
+import {ELECTION_SOURCES} from '../js/election-sources.js';
+import {loadTvbs} from './tvbs-election.js';
+import {loadCna} from './cna-election.js';
 import councilElection from './council-election.js';
 import {loadSetnResults,SETN_PAGE} from './setn-election.js';
 import {ELECTION_EVENT as EVENT,electionPhase} from '../js/election-time.js';
@@ -50,8 +53,10 @@ async function snapshot(){
 }
 export default async function election(req,res){
  res.setHeader('Cache-Control','no-store');if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'Method not allowed'});}
+ const query=new URL(req.url||'/','https://123.baipon.com').searchParams;for(const [key,value]of Object.entries(req.query||{}))if(typeof value==='string')query.set(key,value);const provider=query.get('source')||'setn';if(!Object.hasOwn(ELECTION_SOURCES,provider))return res.status(400).json({error:'未知的開票資料來源。'});
  if(req.query?.council==='1'||new URL(req.url||'/','https://123.baipon.com').searchParams.get('council')==='1')return councilElection(req,res);
  if(electionPhase()==='ended')return res.status(200).json({event:EVENT,phase:'ended',resultsAvailable:false,races:[]});
+ if(provider!=='setn'){const source=ELECTION_SOURCES[provider];try{const info=provider==='tvbs'?await loadTvbs('mayor'):provider==='cna'?await loadCna():{races:[],providerState:'external'};return res.status(200).json({event:EVENT,phase:electionPhase(),provider,providerState:'connected',...info,checkedAt:new Date().toISOString(),serverTime:new Date().toISOString(),resultsPage:source.page,attribution:source.tc+' · 媒體開票資料（非中選會正式公告）'});}catch{return res.status(503).json({event:EVENT,provider,error:provider==='cna'?'中央社公開資料目前受限流或暫不可用，請稍後再試或選擇其他來源。':'TVBS 開票資料暫時無法讀取，請選擇其他來源。'});}}
  try{if(!cached||Date.now()-cached.at>30000||cached.phase!==electionPhase()){pending??=snapshot().then(data=>{cached={at:Date.now(),phase:electionPhase(),data};return data;}).finally(()=>pending=null);await pending;}return res.status(200).json({...cached.data,phase:electionPhase(),serverTime:new Date().toISOString()});}
  catch{return res.status(502).json({event:EVENT,error:'選舉資料暫時無法讀取；請查看中選會官方資訊。'});}
 }
