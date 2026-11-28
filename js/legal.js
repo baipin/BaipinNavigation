@@ -60,7 +60,7 @@ themeButton.onclick = () => {
 };
 systemTheme.addEventListener('change',applyTheme);
 window.addEventListener('storage',event=> { if (event.key === 'theme_mode') applyTheme(); });
-// All background sources use the same saved preferences as the homepage.
-import('./legal-background.js?v=source-priority-v3').then(({installLegalBackground})=>installLegalBackground()).catch(()=>window.naviBackgroundStartup?.fallback());
+// Archived pages can opt into a fixed local background while keeping language and theme controls.
+if(!document.body.hasAttribute('data-fixed-background'))import('./legal-background.js?v=source-priority-v3').then(({installLegalBackground})=>installLegalBackground()).catch(()=>window.naviBackgroundStartup?.fallback());
 applyTheme();
 render();

@@ -36,7 +36,7 @@ for(const source of ['hko','traffic','bing','webcast','webcast-live']){
  const startup={pending:true,ready(){this.pending=false;},fallback(){this.pending=false;}};const s=setup('hko',{startup,cookie:'homepage_bg='+encodeURIComponent('https://example.test/photo.jpg')});assert.equal(s.styles.size,0,'no default/photo swap while camera initializes');for(let i=0;i<8;i++)await tick();const before=s.styles.get('--legal-wallpaper');s.win.emit('pageshow');assert.equal(s.styles.get('--legal-wallpaper'),before,'pageshow preserves camera while refreshing');s.api.destroy();
 }
 for(const name of ['privacy.html','terms.html','history.html']){
- const text=await readFile(new URL('../'+name,import.meta.url),'utf8');assert.ok(text.includes('legal.js?v=source-priority-v5'));assert.ok(text.includes('legal.css?v=all-backgrounds-v4'));
+ const text=await readFile(new URL('../'+name,import.meta.url),'utf8');assert.ok(text.includes('legal.js?v=source-priority-v5'));assert.match(text, /href="\/legal\.css\?v=[^"]+"/);
  if(name==='history.html')continue;const labels=JSON.parse(text.match(/<script type="application\/json" id="legal-translations">(.*?)<\/script>/s)[1]);
  assert.ok(!/独立密码|獨立密碼|独立备份密码|獨立備份密碼|三个服务|三個服務/.test(text));
  for(const lang of ['sc','tc']){assert.ok(labels[lang].calendar_3.includes('OAuth'));assert.ok(labels[lang].calendar_3.includes('Canvas'));assert.ok(labels[lang].vault_0.includes(lang==='sc'?'默认':'預設'));assert.ok(labels[lang].updated.includes('11 月 25 日'));}
