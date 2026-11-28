@@ -5,3 +5,5 @@ const html=fs.readFileSync(new URL('./fixtures/election/setn-council-taipei-1.ht
 let code,body;await handler({url:'/api/sync?council=1&city=invalid&district=bad'},{status(n){code=n;return this;},json(value){body=value;}});assert.equal(code,400);assert.ok(body.error);
 const logos=JSON.parse(fs.readFileSync(new URL('../data/election/party-logos.json',import.meta.url)));for(const image of Object.values(logos)){assert.ok(image.startsWith('/img/election-parties/'));assert.ok(fs.statSync(new URL('..'+image,import.meta.url)).size<200000);}
 console.log('PASS: 22 cities/221 real districts, council source fixture, safe query allowlist, pre-count zeros, changed counts, wrong district rejection and local party emblems.');
+
+assert.ok(parseCouncil(html,area,true).candidates.every(candidate=>candidate.votes===0));assert.equal(parseCouncil(html,area,true).status,'awaiting');

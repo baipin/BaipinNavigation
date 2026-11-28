@@ -11,7 +11,7 @@ function blocks(html,className){
   if(depth)throw Error('Incomplete SETN fragment');found.push({open:match[0],html:html.slice(opening.lastIndex,end)});opening.lastIndex=tags.lastIndex;
  }return found;
 }
-export function parseSetnResults(html,{counting=false}={}){
+export function parseSetnResults(html,{counting=false,preserveZeros=false}={}){
  if(typeof html!=='string'||html.length>1000000)throw Error('Invalid SETN response');
  const races=blocks(html,'candidate-region').map(region=>{
   const id=region.open.match(/data-city=["']([a-z-]+)["']/)?.[1],name=text(blocks(region.html,'region-title')[0]?.html);if(!id||!name)throw Error('Missing SETN region');
@@ -23,7 +23,7 @@ export function parseSetnResults(html,{counting=false}={}){
    return {name,party,number,votes:counting?Number(raw):null};
   });if(!candidates.length)throw Error('Empty SETN ballot');
   // Pre-count zero placeholders are not votes. Only a positive count establishes reporting in this race.
-  const hasVotes=counting&&candidates.some(candidate=>candidate.votes>0);if(!hasVotes)for(const candidate of candidates)candidate.votes=null;
+  const hasVotes=counting&&candidates.some(candidate=>candidate.votes>0);if(!hasVotes&&!preserveZeros)for(const candidate of candidates)candidate.votes=null;
   if(hasVotes)candidates.sort((a,b)=>b.votes-a.votes);
   return {id,name,candidates,status:hasVotes?(candidates[1]?.votes===candidates[0].votes?'tied':'leading'):'awaiting',counted:null};
  });if(!races.length)throw Error('No SETN results');return races;

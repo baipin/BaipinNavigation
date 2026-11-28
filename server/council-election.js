@@ -6,7 +6,7 @@ import {electionPhase} from '../js/election-time.js';
 const directory=JSON.parse(readFileSync(new URL('../data/election/council-districts.json',import.meta.url),'utf8')).cities;
 const cache=new Map(),pending=new Map();
 export function councilQuery(query){const city=directory.find(city=>city.id===query.get('city')),district=city?.districts.find(district=>district.id===query.get('district'));return city&&district?{city,district}:null;}
-export function parseCouncil(html,area,counting){const races=parseSetnResults(html,{counting});if(races.length!==1||races[0].id!==area.city.id||!races[0].name.includes(area.district.name))throw Error('Unexpected council district');return {...races[0],name:area.district.name,city:area.city.name,cityId:area.city.id,district:area.district.id};}
+export function parseCouncil(html,area,counting){const races=parseSetnResults(html,{counting,preserveZeros:counting});if(races.length!==1||races[0].id!==area.city.id||!races[0].name.includes(area.district.name))throw Error('Unexpected council district');return {...races[0],name:area.district.name,city:area.city.name,cityId:area.city.id,district:area.district.id};}
 export default async function councilElection(req,res){
  const query=new URL(req.url||'/','https://123.baipon.com').searchParams;for(const [key,value]of Object.entries(req.query||{}))if(typeof value==='string')query.set(key,value);
  const provider=query.get('source')||'setn';if(!Object.hasOwn(ELECTION_SOURCES,provider))return res.status(400).json({error:'未知的開票來源。'});if(!ELECTION_SOURCES[provider].council)return res.status(422).json({error:ELECTION_SOURCES[provider].tc+' 未提供本站可讀取的議員票數，請選擇三立或 TVBS。',unsupported:true,source:ELECTION_SOURCES[provider].page});

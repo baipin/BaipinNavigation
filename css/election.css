@@ -34,3 +34,5 @@
 .election-source-select{font:inherit;font-size:.75rem;min-width:0;max-width:190px;border:1px solid #8885;border-radius:9px;color:inherit;background:rgb(var(--mdui-color-surface-container));padding:7px 9px;}.election-council [hidden]{display:none!important;}.election-council-source{display:inline-block;margin-top:7px;font-size:.8rem;color:inherit;text-underline-offset:3px;}@media(max-width:600px){.election-source-select{font-size:16px;max-width:100%;}.election-head>.election-source-select{flex:1;}}
 
 @media(max-width:600px){.election-head>div{flex-basis:calc(100% - 80px)}.election-head>.election-source-select{order:2;flex:1 1 100%;width:100%;}.election-head>mdui-button{order:3;}}
+
+.election-dialog-source{display:flex;align-items:center;gap:10px;margin:12px 0}.election-dialog-source select{flex:1;max-width:none}.election-dialog-source mdui-button{flex:none}.election-council-group{box-sizing:border-box}.election-council-track{transition:none!important;animation:none!important}@media(max-width:600px){.election-head>.election-source-select{display:none!important}}
