@@ -38,3 +38,5 @@
 .election-dialog-source{display:flex;align-items:center;gap:10px;margin:12px 0}.election-dialog-source select{flex:1;max-width:none}.election-dialog-source mdui-button{flex:none}.election-council-group{box-sizing:border-box}.election-council-track{transition:none!important;animation:none!important}@media(max-width:600px){.election-head>.election-source-select{display:none!important}}
 
 .election-winner{display:inline-flex;align-items:center;gap:3px;font-size:.65rem;font-weight:700;line-height:1.5;color:#a83b26;background:#a83b2614;padding:1px 5px;border-radius:5px;vertical-align:middle;white-space:nowrap}.election-winner .material-icons{font-size:14px;line-height:1}.election-candidate>span>.election-winner{margin-top:4px}.mdui-theme-dark .election-winner{color:#ffad91;background:#ffad911c}
+
+.election-page-link{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;flex:none;border-radius:50%;text-decoration:none;color:inherit}.election-page-link:hover{background:#8882}.election-page-link .material-icons{font-size:20px}.election-head>[hidden]{display:none!important}
