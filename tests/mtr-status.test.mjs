@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {XMLParser} from 'fast-xml-parser';
-import handler,{parseMtrStatus,addMtrDetails,MTR_STATUSES} from '../server/mtr-status.js';
+import handler,{parseMtrStatus,addMtrDetails,addMtrFullAlerts,MTR_STATUSES} from '../server/mtr-status.js';
 const fixture=name=>readFileSync(new URL('./fixtures/mtr/'+name,import.meta.url),'utf8');
 // These snapshots are unmodified responses retrieved from the official MTR URLs on 2026-11-26.
 const xml=fixture('status-2026-11-26.xml'),details=JSON.parse(fixture('status-2026-11-26.json'));
@@ -36,3 +36,11 @@ try{
  await handler({method:'POST'},res);assert.equal(responseStatus,405);
 }finally{globalThis.fetch=originalFetch;}
 console.log('PASS: official snapshots and six documented statuses; recovery details; missing/unknown/offline states; no inferred full suspension; optional detail failure and mismatched snapshots.');
+
+const engineeringXml=fixture('status-2026-11-29.xml'),engineeringDetails=JSON.parse(fixture('status-2026-11-29.json')),full=JSON.parse(fixture('alert-2026-11-29.json').replace(/^\uFEFF/,''));
+const planned=addMtrFullAlerts(addMtrDetails(parseMtrStatus(engineeringXml),engineeringDetails),full);
+assert.equal(planned.lines.TCL.messages[0].cause,'');assert.ok(planned.lines.TCL.messages[0].description.startsWith('配合東涌綫延綫工程'));assert.equal(planned.lines.TCL.messages[0].arrangement,'early-closure');
+for(const change of [a=>a.id='999999',a=>a.lineCodes=['TML'],a=>a.status='yellow',a=>a.alertTitleTc='Different announcement']){const wrong=structuredClone(full);change(wrong.data[0]);const r=addMtrFullAlerts(addMtrDetails(parseMtrStatus(engineeringXml),engineeringDetails),wrong);assert.equal(r.lines.TCL.messages[0].description,undefined);}
+const noFull=addMtrFullAlerts(addMtrDetails(parseMtrStatus(engineeringXml),engineeringDetails),null);assert.equal(noFull.lines.TCL.status,'red');assert.ok(noFull.lines.TCL.messages[0].title.includes('提早完結'));
+notes.length=0;context.fetch=async()=>({ok:true,json:async()=>({lines:{TML:planned.lines.TCL}})});await context.updateCityRails();assert.equal(row.textContent,'工程提早收車');assert.equal(row.statusIcon,'engineering');assert.ok(notes[0].textContent.includes('配合東涌綫延綫工程'));assert.ok(!notes[0].textContent.includes('發生事故'));
+console.log('PASS: matched official full announcement replaces generic incident cause; mismatched alerts are rejected, planned closure uses engineering icon and real text.');

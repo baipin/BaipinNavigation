@@ -2465,11 +2465,12 @@ function setBackgroundToCookie(value) {
                 const payload=await response.json();
                 document.querySelectorAll('[data-city-line]').forEach(el=>{
                     const line=payload.lines?.[el.dataset.cityLine],status=line?.status;
-                    const label=({green:'正常',yellow:'服務延誤／逐步恢復',red:'服務受阻',grey:'非服務時間',pink:'服務延誤或受阻',typhoon:'熱帶氣旋警告生效'})[status]||'暫無法確認';
+                    const planned=line?.messages?.some(message=>message.arrangement==='early-closure');
+                    const label=planned?'工程提早收車':({green:'正常',yellow:'服務延誤／逐步恢復',red:'服務受阻',grey:'非服務時間',pink:'服務延誤或受阻',typhoon:'熱帶氣旋警告生效'})[status]||'暫無法確認';
                     el.textContent=label;el.setAttribute('aria-label',label);
-                    if(status!=='green'){const icon=document.createElement('span');icon.className='material-icons';icon.setAttribute('aria-hidden','true');icon.textContent=({yellow:'schedule',red:'report_problem',grey:'bedtime',pink:'warning_amber',typhoon:'cyclone'})[status]||'help_outline';el.prepend(icon);}
+                    if(status!=='green'){const icon=document.createElement('span');icon.className='material-icons';icon.setAttribute('aria-hidden','true');icon.textContent=planned?'engineering':({yellow:'schedule',red:'report_problem',grey:'bedtime',pink:'warning_amber',typhoon:'cyclone'})[status]||'help_outline';el.prepend(icon);}
                     el.className='city-rail-status '+(status==='green'?'good':status==='red'?'danger':['yellow','pink','typhoon'].includes(status)?'warn':'offline');
-                    const details=(line?.messages||[]).map(message=>[message.title,message.cause].filter(Boolean).join('：')).join('；');
+                    const details=(line?.messages||[]).map(message=>message.description||(/提早完結/.test(message.title||'')?message.title:[message.title,message.cause].filter(Boolean).join('：'))).join('；');
                     const name=el.closest('a').querySelector('.city-rail-name');
                     if(details&&name){const note=document.createElement('small');note.className='city-rail-detail';note.textContent=details;name.append(note);}
                     el.title=[label,details].filter(Boolean).join(' · ')+(payload.updatedAt?' · 港鐵更新 '+new Date(payload.updatedAt).toLocaleString('zh-HK'):'');
