@@ -17,19 +17,17 @@ const dialog=node('mdui-dialog');dialog.id='election-dialog';dialog.setAttribute
 const dialogPhase=node('strong',null,'election-phase');dialogPhase.setAttribute('role','status');const intro=node('p'),select=node('select'),results=node('div'),sources=node('div',null,'election-sources'),news=node('div',null,'election-announcements');select.className='election-select';const mapHost=node('section',null,'election-map');dialog.append(dialogHead,dialogPhase,intro,mapHost,select,results,news,sources);const map=createElectionMap(mapHost,name=>{selected=name;render();results.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});});document.body.append(dialog);
 let data=null,error='',timer=null,controller=null,loading=false,visible=false,selected='';
 let pageIndex=0,rotationTimer=null,flipTimer=null,flipRevision=0,paused=false;
-const wide=matchMedia('(min-width:1000px)');
-const pageSize=()=>wide.matches?4:2;
-const candidatePages=()=>Math.ceil((data?.races?.length||0)/pageSize());
-wide.addEventListener('change',()=>{stopRotation();render();});
-const flipClass=(name,add)=>summary.querySelectorAll('.election-race').forEach(el=>el.classList[add?'add':'remove'](name));
+const displayedRaces=()=>data?.races?.slice(0,6)||[];
+const candidatePages=()=>Math.max(1,...displayedRaces().map(race=>Math.ceil(race.candidates.length/2)));
+const flipClass=(name,add)=>summary.querySelectorAll('.election-candidates').forEach(el=>el.classList[add?'add':'remove'](name));
 function stopRotation(){clearTimeout(rotationTimer);rotationTimer=null;clearTimeout(flipTimer);flipTimer=null;flipRevision++;flipClass('election-flip-out',false);flipClass('election-flip-in',false);summary.setAttribute('aria-busy','false');}
 function scheduleRotation(){councilTicker.setActive(enabled()&&visible&&!document.hidden&&!dialog.open);clearTimeout(rotationTimer);rotationTimer=null;if(enabled()&&visible&&!document.hidden&&!dialog.open&&!paused&&candidatePages()>1)rotationTimer=setTimeout(()=>turnPage(1),6000);}
 function renderSummary(){
  summary.classList.remove('election-flip-out','election-flip-in');summary.replaceChildren();
- const page=electionPage(data?.races||[],pageIndex,pageSize()),pages=page.pages;pageIndex=page.page;
- for(const race of page.items){const item=candidateList(race,true);item.tabIndex=0;item.setAttribute('role','button');item.setAttribute('aria-label',race.name+' · '+t('查看开票详情','查看開票詳情'));item.onclick=event=>{event.stopPropagation();selected=race.name;show();};item.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();selected=race.name;show();}};summary.append(item);}
- rotation.hidden=pages<2;pageLabel.textContent=(pageIndex+1)+' / '+pages;
- previous.setAttribute('aria-label',t('上一组县市','上一組縣市'));next.setAttribute('aria-label',t('下一组县市','下一組縣市'));pause.icon=paused?'play_arrow':'pause';pause.setAttribute('aria-label',paused?t('继续轮播','繼續輪播'):t('暂停轮播','暫停輪播'));pause.setAttribute('aria-pressed',String(paused));summary.setAttribute('aria-busy','false');scheduleRotation();
+ const pages=candidatePages();pageIndex=((pageIndex%pages)+pages)%pages;
+ for(const race of displayedRaces()){const item=candidateList(race,true,pageIndex);item.tabIndex=0;item.setAttribute('role','button');item.setAttribute('aria-label',race.name+' · '+t('查看开票详情','查看開票詳情'));item.onclick=event=>{event.stopPropagation();selected=race.name;show();};item.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();selected=race.name;show();}};summary.append(item);}
+ rotation.hidden=pages<2;pageLabel.textContent=t('候选人 ','候選人 ')+(pageIndex+1)+' / '+pages;
+ previous.setAttribute('aria-label',t('上一组候选人','上一組候選人'));next.setAttribute('aria-label',t('下一组候选人','下一組候選人'));pause.icon=paused?'play_arrow':'pause';pause.setAttribute('aria-label',paused?t('继续轮播','繼續輪播'):t('暂停轮播','暫停輪播'));pause.setAttribute('aria-pressed',String(paused));summary.setAttribute('aria-busy','false');scheduleRotation();
 }
 function turnPage(direction){
  stopRotation();const pages=candidatePages();if(pages<2)return;

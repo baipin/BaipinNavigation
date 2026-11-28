@@ -3,7 +3,7 @@
 .election-phase{display:block;margin-top:12px;font-size:.85rem;color:rgb(var(--mdui-color-primary));}.election-summary>.election-race{flex:0 0 230px;max-width:100%;}.election-summary>.election-race>strong{font-size:.9rem;}
 
 /* A fixed grid flips as a group without moving the page or hiding later districts. */
-.election-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;overflow:visible;perspective:1000px;transform-origin:center;}
+.election-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;overflow:visible;perspective:1000px;transform-origin:center;}
 .election-summary>.election-race{min-width:0;max-width:100%;width:100%;min-height:178px;cursor:pointer;}
 .election-summary>.election-race>strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .election-candidate{border-left:3px solid var(--election-party,#80858c);border-radius:7px;padding:8px 9px;gap:10px;background:#8882;background:color-mix(in srgb,var(--election-party,#80858c) 13%,transparent);}
