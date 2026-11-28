@@ -43,3 +43,5 @@
 
 /* Keep mobile heading actions on one row; the details button gets its own row. */
 @media(max-width:600px){.election-head{display:grid;grid-template-columns:24px minmax(0,1fr) 40px 40px;gap:8px}.election-head>div{min-width:0}.election-head>.election-page-link{grid-column:3;grid-row:1;width:40px;height:40px}.election-head>mdui-button-icon{grid-column:4;grid-row:1;width:40px;height:40px}.election-head>mdui-button{grid-column:1/-1;width:100%;margin-top:4px}.election-head>.material-icons{grid-column:1;grid-row:1}.election-head>div{grid-column:2;grid-row:1}body[data-election-page=true] .election-head{grid-template-columns:24px minmax(0,1fr) 40px}body[data-election-page=true] .election-head>mdui-button-icon{grid-column:3}}
+
+@media(min-width:601px){.election-head>.election-page-link{order:1}}
