@@ -67,3 +67,5 @@
 当前公开地址是 `/archive/election-taiwan-local-2026/`。本目录 `js/`、`css/`、`data/`、`img/parties/` 均为本次活动固定副本，运行不依赖其他选举的组件。仅导航站通用 logo、Material 图标／MDUI、`legal.css`、`js/legal.js` 使用全站资源；背景固定为本目录的 Pexels 照片 7000787，不读取用户背景设置。旧页面已经移除，不设置重定向；站内链接统一指向当前目录。通用原型仍在`features/election/` 目录，供下次重新接入直播；当前首页完全不加载它们。
 
 可复用结构的维护入口为 [`../../features/election/README.md`](../../features/election/README.md)。独立存档只更正其自身错误，不随新活动修改。
+
+页脚的欣赏背景按钮沿用首页交互：鼠标悬停 450ms 后预览（保留顶栏和按钮），点击后隐藏界面；点按任意位置或 Esc 恢复。存档使用本目录固定脚本副本。

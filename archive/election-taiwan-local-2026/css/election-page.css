@@ -8,3 +8,25 @@
 .election-archive-notice{margin-top:64px;display:flex;align-items:flex-start;gap:12px;box-sizing:border-box;width:100%;padding:16px max(5%,calc((100% - 1440px)/2));background:#d3e4ff;color:#00315f;border-bottom:1px solid #0001;font-size:.95rem;line-height:1.6}.election-archive-notice[hidden]{display:none}.election-archive-notice>.material-icons{flex:0 0 24px;margin-top:1px}.election-archive-notice-content{flex:1;min-width:0;overflow-wrap:anywhere}.election-archive-notice button{display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;height:44px;margin:-9px 0;padding:0;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer}.election-archive-notice button:hover{background:#0002}.election-archive-notice button:focus-visible{outline:2px solid currentColor;outline-offset:2px}.election-archive-notice+.election-page-main{margin-top:24px}.election-archive-notice[hidden]+.election-page-main{margin-top:112px}.mdui-theme-dark .election-archive-notice{background:#1d3554;color:#d3e4ff}@media(max-width:600px){.election-archive-notice{font-size:.875rem;padding:14px 5%;gap:10px}.election-archive-notice[hidden]+.election-page-main{margin-top:88px}}
 
 body[data-fixed-background]::before{background-image:url('/archive/election-taiwan-local-2026/img/background-pexels-7000787.jpg')}
+
+/* Same 450ms preview and pinned wallpaper view as the homepage. */
+.election-site-footer { position:relative; }
+        #background-view-button { position:static; margin-left:auto; flex:none; width:48px; height:48px; border-radius:16px; background-color:rgba(225,216,255,.48); color:#312257; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
+        #background-view-button::part(button) { display:flex; box-sizing:border-box; width:100%; height:100%; align-items:center; justify-content:center; padding:0; }
+        #background-view-button::part(label) { display:none; }
+        #background-view-button::part(icon) { display:inline-flex; align-items:center; justify-content:center; margin:0; width:24px; height:24px; font-size:24px; }
+        .mdui-theme-dark #background-view-button { background-color:rgba(104,87,143,.42); color:#eee5ff; }
+        @media(max-width:480px){.footer-brand{flex-wrap:wrap;}}
+        html.background-view body>:not(header):not(.webcast-live-background):not(.webcast-capture-video):not(#background-view-restore):not(script):not(style):not(link),
+        html.background-preview body>:not(header):not(.election-site-footer):not(.webcast-live-background):not(.webcast-capture-video):not(#background-view-restore):not(script):not(style):not(link) { opacity:0 !important; transition:opacity .2s ease; }
+        html.background-preview .election-site-footer { background:transparent !important; border-color:transparent; backdrop-filter:none; -webkit-backdrop-filter:none; }
+        html.background-preview .app-overview>:not(.footer-brand),html.background-preview .footer-brand>:not(#background-view-button) { opacity:0; transition:opacity .2s ease; }
+        html.background-preview #background-view-button { background-color:rgba(225,216,255,.7); box-shadow:0 0 0 2px rgba(255,255,255,.65),0 4px 12px #0003; }
+        html.background-preview.mdui-theme-dark #background-view-button { background-color:rgba(104,87,143,.7); }
+        html.background-view body>header { opacity:0 !important; pointer-events:none; transition:opacity .2s ease; }
+        html.background-view body>:not(#background-view-restore) { pointer-events:none !important; }
+        #background-view-restore { position:fixed; inset:0; z-index:2147483646; width:100%; height:100dvh; padding:24px; border:0; background:transparent; color:#fff; cursor:pointer; display:flex; align-items:flex-end; justify-content:center; font:inherit; }
+        #background-view-restore[hidden] { display:none; }
+        .background-view-hint { margin-bottom:max(12px,env(safe-area-inset-bottom)); padding:12px 20px; border-radius:28px; background:rgba(20,25,30,.72); backdrop-filter:blur(16px); box-shadow:0 4px 16px #0003; font-size:.9rem; }
+        #background-view-restore:focus-visible .background-view-hint { outline:2px solid #fff; outline-offset:4px; }
+        @media(prefers-reduced-motion:reduce){html:is(.background-preview,.background-view) body>*{transition:none!important;}}
