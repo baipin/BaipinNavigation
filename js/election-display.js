@@ -19,8 +19,8 @@ export function electionPage(races,offset,size){
 export const countyKey=name=>String(name||'').replaceAll('台','臺');
 export function rankedCandidates(candidates=[]){return [...candidates].sort((a,b)=>{const av=a.votes,bv=b.votes;return (Number.isFinite(bv)?bv:-1)-(Number.isFinite(av)?av:-1);});}
 export function raceOutcome(race){
- const candidates=rankedCandidates(race?.candidates),first=candidates[0],second=candidates[1];
+ const candidates=rankedCandidates(race?.candidates),first=candidates.find(candidate=>candidate.elected===true)||candidates[0],second=candidates.find(candidate=>candidate!==first);
  if(!first||!Number.isFinite(first.votes)||first.votes<=0)return {state:'awaiting',party:'',color:'#80858c'};
- if(second&&first.votes===second.votes)return {state:'tied',party:'',color:'#80858c'};
- return {state:race.status==='won'?'won':'leading',party:first.party||'',name:first.name,votes:first.votes,color:partyColor(first.party)};
+ if(!first.elected&&second&&first.votes===second.votes)return {state:'tied',party:'',color:'#80858c'};
+ return {state:first.elected===true?'won':'leading',party:first.party||'',name:first.name,votes:first.votes,color:partyColor(first.party)};
 }

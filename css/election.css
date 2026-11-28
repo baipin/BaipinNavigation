@@ -36,3 +36,5 @@
 @media(max-width:600px){.election-head>div{flex-basis:calc(100% - 80px)}.election-head>.election-source-select{order:2;flex:1 1 100%;width:100%;}.election-head>mdui-button{order:3;}}
 
 .election-dialog-source{display:flex;align-items:center;gap:10px;margin:12px 0}.election-dialog-source select{flex:1;max-width:none}.election-dialog-source mdui-button{flex:none}.election-council-group{box-sizing:border-box}.election-council-track{transition:none!important;animation:none!important}@media(max-width:600px){.election-head>.election-source-select{display:none!important}}
+
+.election-winner{display:inline-flex;align-items:center;gap:3px;font-size:.65rem;font-weight:700;line-height:1.5;color:#a83b26;background:#a83b2614;padding:1px 5px;border-radius:5px;vertical-align:middle;white-space:nowrap}.election-winner .material-icons{font-size:14px;line-height:1}.election-candidate>span>.election-winner{margin-top:4px}.mdui-theme-dark .election-winner{color:#ffad91;background:#ffad911c}

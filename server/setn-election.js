@@ -20,12 +20,13 @@ export function parseSetnResults(html,{counting=false,preserveZeros=false}={}){
    const raw=text(candidate.html.match(/<span\b[^>]*class=["'][^"']*\bvotes-number\b[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]).replace(/[,，]/g,'');
    const party=text(blocks(candidate.html,'identity-party')[0]?.html);const number=text(blocks(candidate.html,'number')[0]?.html);
    if(!name||!/^\d+$/.test(raw)||!Number.isSafeInteger(Number(raw)))throw Error('Unrecognized SETN candidate');
-   return {name,party,number,votes:counting?Number(raw):null};
+   const elected=counting&&blocks(candidate.html,'votes').some(block=>/\bclass=["'][^"']*\bis-elected\b/.test(block.open));
+   return {name,party,number,votes:counting?Number(raw):null,...(elected?{elected:true}:{})};
   });if(!candidates.length)throw Error('Empty SETN ballot');
   // Pre-count zero placeholders are not votes. Only a positive count establishes reporting in this race.
   const hasVotes=counting&&candidates.some(candidate=>candidate.votes>0);if(!hasVotes&&!preserveZeros)for(const candidate of candidates)candidate.votes=null;
   if(hasVotes)candidates.sort((a,b)=>b.votes-a.votes);
-  return {id,name,candidates,status:hasVotes?(candidates[1]?.votes===candidates[0].votes?'tied':'leading'):'awaiting',counted:null};
+  return {id,name,candidates,status:candidates.some(candidate=>candidate.elected)?'won':hasVotes?(candidates[1]?.votes===candidates[0].votes?'tied':'leading'):'awaiting',counted:null};
  });if(!races.length)throw Error('No SETN results');return races;
 }
 export async function loadSetnResults({counting=false}={}){
